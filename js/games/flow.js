@@ -3,7 +3,7 @@
   'use strict';
   const Z = window.Zen;
   const OPTIONS = [
-    { id: 'size', label: 'Dimensione', def: 10, choices: [{ v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }, { v: 10, label: '10×10' }, { v: 11, label: '11×11' }, { v: 12, label: '12×12' }, { v: 13, label: '13×13' }, { v: 14, label: '14×14' }] },
+    { id: 'size', label: 'Dimensione', def: 10, choices: [{ v: 9, label: '9×9' }, { v: 10, label: '10×10' }, { v: 11, label: '11×11' }, { v: 12, label: '12×12' }, { v: 13, label: '13×13' }, { v: 14, label: '14×14' }, { v: 15, label: '15×15' }, { v: 16, label: '16×16' }] },
     { id: 'col', label: 'Colori', def: 2, choices: [
       { v: 1, label: 'Tanti', help: 'Percorsi brevi.' },
       { v: 2, label: 'Normali' },
@@ -11,7 +11,7 @@
     ] },
   ];
   const colorRange = (n, c) => {
-    const r = c === 1 ? [n, n + 1] : c === 3 ? [Math.round(n * 0.6), Math.round(n * 0.7)] : [Math.round(n * 0.78), n - (n >= 12 ? 1 : 0)];
+    const r = c === 1 ? [n, n + 1] : c === 3 ? (n > 12 ? [Math.round(n * 0.7), n - 2] : [Math.round(n * 0.6), Math.round(n * 0.7)]) : [Math.round(n * 0.78), n - (n >= 12 ? 1 : 0)];
     return [Math.min(r[0], COLORS.length), Math.min(r[1], COLORS.length)];
   };
   const COLORS = [
@@ -28,8 +28,57 @@
     });
   }
 
+  /* Griglie grandi: ogni casella parte come percorso a sé, poi si uniscono gli estremi vicini,
+     sempre partendo dal percorso più corto, finché restano i colori voluti */
+  function generateBig(n, cmin, cmax) {
+    const N = n * n, NB = neighbors(n);
+    const adj = (a, b) => NB[a].includes(b);
+    for (let att = 0; att < 400; att++) {
+      const want = Z.ri(cmin, cmax);
+      let paths = Z.range(N).map(i => [i]);
+      const owner = new Int32Array(N), alive = new Set(Z.range(N));
+      for (let i = 0; i < N; i++) owner[i] = i;
+      const isEnd = (P, c) => P[0] === c || P[P.length - 1] === c;
+      while (alive.size > want) {
+        /* percorsi in ordine di lunghezza, a parità a caso */
+        const order = Z.shuffle([...alive]).sort((x, y) => paths[x].length - paths[y].length);
+        let done = false;
+        for (const ai of order) {
+          const A = paths[ai];
+          const opts = [];
+          for (const ea of A.length === 1 ? [0] : [0, 1]) {
+            const a = ea ? A[A.length - 1] : A[0];
+            for (const b of NB[a]) {
+              const bi = owner[b];
+              if (bi === ai || !isEnd(paths[bi], b)) continue;
+              opts.push([ea, b, bi]);
+            }
+          }
+          if (!opts.length) continue;
+          opts.sort((x, y) => paths[x[2]].length - paths[y[2]].length + (Math.random() - 0.5) * 6);
+          const [ea, b, bi] = opts[0], B = paths[bi];
+          const A2 = ea ? A : A.slice().reverse();
+          const B2 = B[0] === b ? B : B.slice().reverse();
+          const M = A2.concat(B2);
+          paths[ai] = M; alive.delete(bi); paths[bi] = null;
+          for (const c of B) owner[c] = ai;
+          done = true;
+          break;
+        }
+        if (!done) break;
+      }
+      const list = [...alive].map(i => paths[i]);
+      if (list.length < cmin || list.length > cmax || list.some(p => p.length < 3)) continue;
+      if (list.some(p => adj(p[0], p[p.length - 1]))) continue;
+      Z.shuffle(list);
+      return { n, ends: list.map(p => [p[0], p[p.length - 1]]), sol: list };
+    }
+    return null;
+  }
+
   function generate(opt) {
     const n = opt.size, [cmin, cmax] = colorRange(n, opt.col), N = n * n, NB = neighbors(n);
+    if (n > 10) return generateBig(n, cmin, cmax);
     const adj = (a, b) => NB[a].includes(b);
     for (let att = 0; att < 5000; att++) {
       const own = new Int16Array(N).fill(-1);
@@ -44,7 +93,8 @@
         }
         const s = Z.pick(best), id = paths.length, p = [s];
         own[s] = id; left--;
-        const target = Z.ri(3, Math.max(4, Math.round((N / cmin) * 1.4)));
+        const avg = N / ((cmin + cmax) / 2);
+        const target = n <= 10 ? Z.ri(3, Math.max(4, Math.round((N / cmin) * 1.4))) : Z.ri(Math.round(avg * 0.6), Math.round(avg * 1.6));
         while (p.length < target) {
           const head = p[p.length - 1];
           const opts = NB[head].filter(j => own[j] < 0 && NB[j].every(k => k === head || own[k] !== id));
@@ -82,7 +132,25 @@
         }
         return false;
       };
-      while (paths.some(p => p.length < 3) && tryMerge(p => p.length < 3));
+      /* un percorso di 2 caselle rimasto isolato diventa una deviazione a U di un percorso vicino */
+      const detour = () => {
+        for (let si = 0; si < paths.length; si++) {
+          const S = paths[si];
+          if (S.length !== 2) continue;
+          for (let pi = 0; pi < paths.length; pi++) {
+            if (pi === si) continue;
+            const T = paths[pi];
+            for (let k = 0; k + 1 < T.length; k++) for (const [c1, c2] of [[S[0], S[1]], [S[1], S[0]]]) {
+              if (!adj(T[k], c1) || !adj(T[k + 1], c2)) continue;
+              T.splice(k + 1, 0, c1, c2);
+              paths.splice(si, 1);
+              return true;
+            }
+          }
+        }
+        return false;
+      };
+      while (paths.some(p => p.length < 3) && (tryMerge(p => p.length < 3) || detour()));
       if (paths.some(p => p.length < 3)) continue;
       while (paths.length > cmax && tryMerge(() => true));
       if (paths.length < cmin || paths.length > cmax) continue;

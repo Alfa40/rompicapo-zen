@@ -100,11 +100,12 @@
   }
 
   /* ---------- Generazione (al contrario: i blocchi entrano dalle porte) ---------- */
-  function makeDoors(W, H, nColors) {
+  function makeDoors(W, H, nColors, per) {
     for (let t = 0; t < 200; t++) {
       const doors = [], used = { top: [], right: [], bottom: [], left: [] };
       let ok = true;
-      for (let c = 0; c < nColors && ok; c++) {
+      for (let q = 0; q < nColors * per && ok; q++) {
+        const c = q % nColors;
         let placed = false;
         for (let k = 0; k < 40 && !placed; k++) {
           const side = Z.pick(SIDES), span = side === 'top' || side === 'bottom' ? W : H;
@@ -124,13 +125,14 @@
   function build(cfg) {
     const { W, H } = cfg;
     const colors = Z.shuffle(Z.range(PALETTE.length)).slice(0, cfg.colors);
-    const doors = makeDoors(W, H, cfg.colors);
+    /* griglie grandi: più porte per colore, così si riempiono anche in profondità */
+    const doors = makeDoors(W, H, cfg.colors, W >= 13 ? 3 : W >= 10 ? 2 : 1);
     if (!doors) return null;
     doors.forEach(d => { d.color = colors[d.color]; });
     const P = { W, H, doors, blocks: [] };
     const pos = [];
     let filled = 0;
-    for (let att = 0; att < 400 && filled < cfg.fill * W * H; att++) {
+    for (let att = 0; att < Math.max(400, W * H * 4) && filled < cfg.fill * W * H; att++) {
       const door = Z.pick(doors);
       const shape = randomShape();
       const horiz = door.side === 'left' || door.side === 'right';
@@ -175,7 +177,7 @@
   }
 
   const OPTIONS = [
-    { id: 'size', label: 'Dimensione', def: 8, choices: [{ v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }, { v: 10, label: '10×10' }, { v: 11, label: '11×11' }] },
+    { id: 'size', label: 'Dimensione', def: 8, choices: [{ v: 8, label: '8×8' }, { v: 9, label: '9×9' }, { v: 10, label: '10×10' }, { v: 11, label: '11×11' }, { v: 12, label: '12×12' }, { v: 13, label: '13×13' }, { v: 14, label: '14×14' }] },
     { id: 'col', label: 'Colori', def: 5, choices: [3, 4, 5, 6].map(v => ({ v, label: String(v) })) },
     { id: 'crowd', label: 'Affollamento', def: 3, choices: [
       { v: 1, label: 'Basso' }, { v: 2, label: 'Medio' }, { v: 3, label: 'Alto' }, { v: 4, label: 'Massimo' },
@@ -189,7 +191,7 @@
     const cfg = { W: opt.size, H: opt.size, colors: opt.col, fill: CFG.fill[opt.crowd], cands: CFG.cands[opt.crowd], lock: CFG.lock[opt.lock] };
     let best = null;
     const t0 = Z.now();
-    for (let t = 0; t < 400 && (!best || best.n < cfg.cands); t++) {
+    for (let t = 0; (t < 400 || (!best && Z.now() - t0 < 6000)) && (!best || best.n < cfg.cands); t++) {
       if (best && Z.now() - t0 > 1200) break; /* griglie grandi: basta il migliore trovato finora */
       const P = build(cfg);
       if (!P) continue;

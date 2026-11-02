@@ -111,17 +111,24 @@
   }
 
   const OPTIONS = [
-    { id: 'size', label: 'Dimensione', def: 7, choices: [{ v: 5, label: '5×5' }, { v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }] },
+    { id: 'size', label: 'Dimensione', def: 7, choices: [{ v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }, { v: 10, label: '10×10' }, { v: 11, label: '11×11' }, { v: 12, label: '12×12' }] },
     { id: 'cage', label: 'Gabbie', def: 3, choices: [
       { v: 1, label: 'Piccole' }, { v: 2, label: 'Medie' }, { v: 3, label: 'Grandi' }, { v: 4, label: 'Enormi' },
     ] },
   ];
 
   function generate(opt) {
-    const n = opt.size, w = CFG[opt.cage];
-    let sol = Z.randomLatin(n), last = null;
-    for (let t = 0; t < 800; t++) {
+    const n = opt.size;
+    let w = CFG[opt.cage].slice(), sol = Z.randomLatin(n), last = null, step = 0;
+    const t0 = Z.now();
+    /* solo rompicapo con soluzione unica verificata; se tarda, gabbie un po' più piccole */
+    for (let t = 0; t < 20000; t++) {
       if (t % 25 === 24) sol = Z.randomLatin(n);
+      const el = Z.now() - t0;
+      if (el > 2500 * (step + 1)) {
+        step++;
+        w = [w[0] + 0.02, w[1] + 0.04, Math.max(0, w[2] - 0.03), Math.max(0, w[3] - 0.03)];
+      }
       const c = makeCages(n, sol, w);
       last = { n, sol, cages: c.cages, id: c.id };
       if (count(n, c.cages, 2, 40000) === 1) return last;

@@ -3,7 +3,7 @@
   'use strict';
   const Z = window.Zen;
   const OPTIONS = [
-    { id: 'size', label: 'Dimensione', def: 7, choices: [{ v: 5, label: '5×5' }, { v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }] },
+    { id: 'size', label: 'Dimensione', def: 7, choices: [{ v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }, { v: 10, label: '10×10' }, { v: 11, label: '11×11' }, { v: 12, label: '12×12' }] },
     { id: 'aid', label: 'Indizi', def: 2, choices: [
       { v: 1, label: 'Qualcuno in più', help: 'Alcuni numeri e segni in più per partire.' },
       { v: 2, label: 'Il minimo', help: 'Solo quelli indispensabili per una soluzione unica.' },
@@ -140,14 +140,21 @@
     let givens = new Array(N).fill(0), ineq = allIneq.slice();
     /* Assicura l'unicità di partenza */
     for (;;) {
-      const r = n >= 8 ? solverProp(n, givens, ineq, 2, Infinity) : solver(n, givens, ineq, 2);
+      const r = n >= 8 ? solverProp(n, givens, ineq, 2, 20000) : solver(n, givens, ineq, 2);
       if (r.count === 1) break;
+      if (r.count < 0) {
+        /* ricerca troppo lunga: un numero in più a caso e si riprova */
+        const free = Z.range(N).filter(i => !givens[i]);
+        const i = Z.pick(free);
+        givens[i] = sol[i];
+        continue;
+      }
       const alt = r.sols.find(s => s.some((x, i) => x !== sol[i]));
       const diffs = Z.range(N).filter(i => alt[i] !== sol[i]);
       const i = Z.pick(diffs);
       givens[i] = sol[i];
     }
-    const t0 = Z.now(), late = () => Z.now() - t0 > 3000; /* tetto di tempo: si smette di togliere indizi */
+    const t0 = Z.now(), late = () => Z.now() - t0 > (n >= 11 ? 4000 : 3000); /* tetto di tempo: si smette di togliere indizi */
     if (n >= 8) {
       /* 8×8: numeri e segni tolti in ordine misto, così restano pochi di entrambi */
       const items = Z.shuffle([

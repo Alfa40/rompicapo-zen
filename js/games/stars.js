@@ -3,7 +3,7 @@
   'use strict';
   const Z = window.Zen;
   const OPTIONS = [
-    { id: 'size', label: 'Dimensione', def: 10, choices: [{ v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }, { v: 10, label: '10×10' }, { v: 11, label: '11×11' }] },
+    { id: 'size', label: 'Dimensione', def: 10, choices: [{ v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }, { v: 10, label: '10×10' }, { v: 11, label: '11×11' }] },
     { id: 'k', label: 'Stelle', def: 2, choices: [
       { v: 1, label: '1 per riga' }, { v: 2, label: '2 per riga', help: 'Due stelle per riga, colonna e regione: serve una griglia da almeno 8×8.', need: o => o.size >= 8 },
     ] },

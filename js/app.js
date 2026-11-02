@@ -285,6 +285,34 @@
       },
     };
 
+    /* ---------- Zoom solo sulla griglia (le griglie grandi hanno caselle piccole) ---------- */
+    const Zm = { s: 1, tx: 0, ty: 0, max: 1, bw: 0, bh: 0, ww: 0, wh: 0 };
+    const zoomUI = h('div.zoom-ui', null,
+      h('button.zoom-btn', { type: 'button', 'aria-label': 'Ingrandisci la griglia', text: '+', on: { click: () => zoomAt(Zm.s * 1.6) } }),
+      h('button.zoom-btn', { type: 'button', 'aria-label': 'Riduci la griglia', text: '−', on: { click: () => zoomAt(Zm.s / 1.6) } }));
+    function clampZoom() {
+      Zm.s = Math.min(Zm.max, Math.max(1, Zm.s));
+      const mx = Math.max(0, (Zm.bw * Zm.s - Zm.ww) / 2 + 12), my = Math.max(0, (Zm.bh * Zm.s - Zm.wh) / 2 + 12);
+      Zm.tx = Math.min(mx, Math.max(-mx, Zm.tx));
+      Zm.ty = Math.min(my, Math.max(-my, Zm.ty));
+      if (Zm.s === 1) { Zm.tx = 0; Zm.ty = 0; }
+    }
+    function applyZoom() {
+      if (!view) return;
+      clampZoom();
+      view.el.style.width = Math.floor(Zm.bw * Zm.s) + 'px';
+      view.el.style.height = Math.floor(Zm.bh * Zm.s) + 'px';
+      view.el.style.transform = Zm.s > 1 ? `translate(${Zm.tx}px, ${Zm.ty}px)` : '';
+      wrap.classList.toggle('zoomed', Zm.s > 1.01);
+    }
+    /* zoom verso un punto (coordinate rispetto al centro del campo) */
+    function zoomAt(ns, px = 0, py = 0) {
+      const qx = (px - Zm.tx) / Zm.s, qy = (py - Zm.ty) / Zm.s;
+      Zm.s = Math.min(Zm.max, Math.max(1, ns));
+      Zm.tx = px - qx * Zm.s; Zm.ty = py - qy * Zm.s;
+      applyZoom();
+    }
+
     function fit() {
       if (!view) return;
       const r = wrap.getBoundingClientRect();
@@ -292,9 +320,101 @@
       const a = view.aspect || 1;
       let w = Math.min(W, 680), hh = w / a;
       if (hh > H) { hh = H; w = hh * a; }
-      view.el.style.width = Math.floor(w) + 'px';
-      view.el.style.height = Math.floor(hh) + 'px';
+      Zm.bw = w; Zm.bh = hh; Zm.ww = r.width; Zm.wh = r.height;
+      /* massimo: caselle di circa 44 px (64 dove ci sono le etichette piccole delle gabbie) */
+      const cells = (P && P.opt && P.opt.size) || 9;
+      const target = view.el.classList.contains('cages') ? 64 : 44;
+      Zm.max = Math.max(1, Math.min(8, target / (Math.min(w, hh) / (cells + (view.zoomExtra || 0)))));
+      const can = Zm.max > 1.15;
+      wrap.classList.toggle('zoomable', can);
+      zoomUI.hidden = !can;
+      if (!can) Zm.s = 1;
+      applyZoom();
     }
+
+    /* due dita sulla griglia = zoom e spostamento; il primo dito non deve lasciare mosse a metà */
+    const touches = new Map();
+    let pinch = null, snap = null, swallow = false, cancelling = false;
+    const mid = () => {
+      const r = wrap.getBoundingClientRect(), [a, b] = [...touches.values()];
+      return { x: (a.x + b.x) / 2 - r.left - r.width / 2, y: (a.y + b.y) / 2 - r.top - r.height / 2, d: Math.hypot(a.x - b.x, a.y - b.y) || 1 };
+    };
+    wrap.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse') return;
+      touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (touches.size === 1) {
+        swallow = false;
+        snap = { cur: JSON.stringify(cur), u: undo.length, r: redo.slice(), target: e.target, id: e.pointerId };
+        return;
+      }
+      if (!wrap.classList.contains('zoomable') || won) return;
+      e.stopPropagation(); e.preventDefault();
+      if (touches.size === 2 && snap) {
+        /* annulla quello che il primo dito aveva iniziato */
+        cancelling = true;
+        try { snap.target.dispatchEvent(new PointerEvent('pointercancel', { pointerId: snap.id, bubbles: true })); } catch (err) { /* ok */ }
+        cancelling = false;
+        gestureStart = null;
+        if (JSON.stringify(cur) !== snap.cur) {
+          cur = JSON.parse(snap.cur);
+          undo.length = Math.min(undo.length, snap.u);
+          redo = snap.r;
+          view.render(cur);
+          save(); updateTools();
+        }
+        const m = mid();
+        pinch = { d0: m.d, s0: Zm.s, qx: (m.x - Zm.tx) / Zm.s, qy: (m.y - Zm.ty) / Zm.s };
+        swallow = true;
+      }
+    }, true);
+    let lastStep = 0;
+    wrap.addEventListener('pointermove', e => {
+      if (!touches.has(e.pointerId)) return;
+      touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (!swallow) return;
+      e.stopPropagation(); e.preventDefault();
+      if (!pinch || touches.size < 2) return;
+      pinchStep(false);
+    }, true);
+    function pinchStep(force) {
+      const now = Date.now();
+      if (!force && now - lastStep < 30) return;
+      lastStep = now;
+      const m = mid();
+      Zm.s = Math.min(Zm.max, Math.max(1, pinch.s0 * m.d / pinch.d0));
+      Zm.tx = m.x - pinch.qx * Zm.s; Zm.ty = m.y - pinch.qy * Zm.s;
+      applyZoom();
+    }
+    const lift = e => {
+      if (cancelling || !touches.has(e.pointerId)) return;
+      touches.delete(e.pointerId);
+      if (swallow) { e.stopPropagation(); }
+      if (pinch && touches.size === 1) {
+        /* ultimo passo con la posizione finale delle due dita */
+        touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        pinchStep(true);
+        touches.delete(e.pointerId);
+      }
+      if (touches.size < 2) pinch = null;
+      if (!touches.size) { swallow = false; snap = null; }
+    };
+    wrap.addEventListener('pointerup', lift, true);
+    wrap.addEventListener('pointercancel', lift, true);
+    /* rotellina: Ctrl/pizzico del trackpad = zoom, altrimenti sposta la griglia ingrandita */
+    wrap.addEventListener('wheel', e => {
+      if (!wrap.classList.contains('zoomable')) return;
+      const r = wrap.getBoundingClientRect();
+      const px = e.clientX - r.left - r.width / 2, py = e.clientY - r.top - r.height / 2;
+      if (e.ctrlKey || Zm.s === 1) {
+        if (!e.ctrlKey && e.deltaY > 0) return;
+        e.preventDefault();
+        zoomAt(Zm.s * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.002)), px, py);
+      } else {
+        e.preventDefault();
+        if (e.shiftKey && !e.deltaX) Zm.tx -= e.deltaY; else { Zm.tx -= e.deltaX; Zm.ty -= e.deltaY; }
+        applyZoom();
+      }
+    }, { passive: false });
 
     function begin() {
       wrap.innerHTML = '';
@@ -306,7 +426,8 @@
       lvPill.textContent = P.opt ? Z.optsSummary(G, P.opt) : 'Difficoltà';
       view = G.view(ctx);
       view.el.classList.add('board');
-      wrap.append(view.el);
+      Zm.s = 1; Zm.tx = 0; Zm.ty = 0;
+      wrap.append(view.el, zoomUI);
       fit();
       requestAnimationFrame(fit);
       view.render(cur);
@@ -318,7 +439,9 @@
       hideHint();
       wrap.innerHTML = '';
       controls.innerHTML = '';
-      wrap.append(h('div.loading', null, h('div.spinner'), h('p', { text: 'Preparo un nuovo rompicapo…' })));
+      const o = Z.getOpts(id), slow = (id === 'futoshiki' && o.size >= 10) || (id === 'calcudoku' && o.size >= 11) || (id === 'hashi' && o.size >= 18);
+      wrap.append(h('div.loading', null, h('div.spinner'), h('p', { text: 'Preparo un nuovo rompicapo…' }),
+        slow ? h('p.loading-note', { text: 'Le griglie così grandi richiedono qualche secondo.' }) : null));
       updateTools();
       setTimeout(() => {
         let p = null;

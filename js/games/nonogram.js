@@ -3,7 +3,7 @@
   'use strict';
   const Z = window.Zen;
   const OPTIONS = [
-    { id: 'size', label: 'Dimensione', def: 15, choices: [{ v: 10, label: '10×10' }, { v: 12, label: '12×12' }, { v: 15, label: '15×15' }, { v: 18, label: '18×18' }, { v: 20, label: '20×20' }, { v: 25, label: '25×25' }] },
+    { id: 'size', label: 'Dimensione', def: 15, choices: [{ v: 15, label: '15×15' }, { v: 20, label: '20×20' }, { v: 25, label: '25×25' }, { v: 30, label: '30×30' }, { v: 40, label: '40×40' }, { v: 50, label: '50×50' }] },
     { id: 'cx', label: 'Complessità', def: 2, choices: [
       { v: 1, label: 'Bassa', help: 'Disegni compatti: molte righe si risolvono subito.' },
       { v: 2, label: 'Media', help: 'Servono più passaggi tra righe e colonne.' },
@@ -299,6 +299,7 @@
       return {
         el,
         aspect: (w + kr) / (h + kc),
+        zoomExtra: Math.max(kr, kc),
         render(s) {
           cur = s;
           for (let i = 0; i < w * h; i++) {

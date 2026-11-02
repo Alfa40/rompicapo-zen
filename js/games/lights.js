@@ -3,7 +3,7 @@
   'use strict';
   const Z = window.Zen;
   const OPTIONS = [
-    { id: 'size', label: 'Dimensione', def: 7, choices: [{ v: 5, label: '5×5' }, { v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }, { v: 10, label: '10×10' }] },
+    { id: 'size', label: 'Dimensione', def: 7, choices: [{ v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }, { v: 10, label: '10×10' }, { v: 12, label: '12×12' }, { v: 15, label: '15×15' }, { v: 20, label: '20×20' }] },
     { id: 'mv', label: 'Mosse necessarie', def: 2, choices: [
       { v: 1, label: 'Poche' }, { v: 2, label: 'Normali' }, { v: 3, label: 'Tante' },
     ] },

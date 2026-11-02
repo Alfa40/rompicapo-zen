@@ -234,6 +234,16 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spac
 .lv-pill { background: var(--accent-soft); color: var(--accent-deep); padding: 1px 10px; border-radius: 99px; font-weight: 500; font-size: 13px; border: none; cursor: pointer; }
 .theme-name::before { content: '❀ '; color: var(--second); }
 .board-wrap { flex: 1; min-height: 220px; display: flex; align-items: center; justify-content: center; position: relative; }
+.board-wrap.zoomable { overflow: hidden; touch-action: none; border-radius: 18px; }
+.board-wrap.zoomable > .board { flex: none; }
+.zoom-ui { position: absolute; right: 6px; bottom: 6px; display: grid; gap: 6px; z-index: 3; }
+.zoom-ui[hidden] { display: none; }
+.zoom-btn {
+  width: 40px; height: 40px; border-radius: 14px; border: 2px solid var(--line); background: var(--surface);
+  box-shadow: 0 3px 0 var(--edge); font-size: 22px; font-weight: 600; color: var(--accent-deep); display: grid; place-items: center;
+  opacity: 0.92;
+}
+.zoom-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--edge); }
 .controls { display: flex; justify-content: center; }
 .controls:empty { display: none; }
 .controls > * { margin-top: 8px; }
@@ -301,6 +311,8 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spac
 .ng.tiles .ng-cell.sel { border-color: var(--accent); background: var(--accent-soft); }
 .ng-cell.bad { color: var(--warn); background: var(--warn-soft); }
 .ng-v { line-height: 1; }
+.ng.wide .ng-cell { font-size: calc(100cqw / (var(--n) + (var(--n) - 1) * var(--gap)) * 0.46); letter-spacing: -0.04em; }
+.ng.wide .ng-notes { font-size: 0.3em; }
 .ng-notes {
   position: absolute; inset: 8%; display: grid; grid-template-columns: repeat(var(--nc), 1fr);
   font-size: 0.34em; color: var(--ink-soft); font-weight: 500; pointer-events: none; place-items: center;
@@ -472,3 +484,5 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spac
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
   .petals { display: none; }
 }
+
+.loading-note { font-size: 13px; color: var(--ink-soft); margin-top: -6px; }

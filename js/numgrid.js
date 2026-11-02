@@ -5,12 +5,13 @@
 
   Z.NumGrid = function (ctx, o) {
     const n = o.n, N = n * n, giv = o.givens;
-    let sel = -1, noteMode = false, cur = null;
+    let sel = -1, noteMode = false, cur = null, pend = 0, pendT = 0;
 
     const el = Z.h('div.ng' + (o.cls ? '.' + o.cls : ''));
     el.style.setProperty('--n', n);
     el.style.setProperty('--gap', o.gap || 0);
-    el.style.setProperty('--nc', n <= 4 ? 2 : 3);
+    el.style.setProperty('--nc', n <= 4 ? 2 : n <= 9 ? 3 : 4);
+    if (n >= 10) el.classList.add('wide'); /* numeri a due cifre */
     const grid = Z.h('div.ng-grid');
     el.append(grid);
 
@@ -104,8 +105,15 @@
       },
       onKey(e) {
         const k = e.key;
-        if (/^[1-9]$/.test(k) && +k <= n) { input(+k); return true; }
-        if (k === 'Backspace' || k === 'Delete' || k === '0') { erase(); return true; }
+        if (/^[0-9]$/.test(k)) {
+          /* da tastiera: con griglie oltre 9 si possono digitare due cifre di fila (1 poi 0 = 10) */
+          const d = +k;
+          if (pend && Date.now() - pendT < 900 && pend * 10 + d <= n) { pend = 0; if (noteMode) input(1); input(10 + d); return true; }
+          if (d === 0) { erase(); return true; }
+          if (d <= n) { input(d); pend = n >= 10 && d === 1 ? 1 : 0; pendT = Date.now(); return true; }
+          return true;
+        }
+        if (k === 'Backspace' || k === 'Delete') { erase(); return true; }
         if (k === 'n' || k === 'N') { noteMode = !noteMode; paint(); return true; }
         const dirs = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
         if (dirs[k]) {
