@@ -33,6 +33,68 @@
     Z.store.set('opzioni-v3', true);
   }
 
+  /* ---------- Rompicapo preparati in anticipo ----------
+     Per ogni gioco (tranne il Sudoku, che è immediato) si tengono pronti fino a 10 rompicapo
+     con le impostazioni scelte; quando ne restano 5 se ne preparano altri 5.
+     Il lavoro avviene in un thread separato, quindi il gioco non si blocca. */
+  const QUEUE_MAX = 10, QUEUE_LOW = 5, NO_QUEUE = new Set(['sudoku']);
+  const optKey = o => JSON.stringify(o);
+  function queueOf(id, o) {
+    const q = Z.store.get('queue:' + id, null);
+    return q && q.key === optKey(o) ? q.list : [];
+  }
+  function queueSave(id, o, list) {
+    if (Z.store.set('queue:' + id, { key: optKey(o), list })) return;
+    /* spazio del browser esaurito: se ne tengono meno */
+    while (list.length > 1) {
+      list = list.slice(0, list.length >> 1);
+      if (Z.store.set('queue:' + id, { key: optKey(o), list })) return;
+    }
+  }
+  /* prende un rompicapo pronto, se c'è */
+  function queueTake(id, o) {
+    if (NO_QUEUE.has(id)) return null;
+    const list = queueOf(id, o);
+    if (!list.length) return null;
+    const P = list.shift();
+    queueSave(id, o, list);
+    return P;
+  }
+  let worker = null, workerOff = false, working = null;
+  const filling = {};
+  function prefetch() {
+    if (working || workerOff) return;
+    if (!worker) {
+      try { worker = new Worker('js/worker.js'); } catch (e) { workerOff = true; return; } /* es. aperto da file */
+      worker.onerror = () => { workerOff = true; working = null; worker.terminate(); worker = null; };
+      worker.onmessage = e => {
+        const d = e.data;
+        if (d.P) {
+          const o = Z.getOpts(d.id);
+          if (optKey(o) === d.key) {
+            const list = queueOf(d.id, o);
+            list.push(d.P);
+            queueSave(d.id, o, list);
+          }
+        }
+        if (d.done) { working = null; prefetch(); }
+      };
+    }
+    /* prima il gioco aperto, poi gli altri */
+    const order = Z.ORDER.slice().sort((a, b) => (b === currentId) - (a === currentId));
+    for (const id of order) {
+      if (NO_QUEUE.has(id)) continue;
+      const o = Z.getOpts(id), key = optKey(o), n = queueOf(id, o).length;
+      /* scesi a 5 (o mai riempiti): si riempie fino a 10, un rompicapo alla volta */
+      if (n <= QUEUE_LOW) filling[id] = key;
+      if (filling[id] !== key || n >= QUEUE_MAX) { if (n >= QUEUE_MAX) delete filling[id]; continue; }
+      working = id;
+      worker.postMessage({ id, opt: o, key, n: 1 });
+      return;
+    }
+  }
+  let currentId = null;
+
   /* ---------- Tema chiaro/scuro ---------- */
   const MODES = ['auto', 'light', 'dark'];
   let mode = Z.store.get('mode', 'auto');
@@ -101,6 +163,7 @@
   let game = null;
   function home() {
     game = null;
+    currentId = null;
     closeOverlay();
     applyTheme(Z.themeById(Z.store.get('homeTheme', 'giardino')));
     screen.innerHTML = '';
@@ -149,6 +212,7 @@
             }
             Z.setOpts(id, o);
             draw();
+            prefetch();
           });
           row.append(b);
         }
@@ -200,6 +264,7 @@
   /* ---------- Partita ---------- */
   function startGame(id, fresh) {
     const G = Z.GAMES[id];
+    currentId = id;
     const key = `save:${id}`;
     const saved = !fresh && Z.store.get(key, null);
 
@@ -439,16 +504,18 @@
       hideHint();
       wrap.innerHTML = '';
       controls.innerHTML = '';
-      const o = Z.getOpts(id), slow = (id === 'futoshiki' && o.size >= 10) || (id === 'calcudoku' && o.size >= 11) || (id === 'hashi' && o.size >= 18);
+      const o = Z.getOpts(id), ready = queueTake(id, o);
+      const slow = !ready && ((id === 'futoshiki' && o.size >= 10) || (id === 'calcudoku' && o.size >= 11) || (id === 'hashi' && o.size >= 18));
       wrap.append(h('div.loading', null, h('div.spinner'), h('p', { text: 'Preparo un nuovo rompicapo…' }),
         slow ? h('p.loading-note', { text: 'Le griglie così grandi richiedono qualche secondo.' }) : null));
       updateTools();
       setTimeout(() => {
-        let p = null;
+        let p = ready;
         const opt = Z.getOpts(id);
         for (let t = 0; t < 5 && !p; t++) p = G.generate(opt);
         P = p;
         P.opt = opt;
+        prefetch();
         P.theme = Z.nextTheme();
         cur = G.init(P);
         undo = []; redo = [];
@@ -578,4 +645,5 @@
   const m = /^#(\w+)/.exec(location.hash);
   if (m && Z.GAMES[m[1]]) startGame(m[1]);
   else home();
+  setTimeout(prefetch, 1500);
 })();
