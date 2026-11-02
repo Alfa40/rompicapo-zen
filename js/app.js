@@ -372,6 +372,15 @@
 
   window.addEventListener('resize', () => { if (game) game.fit(); });
 
+  /* Niente zoom: pizzico su iPhone/iPad (Safari ignora user-scalable=no) e Ctrl+rotellina/+/- su computer.
+     Il doppio tocco è già disattivato da touch-action: manipulation (CSS). */
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
+  document.addEventListener('touchmove', e => { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false });
+  window.addEventListener('wheel', e => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && ['+', '-', '=', '0'].includes(e.key)) e.preventDefault();
+  });
+
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     navigator.serviceWorker.register('sw.js').catch(() => { /* facoltativo */ });
   }
