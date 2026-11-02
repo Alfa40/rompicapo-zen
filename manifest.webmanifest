@@ -1,0 +1,11 @@
+{
+  "name": "Rompicapo Zen",
+  "short_name": "Rompicapo",
+  "description": "Rompicapo tradizionali in stile cartoon, calmi e sempre nuovi.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f6f1e7",
+  "theme_color": "#f6f1e7",
+  "lang": "it",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
