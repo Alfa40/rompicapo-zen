@@ -437,6 +437,22 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spac
 @keyframes glow { 50% { opacity: 0.7; transform: scale(1.12); } }
 .lamp:active .lamp-body { transform: translateY(2px); }
 
+/* ---------- Porte colorate ---------- */
+.blk { overflow: visible; }
+.blk-wall { fill: var(--line-strong); opacity: 0.22; }
+.blk-floor { fill: var(--surface); }
+.blk-dots circle { fill: var(--line); }
+.blk-door { stroke: var(--surface); stroke-width: 0.05; }
+.blk-door-arrow { fill: none; stroke: #fff; stroke-width: 0.06; stroke-linecap: round; stroke-linejoin: round; opacity: 0.9; }
+.blk-b { cursor: grab; transition: transform 0.13s ease-out, opacity 0.28s ease; }
+.blk-b.drag { cursor: grabbing; transition: transform 0.07s linear; }
+.blk-b.drag .blk-in { filter: brightness(1.06) drop-shadow(0 0.06px 0.1px rgba(0,0,0,.25)); }
+.blk-b.leaving { opacity: 0; transition: transform 0.28s ease-in, opacity 0.28s ease-in; pointer-events: none; }
+.blk-b.gone { display: none; }
+.blk-shadow { fill: var(--edge); }
+.blk-shine { fill: #fff; opacity: 0.35; pointer-events: none; }
+.blk-lock path { fill: none; stroke: #fff; stroke-width: 0.075; stroke-linecap: round; stroke-linejoin: round; opacity: 0.95; }
+
 /* ---------- Petali di festa ---------- */
 .petals { position: fixed; inset: 0; pointer-events: none; z-index: 15; overflow: hidden; }
 .petals i {
