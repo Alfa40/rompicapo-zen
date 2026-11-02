@@ -2,13 +2,15 @@
 (function () {
   'use strict';
   const Z = window.Zen;
-  const SIZE = { easy: 7, normal: 9, hard: 11 };
+  const OPTIONS = [
+    { id: 'size', label: 'Dimensione', def: 9, choices: [{ v: 5, label: '5×5' }, { v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }, { v: 10, label: '10×10' }, { v: 11, label: '11×11' }, { v: 12, label: '12×12' }] },
+  ];
   /* bit: 1 su, 2 destra, 4 giù, 8 sinistra */
   const D = [[0, -1, 1, 4], [1, 0, 2, 8], [0, 1, 4, 1], [-1, 0, 8, 2]];
   const rot = (m, r) => { r = ((r % 4) + 4) % 4; for (let k = 0; k < r; k++) m = ((m << 1) | (m >> 3)) & 15; return m; };
 
-  function generate(level) {
-    const n = SIZE[level], N = n * n;
+  function generate(opt) {
+    const n = opt.size, N = n * n;
     for (;;) {
       const m = new Uint8Array(N), inT = new Uint8Array(N);
       const src = ((n / 2) | 0) * n + ((n / 2) | 0);
@@ -106,6 +108,7 @@
   }
 
   Z.register({
+    options: OPTIONS,
     id: 'pipes',
     name: 'Tubi',
     hue: 185,

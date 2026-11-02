@@ -145,11 +145,22 @@
     return g;
   }
 
-  function generate(level) {
+  const OPTIONS = [
+    { id: 'tec', label: 'Tecniche richieste', def: 3, choices: [
+      { v: 1, label: 'Base', help: 'Basta cercare l’unico posto possibile per ogni numero.' },
+      { v: 2, label: 'Intermedie', help: 'Servono anche candidati bloccati e coppie.' },
+      { v: 3, label: 'Avanzate', help: 'Indizi minimi: le tecniche comuni non sempre bastano.' },
+      { v: 4, label: 'Esperte', help: 'Scelto tra molti come quello in cui ci si blocca prima.' },
+    ] },
+  ];
+
+  function generate(opt) {
+    const level = ['easy', 'easy', 'easy', 'normal', 'hard'][opt.tec] || 'normal';
     let fallback = null;
     const t0 = Z.now();
     for (let t = 0; t < 150; t++) {
       const sol = search(new Array(81).fill(0), 1, true).sol;
+      if (opt.tec === 1) return { givens: dig(sol, g => logic(g, 1), 36), sol };
       if (level === 'easy') {
         /* richiede candidati bloccati o coppie: le sole caselle singole non bastano */
         const g = dig(sol, x => logic(x, 2), 22);
@@ -218,6 +229,7 @@
   }
 
   Z.register({
+    options: OPTIONS,
     _logic: logic,
     id: 'sudoku',
     name: 'Sudoku',

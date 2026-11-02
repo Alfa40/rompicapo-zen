@@ -2,7 +2,12 @@
 (function () {
   'use strict';
   const Z = window.Zen;
-  const CFG = { easy: [6, 13], normal: [7, 22], hard: [8, 32] };
+  const OPTIONS = [
+    { id: 'size', label: 'Dimensione', def: 7, choices: [{ v: 4, label: '4×4' }, { v: 5, label: '5×5' }, { v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }] },
+    { id: 'mv', label: 'Mosse necessarie', def: 2, choices: [
+      { v: 1, label: 'Poche' }, { v: 2, label: 'Normali' }, { v: 3, label: 'Tante' },
+    ] },
+  ];
 
   function press(n, on, i) {
     const x = i % n, y = (i / n) | 0;
@@ -56,15 +61,21 @@
     return best.x;
   }
 
-  function generate(level) {
-    const [n, k] = CFG[level], N = n * n;
-    for (;;) {
+  function generate(opt) {
+    const n = opt.size, N = n * n, k = Math.max(3, Math.round(N * [0.45, 0.25, 0.45, 0.55][opt.mv]));
+    let best = null;
+    for (let t = 0; ; t++) {
       const on = new Array(N).fill(0);
       for (const i of Z.shuffle(Z.range(N)).slice(0, k)) press(n, on, i);
       const lit = on.reduce((a, b) => a + b, 0);
       if (lit < N * 0.3) continue;
       const x = solve(n, on);
-      if (x && x.reduce((a, b) => a + b, 0) >= k * 0.8) return { n, start: on };
+      if (!x) continue;
+      const w = x.reduce((a, b) => a + b, 0);
+      if (w >= k * 0.8) return { n, start: on };
+      /* griglie con più soluzioni (4×4, 5×5, 9×9): si tiene la più lunga trovata */
+      if (!best || w > best.w) best = { w, P: { n, start: on } };
+      if (t > 300) return best.P;
     }
   }
 
@@ -88,6 +99,7 @@
   }
 
   Z.register({
+    options: OPTIONS,
     id: 'lights',
     name: 'Luci',
     hue: 45,

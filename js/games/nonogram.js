@@ -2,7 +2,14 @@
 (function () {
   'use strict';
   const Z = window.Zen;
-  const SIZES = { easy: [12, 12], normal: [15, 15], hard: [18, 18] };
+  const OPTIONS = [
+    { id: 'size', label: 'Dimensione', def: 15, choices: [{ v: 8, label: '8×8' }, { v: 10, label: '10×10' }, { v: 12, label: '12×12' }, { v: 15, label: '15×15' }, { v: 18, label: '18×18' }, { v: 20, label: '20×20' }] },
+    { id: 'cx', label: 'Complessità', def: 2, choices: [
+      { v: 1, label: 'Bassa', help: 'Disegni compatti: molte righe si risolvono subito.' },
+      { v: 2, label: 'Media', help: 'Servono più passaggi tra righe e colonne.' },
+      { v: 3, label: 'Alta', help: 'Disegni frastagliati con lunghe catene di deduzioni.' },
+    ] },
+  ];
 
   function clueOf(line) {
     const r = []; let c = 0;
@@ -105,15 +112,15 @@
     return g;
   }
 
-  function generate(level) {
-    const [w, h] = SIZES[level];
-    const want = level === 'easy' ? 12 : level === 'normal' ? 24 : 40;
+  function generate(opt) {
+    const w = opt.size, h = opt.size, cx = opt.cx;
+    const want = [1, 1, 24, 40][cx];
     const t0 = Z.now();
     let best = null, found = 0;
     for (let t = 0; t < 6000 && found < want; t++) {
-      if (best && Z.now() - t0 > (level === 'hard' ? 1600 : 900)) break;
+      if (best && Z.now() - t0 > (cx === 3 || w > 15 ? 1600 : 900)) break;
       const img = genImage(w, h, 0.48 + Math.random() * 0.14, Math.random() < 0.6, 1);
-      const noise = level === 'hard' ? 0.13 : 0.1;
+      const noise = [0.04, 0.04, 0.1, 0.13][cx];
       for (let i = 0; i < img.length; i++) if (Math.random() < noise) img[i] ^= 1;
       const fill = img.reduce((a, b) => a + b, 0) / (w * h);
       if (fill < 0.4 || fill > 0.66) continue;
@@ -194,6 +201,7 @@
   }
 
   Z.register({
+    options: OPTIONS,
     id: 'nonogram',
     name: 'Nonogramma',
     hue: 330,

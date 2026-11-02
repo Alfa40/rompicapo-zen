@@ -3,9 +3,10 @@
   'use strict';
   const Z = window.Zen;
   const CFG = {
-    easy: { n: 6, w: [0.05, 0.42, 0.33, 0.2] },
-    normal: { n: 7, w: [0.02, 0.36, 0.36, 0.26] },
-    hard: { n: 8, w: [0.01, 0.3, 0.38, 0.31] },
+    1: [0.14, 0.5, 0.3, 0.06],
+    2: [0.05, 0.42, 0.33, 0.2],
+    3: [0.02, 0.36, 0.36, 0.26],
+    4: [0.01, 0.3, 0.38, 0.31],
   };
   const SYM = { '+': '+', '-': '−', '*': '×', '/': '÷', '': '' };
 
@@ -109,8 +110,15 @@
     return nodes > nodeLimit ? -1 : cnt;
   }
 
-  function generate(level) {
-    const { n, w } = CFG[level];
+  const OPTIONS = [
+    { id: 'size', label: 'Dimensione', def: 7, choices: [{ v: 4, label: '4×4' }, { v: 5, label: '5×5' }, { v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }] },
+    { id: 'cage', label: 'Gabbie', def: 3, choices: [
+      { v: 1, label: 'Piccole' }, { v: 2, label: 'Medie' }, { v: 3, label: 'Grandi' }, { v: 4, label: 'Enormi' },
+    ] },
+  ];
+
+  function generate(opt) {
+    const n = opt.size, w = CFG[opt.cage];
     let sol = Z.randomLatin(n), last = null;
     for (let t = 0; t < 800; t++) {
       if (t % 25 === 24) sol = Z.randomLatin(n);
@@ -168,6 +176,7 @@
   }
 
   Z.register({
+    options: OPTIONS,
     id: 'calcudoku',
     name: 'Calcudoku',
     hue: 270,

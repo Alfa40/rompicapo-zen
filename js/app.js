@@ -18,17 +18,19 @@
     'Il vento passa, la montagna resta.',
   ];
 
-  /* Livelli scalati di un gradino (2026-11): le partite salvate seguono la loro difficoltà */
-  if (!Z.store.get('livelli-v2', false)) {
+  /* Dai 3 livelli alla difficoltà personalizzata: una sola partita salvata per gioco */
+  if (!Z.store.get('opzioni-v3', false)) {
     for (const id of Z.ORDER) {
-      for (const pre of ['save', 'done']) {
-        const n = Z.store.get(`${pre}:${id}:normal`, null), d = Z.store.get(`${pre}:${id}:hard`, null);
-        Z.store.del(`${pre}:${id}:easy`); Z.store.del(`${pre}:${id}:normal`); Z.store.del(`${pre}:${id}:hard`);
-        if (n != null) Z.store.set(`${pre}:${id}:easy`, n);
-        if (d != null) Z.store.set(`${pre}:${id}:normal`, d);
+      let save = null, done = 0;
+      for (const lv of ['normal', 'easy', 'hard']) {
+        save = save || Z.store.get(`save:${id}:${lv}`, null);
+        done += Z.store.get(`done:${id}:${lv}`, 0);
+        Z.store.del(`save:${id}:${lv}`); Z.store.del(`done:${id}:${lv}`);
       }
+      if (save && !Z.store.get(`save:${id}`, null)) Z.store.set(`save:${id}`, save);
+      if (done) Z.store.set(`done:${id}`, Z.store.get(`done:${id}`, 0) + done);
     }
-    Z.store.set('livelli-v2', true);
+    Z.store.set('opzioni-v3', true);
   }
 
   /* ---------- Tema chiaro/scuro ---------- */
@@ -111,34 +113,69 @@
     const grid = h('div.cards');
     Z.ORDER.forEach((id, k) => {
       const G = Z.GAMES[id];
-      const saved = Z.LEVELS.some(L => Z.store.get(`save:${id}:${L.id}`, null));
+      const saved = Z.store.get(`save:${id}`, null);
       const card = h('button.card', { type: 'button', style: { '--h': G.hue, '--k': k } },
         h('div.card-ic', { html: G.icon }),
         h('div.card-tx', null, h('h2', { text: G.name }), h('p', { text: G.tagline })),
         saved ? h('span.badge', { text: 'In corso' }) : null);
-      card.addEventListener('click', () => levelSheet(id));
+      card.addEventListener('click', () => setupSheet(id));
       grid.append(card);
     });
     screen.append(top, grid, h('p.foot', { text: 'Ogni rompicapo è generato al momento: non ne vedrai mai due uguali.' }));
   }
 
-  function levelSheet(id) {
+  /* Pannello della difficoltà: ogni scelta viene salvata subito per quel gioco */
+  function optionsPanel(id) {
     const G = Z.GAMES[id];
-    const list = h('div.levels');
-    Z.LEVELS.forEach(L => {
-      const saved = Z.store.get(`save:${id}:${L.id}`, null);
-      const done = Z.store.get(`done:${id}:${L.id}`, 0);
-      const b = h('button.level', { type: 'button' },
-        h('span.lv-dots', { html: [0, 1, 2].map(k => `<i class="${k <= Z.LEVELS.indexOf(L) ? 'on' : ''}"></i>`).join('') }),
-        h('span.lv-tx', null, h('b', { text: L.label }), h('small', { text: L.desc })),
-        h('span.lv-meta', null, saved ? h('em', { text: 'Continua' }) : null, done ? h('small', { text: `${done} risolti` }) : null));
-      b.addEventListener('click', () => { closeOverlay(); startGame(id, L.id); });
-      list.append(b);
-    });
+    const o = Z.getOpts(id);
+    const box = h('div.opts');
+    const draw = () => {
+      box.innerHTML = '';
+      for (const d of G.options || []) {
+        const row = h('div.chips', { role: 'radiogroup', 'aria-label': d.label });
+        const cur = d.choices.find(c => c.v === o[d.id]);
+        for (const c of d.choices) {
+          const ok = !c.need || c.need(o);
+          const b = h('button.opt-chip' + (c.v === o[d.id] ? '.on' : ''), {
+            type: 'button', role: 'radio', 'aria-checked': String(c.v === o[d.id]), text: c.label,
+          });
+          b.disabled = !ok;
+          b.addEventListener('click', () => {
+            o[d.id] = c.v;
+            /* scelte non più compatibili tornano a una valida */
+            for (const e of G.options) {
+              const v = e.choices.find(x => x.v === o[e.id]);
+              if (v && v.need && !v.need(o)) o[e.id] = (e.choices.slice().reverse().find(x => !x.need || x.need(o)) || e.choices[0]).v;
+            }
+            Z.setOpts(id, o);
+            draw();
+          });
+          row.append(b);
+        }
+        box.append(h('div.opt', null,
+          h('div.opt-label', { text: d.label }), row,
+          cur && cur.help ? h('p.opt-help', { text: cur.help }) : null));
+      }
+    };
+    draw();
+    return box;
+  }
+
+  function setupSheet(id) {
+    const G = Z.GAMES[id];
+    const saved = Z.store.get(`save:${id}`, null);
+    const done = Z.store.get(`done:${id}`, 0);
+    const go = fresh => { closeOverlay(); startGame(id, fresh); };
     const card = openSheet([
       h('div.sheet-head', null, h('div.card-ic', { html: G.icon }), h('h2', { text: G.name })),
       h('div.rules', { html: G.rules }),
-      list,
+      h('h3.opt-title', { text: 'Difficoltà' }),
+      optionsPanel(id),
+      done ? h('p.opt-done', { text: `${done} risolti finora` }) : null,
+      h('div.sheet-actions', null,
+        saved ? h('button.btn', { type: 'button', text: 'Continua', on: { click: () => go(false) } }) : null,
+        h('button.btn.primary', { type: 'button', text: saved ? 'Nuova partita' : 'Gioca', on: { click: () => go(true) } })),
+      saved ? h('p.opt-note', { text: 'La partita in corso resta com’era; le nuove impostazioni valgono per le prossime.' }) : null,
     ]);
     card.style.setProperty('--h', G.hue);
   }
@@ -161,18 +198,18 @@
   }
 
   /* ---------- Partita ---------- */
-  function startGame(id, level, fresh) {
+  function startGame(id, fresh) {
     const G = Z.GAMES[id];
-    const key = `save:${id}:${level}`;
+    const key = `save:${id}`;
     const saved = !fresh && Z.store.get(key, null);
-    const L = Z.LEVELS.find(x => x.id === level);
 
     screen.innerHTML = '';
     screen.className = 'game';
     const themeName = h('span.theme-name');
+    const lvPill = h('button.lv-pill', { type: 'button', title: 'Cambia difficoltà', on: { click: () => gameOptions() } });
     const bar = h('header.gbar', null,
       h('button.icon-btn', { type: 'button', title: 'Menu', 'aria-label': 'Torna al menu', html: Z.ICONS.back, on: { click: home } }),
-      h('div.gtitle', null, h('b', { text: G.name }), h('span', null, h('span.lv-pill', { text: L.label }), themeName)),
+      h('div.gtitle', null, h('b', { text: G.name }), h('span', null, lvPill, themeName)),
       h('button.icon-btn', { type: 'button', title: 'Come si gioca', 'aria-label': 'Come si gioca', html: Z.ICONS.help, on: { click: () => rulesSheet(G) } }));
     const wrap = h('div.board-wrap');
     const controls = h('div.controls');
@@ -225,7 +262,7 @@
     };
     const set = ns => { cur = ns; view.render(cur); after(); };
     const ctx = {
-      level, board: wrap, controls,
+      board: wrap, controls,
       get puzzle() { return P; },
       get state() { return cur; },
       commit(ns) {
@@ -266,6 +303,7 @@
       applyTheme(theme);
       Z.store.set('homeTheme', theme.id);
       themeName.textContent = theme.name;
+      lvPill.textContent = P.opt ? Z.optsSummary(G, P.opt) : 'Difficoltà';
       view = G.view(ctx);
       view.el.classList.add('board');
       wrap.append(view.el);
@@ -284,8 +322,10 @@
       updateTools();
       setTimeout(() => {
         let p = null;
-        for (let t = 0; t < 5 && !p; t++) p = G.generate(level);
+        const opt = Z.getOpts(id);
+        for (let t = 0; t < 5 && !p; t++) p = G.generate(opt);
         P = p;
+        P.opt = opt;
         P.theme = Z.nextTheme();
         cur = G.init(P);
         undo = []; redo = [];
@@ -297,7 +337,7 @@
       won = true;
       hideHint();
       Z.store.del(key);
-      Z.store.set(`done:${id}:${level}`, Z.store.get(`done:${id}:${level}`, 0) + 1);
+      Z.store.set(`done:${id}`, Z.store.get(`done:${id}`, 0) + 1);
       updateTools();
       view.el.classList.add('solved');
       petals();
@@ -307,7 +347,7 @@
           h('div.win-ic', { html: '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" class="lg-a"/><path d="M20 33l8 8 16-17" class="win-ck"/></svg>' }),
           h('h2', { text: 'Completato' }),
           h('p.phrase', { text: Z.pick(PHRASES) }),
-          h('p.count', { text: `${G.name} · ${L.label} · ${Z.store.get(`done:${id}:${level}`, 0)} risolti` }),
+          h('p.count', { text: `${G.name} · ${Z.store.get(`done:${id}`, 0)} risolti` }),
           h('div.sheet-actions', null,
             h('button.btn', { type: 'button', text: 'Menu', on: { click: home } }),
             h('button.btn.primary', { type: 'button', text: 'Prossimo rompicapo', on: { click: () => { closeOverlay(); newPuzzle(); } } })),
@@ -315,6 +355,19 @@
         overlay.onclick = null;
         card.focus && card.focus();
       }, 1100);
+    }
+
+    /* Difficoltà dalla partita: si applica al prossimo rompicapo */
+    function gameOptions() {
+      const card = openSheet([
+        h('div.sheet-head', null, h('div.card-ic', { html: G.icon }), h('h2', { text: 'Difficoltà' })),
+        optionsPanel(id),
+        h('div.sheet-actions', null,
+          h('button.btn', { type: 'button', text: 'Chiudi', on: { click: closeOverlay } }),
+          h('button.btn.primary', { type: 'button', text: 'Nuovo rompicapo', on: { click: () => { closeOverlay(); newPuzzle(); } } })),
+        won ? null : h('p.opt-note', { text: 'Le scelte restano salvate. Con «Nuovo rompicapo» quello in corso andrà perso.' }),
+      ]);
+      card.style.setProperty('--h', G.hue);
     }
 
     function petals() {
@@ -398,8 +451,8 @@
     navigator.serviceWorker.register('sw.js').catch(() => { /* facoltativo */ });
   }
 
-  /* Collegamento diretto: index.html#sudoku/normal */
-  const m = /^#(\w+)\/(easy|normal|hard)$/.exec(location.hash);
-  if (m && Z.GAMES[m[1]]) startGame(m[1], m[2]);
+  /* Collegamento diretto: index.html#sudoku */
+  const m = /^#(\w+)/.exec(location.hash);
+  if (m && Z.GAMES[m[1]]) startGame(m[1]);
   else home();
 })();

@@ -2,7 +2,12 @@
 (function () {
   'use strict';
   const Z = window.Zen;
-  const CFG = { easy: [10, 10, 30], normal: [12, 12, 44], hard: [14, 14, 62] };
+  const OPTIONS = [
+    { id: 'size', label: 'Dimensione', def: 12, choices: [{ v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 10, label: '10×10' }, { v: 12, label: '12×12' }, { v: 14, label: '14×14' }] },
+    { id: 'isl', label: 'Isole', def: 2, choices: [
+      { v: 1, label: 'Poche' }, { v: 2, label: 'Normali' }, { v: 3, label: 'Tante' },
+    ] },
+  ];
   const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
   function build(W, H, target) {
@@ -119,8 +124,8 @@
     return nodes > nodeLimit ? -1 : cnt;
   }
 
-  function generate(level) {
-    const [W, H, target] = CFG[level];
+  function generate(opt) {
+    const W = opt.size, H = opt.size, target = Math.round(W * H * [0.3, 0.22, 0.3, 0.36][opt.isl]);
     let last = null;
     for (let t = 0; t < 600; t++) {
       const P = build(W, H, target);
@@ -195,6 +200,7 @@
   }
 
   Z.register({
+    options: OPTIONS,
     id: 'hashi',
     name: 'Ponti',
     hue: 200,

@@ -7,11 +7,15 @@
   Z.ORDER = [];
   Z.register = g => { Z.GAMES[g.id] = g; Z.ORDER.push(g.id); };
 
-  Z.LEVELS = [
-    { id: 'easy', label: 'Semplice', desc: 'Già una vera sfida per la mente' },
-    { id: 'normal', label: 'Normale', desc: 'Lunghe catene di deduzioni' },
-    { id: 'hard', label: 'Difficile', desc: 'Per menti instancabili' },
-  ];
+  /* Difficoltà personalizzata: ogni gioco dichiara le sue opzioni; la scelta resta salvata per quel gioco */
+  Z.defaultOpts = G => Object.fromEntries((G.options || []).map(o => [o.id, o.def]));
+  Z.getOpts = id => {
+    const G = Z.GAMES[id], o = Object.assign(Z.defaultOpts(G), Z.store.get('opts:' + id, {}));
+    for (const d of G.options || []) if (!d.choices.some(c => c.v === o[d.id])) o[d.id] = d.def;
+    return o;
+  };
+  Z.setOpts = (id, o) => Z.store.set('opts:' + id, o);
+  Z.optsSummary = (G, o) => (G.options || []).map(d => (d.choices.find(c => c.v === o[d.id]) || {}).label).filter(Boolean).join(' · ');
 
   /* Temi: ne viene scelto uno nuovo a ogni partita */
   Z.THEMES = [

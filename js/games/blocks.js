@@ -3,9 +3,9 @@
   'use strict';
   const Z = window.Zen;
   const CFG = {
-    easy: { W: 7, H: 7, colors: 4, fill: 0.7, lock: 0.22, cands: 14 },
-    normal: { W: 8, H: 8, colors: 5, fill: 0.78, lock: 0.35, cands: 22 },
-    hard: { W: 9, H: 9, colors: 6, fill: 0.82, lock: 0.45, cands: 32 },
+    fill: [0, 0.6, 0.7, 0.78, 0.82],
+    cands: [0, 6, 14, 22, 32],
+    lock: [0, 0, 0.22, 0.35, 0.45],
   };
   const PALETTE = [
     { name: 'rosso', c: 'hsl(355 72% 62%)' },
@@ -174,8 +174,19 @@
     return { rounds, freeAtStart, stuck: removed.some(r => !r) };
   }
 
-  function generate(level) {
-    const cfg = CFG[level];
+  const OPTIONS = [
+    { id: 'size', label: 'Dimensione', def: 8, choices: [{ v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }] },
+    { id: 'col', label: 'Colori', def: 5, choices: [3, 4, 5, 6].map(v => ({ v, label: String(v) })) },
+    { id: 'crowd', label: 'Affollamento', def: 3, choices: [
+      { v: 1, label: 'Basso' }, { v: 2, label: 'Medio' }, { v: 3, label: 'Alto' }, { v: 4, label: 'Massimo' },
+    ] },
+    { id: 'lock', label: 'Blocchi a senso unico', def: 3, choices: [
+      { v: 1, label: 'Nessuno' }, { v: 2, label: 'Pochi' }, { v: 3, label: 'Alcuni' }, { v: 4, label: 'Molti' },
+    ] },
+  ];
+
+  function generate(opt) {
+    const cfg = { W: opt.size, H: opt.size, colors: opt.col, fill: CFG.fill[opt.crowd], cands: CFG.cands[opt.crowd], lock: CFG.lock[opt.lock] };
     let best = null;
     for (let t = 0; t < 400 && (!best || best.n < cfg.cands); t++) {
       const P = build(cfg);
@@ -232,6 +243,7 @@
   }
 
   Z.register({
+    options: OPTIONS,
     id: 'blocks',
     name: 'Porte colorate',
     hue: 352,

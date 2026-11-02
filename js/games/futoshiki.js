@@ -2,7 +2,13 @@
 (function () {
   'use strict';
   const Z = window.Zen;
-  const SIZE = { easy: 6, normal: 7, hard: 8 };
+  const OPTIONS = [
+    { id: 'size', label: 'Dimensione', def: 7, choices: [{ v: 4, label: '4×4' }, { v: 5, label: '5×5' }, { v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }] },
+    { id: 'aid', label: 'Indizi', def: 2, choices: [
+      { v: 1, label: 'Qualcuno in più', help: 'Alcuni numeri e segni in più per partire.' },
+      { v: 2, label: 'Il minimo', help: 'Solo quelli indispensabili per una soluzione unica.' },
+    ] },
+  ];
 
   /* Risolutore con propagazione (per l'8×8): righe/colonne, singoli nascosti e catene di segni */
   function solverProp(n, givens, ineq, limit, nodeLimit) {
@@ -102,8 +108,26 @@
   }
 
   const LIM = 6000, LIM_HARD = 3000;
-  function generate(level) {
-    const n = SIZE[level], N = n * n;
+  function generate(opt) {
+    const P = generateMin(opt.size);
+    if (opt.aid === 1) {
+      /* un aiuto in più: alcuni numeri e segni rimessi */
+      const n = P.n, N = n * n, { sol, givens } = P;
+      Z.shuffle(Z.range(N).filter(i => !givens[i])).slice(0, n - 2).forEach(i => { givens[i] = sol[i]; });
+      const all = [];
+      for (let i = 0; i < N; i++) {
+        const r = (i / n) | 0, c = i % n;
+        if (c < n - 1) all.push(sol[i] < sol[i + 1] ? [i, i + 1] : [i + 1, i]);
+        if (r < n - 1) all.push(sol[i] < sol[i + n] ? [i, i + n] : [i + n, i]);
+      }
+      const has = new Set(P.ineq.map(e => e.join()));
+      P.ineq = P.ineq.concat(Z.shuffle(all.filter(e => !has.has(e.join()))).slice(0, n));
+    }
+    return P;
+  }
+
+  function generateMin(n) {
+    const N = n * n;
     const sol = Z.randomLatin(n);
     const allIneq = [];
     for (let i = 0; i < N; i++) {
@@ -124,7 +148,7 @@
       givens[i] = sol[i];
     }
     const t0 = Z.now(), late = () => Z.now() - t0 > 3000; /* tetto di tempo: si smette di togliere indizi */
-    if (level === 'hard') {
+    if (n >= 8) {
       /* 8×8: numeri e segni tolti in ordine misto, così restano pochi di entrambi */
       const items = Z.shuffle([
         ...Z.range(N).filter(i => givens[i]).map(i => ({ g: i })),
@@ -216,6 +240,7 @@
   }
 
   Z.register({
+    options: OPTIONS,
     id: 'futoshiki',
     name: 'Futoshiki',
     hue: 40,
