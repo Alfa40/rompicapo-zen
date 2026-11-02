@@ -111,7 +111,7 @@
   }
 
   const OPTIONS = [
-    { id: 'size', label: 'Dimensione', def: 7, choices: [{ v: 4, label: '4×4' }, { v: 5, label: '5×5' }, { v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }] },
+    { id: 'size', label: 'Dimensione', def: 7, choices: [{ v: 5, label: '5×5' }, { v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }] },
     { id: 'cage', label: 'Gabbie', def: 3, choices: [
       { v: 1, label: 'Piccole' }, { v: 2, label: 'Medie' }, { v: 3, label: 'Grandi' }, { v: 4, label: 'Enormi' },
     ] },

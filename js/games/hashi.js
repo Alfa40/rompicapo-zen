@@ -3,7 +3,7 @@
   'use strict';
   const Z = window.Zen;
   const OPTIONS = [
-    { id: 'size', label: 'Dimensione', def: 12, choices: [{ v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 10, label: '10×10' }, { v: 12, label: '12×12' }, { v: 14, label: '14×14' }] },
+    { id: 'size', label: 'Dimensione', def: 12, choices: [{ v: 8, label: '8×8' }, { v: 10, label: '10×10' }, { v: 12, label: '12×12' }, { v: 14, label: '14×14' }, { v: 16, label: '16×16' }, { v: 18, label: '18×18' }] },
     { id: 'isl', label: 'Isole', def: 2, choices: [
       { v: 1, label: 'Poche' }, { v: 2, label: 'Normali' }, { v: 3, label: 'Tante' },
     ] },
@@ -125,13 +125,18 @@
   }
 
   function generate(opt) {
-    const W = opt.size, H = opt.size, target = Math.round(W * H * [0.3, 0.22, 0.3, 0.36][opt.isl]);
-    let last = null;
-    for (let t = 0; t < 600; t++) {
-      const P = build(W, H, target);
-      if (!P) continue;
-      last = P;
-      if (count(P, 2, 150000) === 1) return P;
+    const W = opt.size, H = opt.size;
+    let target = Math.round(W * H * [0.3, 0.22, 0.3, 0.36][opt.isl]), last = null;
+    /* solo rompicapo con soluzione unica verificata; se non se ne trovano, qualche isola in meno */
+    for (let round = 0; round < 12; round++) {
+      const t0 = Z.now();
+      for (let t = 0; t < 600 && Z.now() - t0 < 1200; t++) {
+        const P = build(W, H, target);
+        if (!P) continue;
+        last = P;
+        if (count(P, 2, 150000) === 1) return P;
+      }
+      target = Math.round(target * 0.92);
     }
     return last;
   }
@@ -210,6 +215,7 @@
       <p>Tocca un'isola e poi una vicina, oppure trascina da un'isola verso un'altra. Ripeti per fare un ponte doppio, una terza volta per toglierlo.</p>`,
     icon: `<svg viewBox="0 0 64 64"><path d="M18 20h28M18 24h28M18 22v26" class="ic-l2"/><circle cx="16" cy="22" r="9" class="ic-s ic-st"/><circle cx="48" cy="22" r="9" class="ic-s ic-st"/><circle cx="16" cy="48" r="9" class="ic-a"/><text x="16" y="26" class="ic-t">3</text><text x="48" y="26" class="ic-t">2</text></svg>`,
     generate,
+    _count: count,
     _check(P) { return count(P, 2, 400000) === 1 ? '' : 'NON unico'; },
     init: P => ({ b: new Array(P.E.length).fill(0) }),
     solved(P, s) {

@@ -3,7 +3,7 @@
   'use strict';
   const Z = window.Zen;
   const OPTIONS = [
-    { id: 'size', label: 'Dimensione', def: 7, choices: [{ v: 4, label: '4×4' }, { v: 5, label: '5×5' }, { v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }] },
+    { id: 'size', label: 'Dimensione', def: 7, choices: [{ v: 5, label: '5×5' }, { v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }] },
     { id: 'aid', label: 'Indizi', def: 2, choices: [
       { v: 1, label: 'Qualcuno in più', help: 'Alcuni numeri e segni in più per partire.' },
       { v: 2, label: 'Il minimo', help: 'Solo quelli indispensabili per una soluzione unica.' },
@@ -140,7 +140,7 @@
     let givens = new Array(N).fill(0), ineq = allIneq.slice();
     /* Assicura l'unicità di partenza */
     for (;;) {
-      const r = solver(n, givens, ineq, 2);
+      const r = n >= 8 ? solverProp(n, givens, ineq, 2, Infinity) : solver(n, givens, ineq, 2);
       if (r.count === 1) break;
       const alt = r.sols.find(s => s.some((x, i) => x !== sol[i]));
       const diffs = Z.range(N).filter(i => alt[i] !== sol[i]);
@@ -250,7 +250,7 @@
       <p>Usa la <b>matita</b> per annotare i candidati. La soluzione è sempre una sola.</p>`,
     icon: `<svg viewBox="0 0 64 64"><rect x="6" y="20" width="22" height="22" rx="6" class="ic-s ic-st"/><rect x="36" y="20" width="22" height="22" rx="6" class="ic-a"/><path d="M35 26l-5 5 5 5" class="ic-l2" transform="translate(-3 0)"/><text x="17" y="36" class="ic-t">2</text><text x="47" y="36" class="ic-t ic-w">4</text></svg>`,
     generate,
-    _check(P) { return solver(P.n, P.givens, P.ineq, 2).count === 1 ? '' : 'NON unico'; },
+    _check(P) { return (P.n >= 8 ? solverProp : solver)(P.n, P.givens, P.ineq, 2, Infinity).count === 1 ? '' : 'NON unico'; },
     init: P => ({ v: P.givens.slice(), m: new Array(P.n * P.n).fill(0) }),
     solved: (P, s) => s.v.every((x, i) => x === P.sol[i]),
     hint,

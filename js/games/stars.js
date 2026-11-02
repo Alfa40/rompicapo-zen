@@ -3,7 +3,7 @@
   'use strict';
   const Z = window.Zen;
   const OPTIONS = [
-    { id: 'size', label: 'Dimensione', def: 10, choices: [{ v: 5, label: '5×5' }, { v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }, { v: 10, label: '10×10' }, { v: 11, label: '11×11' }] },
+    { id: 'size', label: 'Dimensione', def: 10, choices: [{ v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }, { v: 10, label: '10×10' }, { v: 11, label: '11×11' }] },
     { id: 'k', label: 'Stelle', def: 2, choices: [
       { v: 1, label: '1 per riga' }, { v: 2, label: '2 per riga', help: 'Due stelle per riga, colonna e regione: serve una griglia da almeno 8×8.', need: o => o.size >= 8 },
     ] },
@@ -91,36 +91,52 @@
     return Array.from(reg);
   }
 
+  /* Risolutore riga per riga con maschere di bit; restituisce fino a "limit" soluzioni (null se troppo lungo) */
   function solve(n, k, reg, limit, sets) {
-    const colCnt = new Array(n).fill(0), regCnt = new Array(n).fill(0), rows = [], sols = [];
-    /* celle di ogni regione nelle righe successive a r */
-    const after = Z.range(n + 1).map(() => new Array(n).fill(0));
+    const masks = sets.map(st => st.reduce((m, c) => m | (1 << c), 0));
+    const near = masks.map(m => m | (m << 1) | (m >> 1));
+    const regOf = sets.map(() => null);
+    const colCnt = new Int8Array(n), regCnt = new Int8Array(n), rows = [], sols = [];
+    /* celle di ogni regione nelle righe da r in poi, e per regione la prima riga dopo cui non ha più celle */
+    const after = Z.range(n + 1).map(() => new Int16Array(n));
     for (let r = n - 1; r >= 0; r--) {
-      after[r] = after[r + 1].slice();
+      after[r].set(after[r + 1]);
       for (let c = 0; c < n; c++) after[r][reg[r * n + c]]++;
     }
-    let nodes = 0;
-    const rec = r => {
-      if (sols.length >= limit || ++nodes > 400000) return;
-      if (r === n) { if (regCnt.every(x => x === k)) sols.push(rows.slice()); return; }
-      for (const s of sets) {
-        if (s.some(c => colCnt[c] >= k)) continue;
-        if (r > 0 && touches(rows[r - 1], s)) continue;
+    /* righe "minime" ancora necessarie per riempire le regioni: ogni riga ospita al massimo k stelle */
+    let nodes = 0, full = 0;
+    const LIMIT = 400000;
+    const rec = (r, prevNear) => {
+      if (sols.length >= limit || ++nodes > LIMIT) return;
+      if (r === n) { sols.push(rows.slice()); return; }
+      const rem = n - r - 1;
+      const rowRegs = reg.slice(r * n, r * n + n);
+      for (let si = 0; si < masks.length; si++) {
+        const m = masks[si];
+        if ((m & full) || (m & prevNear)) continue;
+        const cs = sets[si];
         let ok = true;
-        for (const c of s) { if (++regCnt[reg[r * n + c]] > k) ok = false; colCnt[c]++; }
+        for (const c of cs) { const R = rowRegs[c]; if (++regCnt[R] > k) ok = false; if (++colCnt[c] === k) full |= 1 << c; }
         if (ok) {
-          for (let R = 0; R < n && ok; R++) if (regCnt[R] + after[r + 1][R] < k) ok = false;
-          const rem = n - r - 1;
+          const af = after[r + 1];
+          let need = 0;
+          for (let R = 0; R < n; R++) {
+            const miss = k - regCnt[R];
+            if (miss > af[R]) { ok = false; break; }
+            need += miss;
+          }
+          if (ok && need > rem * k) ok = false;
           for (let c = 0; c < n && ok; c++) if (k - colCnt[c] > rem) ok = false;
         }
-        if (ok) { rows[r] = s; rec(r + 1); }
-        for (const c of s) { regCnt[reg[r * n + c]]--; colCnt[c]--; }
-        if (sols.length >= limit) return;
+        if (ok) { rows[r] = cs; rec(r + 1, near[si]); }
+        for (const c of cs) { regCnt[rowRegs[c]]--; if (colCnt[c]-- === k) full &= ~(1 << c); }
+        if (sols.length >= limit || nodes > LIMIT) return;
       }
     };
-    rec(0);
-    return nodes > 400000 ? null : sols;
+    rec(0, 0);
+    return nodes > LIMIT ? null : sols;
   }
+
 
   function connectedWithout(n, reg, R, skip) {
     const cells = [];

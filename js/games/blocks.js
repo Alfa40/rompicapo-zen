@@ -175,7 +175,7 @@
   }
 
   const OPTIONS = [
-    { id: 'size', label: 'Dimensione', def: 8, choices: [{ v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }] },
+    { id: 'size', label: 'Dimensione', def: 8, choices: [{ v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }, { v: 10, label: '10×10' }, { v: 11, label: '11×11' }] },
     { id: 'col', label: 'Colori', def: 5, choices: [3, 4, 5, 6].map(v => ({ v, label: String(v) })) },
     { id: 'crowd', label: 'Affollamento', def: 3, choices: [
       { v: 1, label: 'Basso' }, { v: 2, label: 'Medio' }, { v: 3, label: 'Alto' }, { v: 4, label: 'Massimo' },
@@ -188,7 +188,9 @@
   function generate(opt) {
     const cfg = { W: opt.size, H: opt.size, colors: opt.col, fill: CFG.fill[opt.crowd], cands: CFG.cands[opt.crowd], lock: CFG.lock[opt.lock] };
     let best = null;
+    const t0 = Z.now();
     for (let t = 0; t < 400 && (!best || best.n < cfg.cands); t++) {
+      if (best && Z.now() - t0 > 1200) break; /* griglie grandi: basta il migliore trovato finora */
       const P = build(cfg);
       if (!P) continue;
       const r = rate(P);

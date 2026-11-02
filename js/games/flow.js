@@ -3,7 +3,7 @@
   'use strict';
   const Z = window.Zen;
   const OPTIONS = [
-    { id: 'size', label: 'Dimensione', def: 10, choices: [{ v: 5, label: '5×5' }, { v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }, { v: 10, label: '10×10' }, { v: 11, label: '11×11' }, { v: 12, label: '12×12' }] },
+    { id: 'size', label: 'Dimensione', def: 10, choices: [{ v: 6, label: '6×6' }, { v: 7, label: '7×7' }, { v: 8, label: '8×8' }, { v: 9, label: '9×9' }, { v: 10, label: '10×10' }, { v: 11, label: '11×11' }, { v: 12, label: '12×12' }, { v: 13, label: '13×13' }, { v: 14, label: '14×14' }] },
     { id: 'col', label: 'Colori', def: 2, choices: [
       { v: 1, label: 'Tanti', help: 'Percorsi brevi.' },
       { v: 2, label: 'Normali' },
@@ -12,12 +12,12 @@
   ];
   const colorRange = (n, c) => {
     const r = c === 1 ? [n, n + 1] : c === 3 ? [Math.round(n * 0.6), Math.round(n * 0.7)] : [Math.round(n * 0.78), n - (n >= 12 ? 1 : 0)];
-    return [Math.min(r[0], 12), Math.min(r[1], 12)];
+    return [Math.min(r[0], COLORS.length), Math.min(r[1], COLORS.length)];
   };
   const COLORS = [
     'hsl(355 75% 62%)', 'hsl(28 90% 58%)', 'hsl(48 92% 55%)', 'hsl(135 50% 50%)', 'hsl(185 65% 45%)',
     'hsl(215 75% 60%)', 'hsl(270 55% 64%)', 'hsl(325 65% 66%)', 'hsl(20 40% 48%)', 'hsl(85 60% 48%)',
-    'hsl(240 40% 45%)', 'hsl(0 0% 60%)',
+    'hsl(240 40% 45%)', 'hsl(0 0% 60%)', 'hsl(160 55% 38%)', 'hsl(300 45% 48%)', 'hsl(40 55% 40%)', 'hsl(200 35% 70%)',
   ];
 
   function neighbors(n) {
