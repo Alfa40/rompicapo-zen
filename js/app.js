@@ -18,6 +18,19 @@
     'Il vento passa, la montagna resta.',
   ];
 
+  /* Livelli scalati di un gradino (2026-11): le partite salvate seguono la loro difficoltà */
+  if (!Z.store.get('livelli-v2', false)) {
+    for (const id of Z.ORDER) {
+      for (const pre of ['save', 'done']) {
+        const n = Z.store.get(`${pre}:${id}:normal`, null), d = Z.store.get(`${pre}:${id}:hard`, null);
+        Z.store.del(`${pre}:${id}:easy`); Z.store.del(`${pre}:${id}:normal`); Z.store.del(`${pre}:${id}:hard`);
+        if (n != null) Z.store.set(`${pre}:${id}:easy`, n);
+        if (d != null) Z.store.set(`${pre}:${id}:normal`, d);
+      }
+    }
+    Z.store.set('livelli-v2', true);
+  }
+
   /* ---------- Tema chiaro/scuro ---------- */
   const MODES = ['auto', 'light', 'dark'];
   let mode = Z.store.get('mode', 'auto');

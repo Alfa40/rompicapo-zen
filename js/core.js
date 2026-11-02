@@ -8,9 +8,9 @@
   Z.register = g => { Z.GAMES[g.id] = g; Z.ORDER.push(g.id); };
 
   Z.LEVELS = [
-    { id: 'easy', label: 'Semplice', desc: 'Per entrare nel ritmo' },
-    { id: 'normal', label: 'Normale', desc: 'Una vera sfida per la mente' },
-    { id: 'hard', label: 'Difficile', desc: 'Lunghe catene di deduzioni' },
+    { id: 'easy', label: 'Semplice', desc: 'Già una vera sfida per la mente' },
+    { id: 'normal', label: 'Normale', desc: 'Lunghe catene di deduzioni' },
+    { id: 'hard', label: 'Difficile', desc: 'Per menti instancabili' },
   ];
 
   /* Temi: ne viene scelto uno nuovo a ogni partita */

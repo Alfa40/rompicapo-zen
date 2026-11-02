@@ -42,7 +42,7 @@
   }
 
   /* Risolutore "umano": livello 1 = singoli; livello 2 = + candidati bloccati, coppie nude e nascoste */
-  function logic(g, level) {
+  function logic(g, level, out) {
     const v = g.slice(), cand = new Int32Array(81);
     let left = 0;
     for (let i = 0; i < 81; i++) if (!v[i]) {
@@ -72,8 +72,9 @@
         if (cnt === 1) { place(last, d); prog = true; }
       }
       if (prog) continue;
-      if (level < 2) return false;
+      if (level < 2) { if (out) out.left = left; return false; }
       if (locked(cand) || nakedPairs(cand) || hiddenPairs(cand)) continue;
+      if (out) out.left = left;
       return false;
     }
     return true;
@@ -146,20 +147,32 @@
 
   function generate(level) {
     let fallback = null;
+    const t0 = Z.now();
     for (let t = 0; t < 150; t++) {
       const sol = search(new Array(81).fill(0), 1, true).sol;
-      if (level === 'easy') return { givens: dig(sol, g => logic(g, 1), 36), sol };
-      if (level === 'normal') {
+      if (level === 'easy') {
+        /* richiede candidati bloccati o coppie: le sole caselle singole non bastano */
         const g = dig(sol, x => logic(x, 2), 22);
         if (!logic(g, 1)) return { givens: g, sol };
-        fallback = { givens: g, sol };
-      } else {
+        fallback = fallback || { givens: g, sol };
+      } else if (level === 'normal') {
+        /* minimo: nemmeno candidati bloccati e coppie bastano */
         const g = dig(sol, () => true, 0);
         if (!logic(g, 2)) return { givens: g, sol };
-        fallback = { givens: g, sol };
+        fallback = fallback || { givens: g, sol };
+      } else {
+        /* come Normale, ma tra molti candidati si sceglie quello in cui
+           le tecniche note si bloccano prima (più caselle ancora vuote) */
+        const g = dig(sol, () => true, 0);
+        const out = {};
+        if (logic(g, 2, out)) continue;
+        const clues = g.filter(Boolean).length;
+        const score = out.left * 2 - clues + Math.random();
+        if (!fallback || score > fallback.score) fallback = { givens: g, sol, score };
+        if ((fallback.score >= 100 && t >= 4) || Z.now() - t0 > 2500) break;
       }
     }
-    return fallback;
+    return fallback && { givens: fallback.givens, sol: fallback.sol };
   }
 
   /* ---------- Suggerimenti spiegati ---------- */
@@ -205,6 +218,7 @@
   }
 
   Z.register({
+    _logic: logic,
     id: 'sudoku',
     name: 'Sudoku',
     hue: 150,

@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const Z = window.Zen;
-  const CFG = { easy: [6, 1], normal: [8, 1], hard: [10, 2] };
+  const CFG = { easy: [8, 1], normal: [10, 2], hard: [11, 2] };
 
   function rowSets(n, k) {
     const out = [];

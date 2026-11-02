@@ -3,9 +3,9 @@
   'use strict';
   const Z = window.Zen;
   const CFG = {
-    easy: { W: 6, H: 6, colors: 3, fill: 0.58, lock: 0, cands: 6 },
-    normal: { W: 7, H: 7, colors: 4, fill: 0.7, lock: 0.22, cands: 14 },
-    hard: { W: 8, H: 8, colors: 5, fill: 0.78, lock: 0.35, cands: 22 },
+    easy: { W: 7, H: 7, colors: 4, fill: 0.7, lock: 0.22, cands: 14 },
+    normal: { W: 8, H: 8, colors: 5, fill: 0.78, lock: 0.35, cands: 22 },
+    hard: { W: 9, H: 9, colors: 6, fill: 0.82, lock: 0.45, cands: 32 },
   };
   const PALETTE = [
     { name: 'rosso', c: 'hsl(355 72% 62%)' },
@@ -182,7 +182,6 @@
       if (!P) continue;
       const r = rate(P);
       const score = r.rounds * 3 - r.freeAtStart * 2 + (r.stuck ? 4 : 0) + Math.random();
-      if (level === 'easy') return P;
       if (!best || score > best.score) best = { score, P, n: (best ? best.n : 0) + 1 };
       else best.n++;
     }

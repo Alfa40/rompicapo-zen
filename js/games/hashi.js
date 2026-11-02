@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const Z = window.Zen;
-  const CFG = { easy: [7, 7, 14], normal: [10, 10, 30], hard: [12, 12, 44] };
+  const CFG = { easy: [10, 10, 30], normal: [12, 12, 44], hard: [14, 14, 62] };
   const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
   function build(W, H, target) {

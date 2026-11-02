@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const Z = window.Zen;
-  const CFG = { easy: [5, 6], normal: [6, 13], hard: [7, 22] };
+  const CFG = { easy: [6, 13], normal: [7, 22], hard: [8, 32] };
 
   function press(n, on, i) {
     const x = i % n, y = (i / n) | 0;

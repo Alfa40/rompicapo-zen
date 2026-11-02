@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const Z = window.Zen;
-  const SIZES = { easy: [8, 8], normal: [12, 12], hard: [15, 15] };
+  const SIZES = { easy: [12, 12], normal: [15, 15], hard: [18, 18] };
 
   function clueOf(line) {
     const r = []; let c = 0;
@@ -107,13 +107,13 @@
 
   function generate(level) {
     const [w, h] = SIZES[level];
-    const want = level === 'easy' ? 1 : level === 'normal' ? 12 : 24;
+    const want = level === 'easy' ? 12 : level === 'normal' ? 24 : 40;
     const t0 = Z.now();
     let best = null, found = 0;
     for (let t = 0; t < 6000 && found < want; t++) {
-      if (best && Z.now() - t0 > 900) break;
+      if (best && Z.now() - t0 > (level === 'hard' ? 1600 : 900)) break;
       const img = genImage(w, h, 0.48 + Math.random() * 0.14, Math.random() < 0.6, 1);
-      const noise = level === 'easy' ? 0.04 : 0.1;
+      const noise = level === 'hard' ? 0.13 : 0.1;
       for (let i = 0; i < img.length; i++) if (Math.random() < noise) img[i] ^= 1;
       const fill = img.reduce((a, b) => a + b, 0) / (w * h);
       if (fill < 0.4 || fill > 0.66) continue;

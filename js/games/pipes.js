@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const Z = window.Zen;
-  const SIZE = { easy: 5, normal: 7, hard: 9 };
+  const SIZE = { easy: 7, normal: 9, hard: 11 };
   /* bit: 1 su, 2 destra, 4 giù, 8 sinistra */
   const D = [[0, -1, 1, 4], [1, 0, 2, 8], [0, 1, 4, 1], [-1, 0, 8, 2]];
   const rot = (m, r) => { r = ((r % 4) + 4) % 4; for (let k = 0; k < r; k++) m = ((m << 1) | (m >> 3)) & 15; return m; };

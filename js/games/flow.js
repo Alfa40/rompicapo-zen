@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const Z = window.Zen;
-  const CFG = { easy: [6, 5, 6], normal: [8, 7, 8], hard: [10, 8, 10] };
+  const CFG = { easy: [8, 7, 8], normal: [10, 8, 10], hard: [12, 9, 11] };
   const COLORS = [
     'hsl(355 75% 62%)', 'hsl(28 90% 58%)', 'hsl(48 92% 55%)', 'hsl(135 50% 50%)', 'hsl(185 65% 45%)',
     'hsl(215 75% 60%)', 'hsl(270 55% 64%)', 'hsl(325 65% 66%)', 'hsl(20 40% 48%)', 'hsl(85 60% 48%)',

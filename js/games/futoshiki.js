@@ -2,7 +2,61 @@
 (function () {
   'use strict';
   const Z = window.Zen;
-  const SIZE = { easy: 5, normal: 6, hard: 7 };
+  const SIZE = { easy: 6, normal: 7, hard: 8 };
+
+  /* Risolutore con propagazione (per l'8×8): righe/colonne, singoli nascosti e catene di segni */
+  function solverProp(n, givens, ineq, limit, nodeLimit) {
+    const N = n * n, FULL = ((1 << (n + 1)) - 1) & ~1;
+    const hi = m => 31 - Math.clz32(m), lo = m => 31 - Math.clz32(m & -m);
+    const units = [];
+    for (let r = 0; r < n; r++) units.push(Z.range(n).map(c => r * n + c));
+    for (let c = 0; c < n; c++) units.push(Z.range(n).map(r => r * n + c));
+    const peers = Z.range(N).map(i => Z.range(N).filter(j => j !== i && (((j / n) | 0) === ((i / n) | 0) || j % n === i % n)));
+    let count = 0, nodes = 0;
+    const sols = [];
+    function prop(cand) {
+      for (let ch = true; ch;) {
+        ch = false;
+        for (let i = 0; i < N; i++) {
+          const m = cand[i];
+          if (!m) return false;
+          if (m & (m - 1)) continue;
+          for (const p of peers[i]) if (cand[p] & m) { cand[p] &= ~m; if (!cand[p]) return false; ch = true; }
+        }
+        for (const [a, b] of ineq) {
+          const na = cand[a] & ((1 << hi(cand[b])) - 1);
+          if (na !== cand[a]) { cand[a] = na; if (!na) return false; ch = true; }
+          const nb = cand[b] & ~((1 << (lo(cand[a]) + 1)) - 1);
+          if (nb !== cand[b]) { cand[b] = nb; if (!nb) return false; ch = true; }
+        }
+        for (const U of units) for (let d = 1; d <= n; d++) {
+          const b = 1 << d;
+          let cnt = 0, last = -1;
+          for (const i of U) if (cand[i] & b) { cnt++; last = i; }
+          if (!cnt) return false;
+          if (cnt === 1 && cand[last] !== b) { cand[last] = b; ch = true; }
+        }
+      }
+      return true;
+    }
+    (function rec(cand) {
+      if (++nodes > nodeLimit || !prop(cand)) return;
+      let best = -1, bc = 99;
+      for (let i = 0; i < N; i++) {
+        const pc = Z.popcount(cand[i]);
+        if (pc > 1 && pc < bc) { bc = pc; best = i; if (pc === 2) break; }
+      }
+      if (best < 0) { count++; sols.push(Array.from(cand, m => lo(m))); return; }
+      for (let d = 1; d <= n; d++) {
+        if (!(cand[best] & (1 << d))) continue;
+        const c2 = cand.slice();
+        c2[best] = 1 << d;
+        rec(c2);
+        if (count >= limit || nodes > nodeLimit) return;
+      }
+    })(Int32Array.from(givens, g => (g ? 1 << g : FULL)));
+    return { count: nodes > nodeLimit ? -1 : count, sols };
+  }
 
   function solver(n, givens, ineq, limit, nodeLimit) {
     nodeLimit = nodeLimit || Infinity;
@@ -47,7 +101,7 @@
     return { count: nodes > nodeLimit ? -1 : count, sols };
   }
 
-  const LIM = 6000;
+  const LIM = 6000, LIM_HARD = 3000;
   function generate(level) {
     const n = SIZE[level], N = n * n;
     const sol = Z.randomLatin(n);
@@ -69,23 +123,38 @@
       const i = Z.pick(diffs);
       givens[i] = sol[i];
     }
+    const t0 = Z.now(), late = () => Z.now() - t0 > 3000; /* tetto di tempo: si smette di togliere indizi */
+    if (level === 'hard') {
+      /* 8×8: numeri e segni tolti in ordine misto, così restano pochi di entrambi */
+      const items = Z.shuffle([
+        ...Z.range(N).filter(i => givens[i]).map(i => ({ g: i })),
+        ...allIneq.map(e => ({ e })),
+      ]);
+      for (const it of items) {
+        if (late()) break;
+        if (it.g != null) {
+          const k = givens[it.g];
+          givens[it.g] = 0;
+          if (solverProp(n, givens, ineq, 2, LIM_HARD).count !== 1) givens[it.g] = k;
+        } else {
+          const without = ineq.filter(x => x !== it.e);
+          if (solverProp(n, givens, without, 2, LIM_HARD).count === 1) ineq = without;
+        }
+      }
+      return { n, sol, givens, ineq };
+    }
     /* Togli prima i numeri, poi i segni, finché resta unica */
     const gIdx = Z.shuffle(Z.range(N).filter(i => givens[i]));
     for (const i of gIdx) {
+      if (late()) break;
       const k = givens[i];
       givens[i] = 0;
       if (solver(n, givens, ineq, 2, LIM).count !== 1) givens[i] = k;
     }
     for (const e of Z.shuffle(allIneq.slice())) {
+      if (late()) break;
       const without = ineq.filter(x => x !== e);
       if (solver(n, givens, without, 2, LIM).count === 1) ineq = without;
-    }
-    if (level === 'easy') {
-      /* un aiuto in più: alcuni numeri e segni rimessi */
-      const empty = Z.shuffle(Z.range(N).filter(i => !givens[i]));
-      empty.slice(0, 3).forEach(i => { givens[i] = sol[i]; });
-      const missing = Z.shuffle(allIneq.filter(e => !ineq.includes(e)));
-      ineq = ineq.concat(missing.slice(0, 4));
     }
     return { n, sol, givens, ineq };
   }
