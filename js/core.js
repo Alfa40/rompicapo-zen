@@ -83,13 +83,15 @@
     }
   };
 
-  /* Archiviazione (sempre protetta) */
+  /* Archiviazione (sempre protetta). Nelle anteprime delle proposte il prefisso è diverso (ZEN_PREFIX, messo dal
+     robot che le pubblica), così non toccano le partite del gioco vero. */
+  const PFX = window.ZEN_PREFIX || 'zen:';
   Z.store = {
     get(k, d) {
-      try { const v = localStorage.getItem('zen:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; }
+      try { const v = localStorage.getItem(PFX + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; }
     },
-    set(k, v) { try { localStorage.setItem('zen:' + k, JSON.stringify(v)); return true; } catch (e) { return false; } },
-    del(k) { try { localStorage.removeItem('zen:' + k); } catch (e) { /* ignorato */ } },
+    set(k, v) { try { localStorage.setItem(PFX + k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+    del(k) { try { localStorage.removeItem(PFX + k); } catch (e) { /* ignorato */ } },
   };
 
   /* DOM */

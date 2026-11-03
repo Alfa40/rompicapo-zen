@@ -26,3 +26,4 @@ for (const id of Z.ORDER) for (const L of ['min', 'def', 'max']) for (let r = 0;
   if (!G.solved(P, s)) { console.log(id, L, 'non risolto'); fail++; }
 }
 console.log(fail ? 'ERRORI: ' + fail : 'Tutto ok');
+if (fail) process.exitCode = 1;

@@ -20,8 +20,8 @@ for (const id of Z.ORDER) {
     if (lv && lv !== L) continue;
     const times=[];
     for (let r=0;r<reps;r++){ const t=Date.now(); const P=G.generate(optsFor(G, L)); times.push(Date.now()-t);
-      if (G._check) { const msg=G._check(P,L); if (msg) console.log('  ', msg); }
-      const s=G.init(P); if (G.solved(P,s)) console.log('  ! già risolto all\'inizio');
+      if (G._check) { const msg=G._check(P,L); if (msg) { console.log('  ', msg); process.exitCode = 1; } }
+      const s=G.init(P); if (G.solved(P,s)) { console.log('  ! già risolto all\'inizio'); process.exitCode = 1; }
     }
     console.log(id, L, 'ms:', times.join(', '));
   }

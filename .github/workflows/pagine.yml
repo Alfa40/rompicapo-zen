@@ -1,0 +1,61 @@
+name: Pubblica il gioco e le anteprime
+
+# Pubblica su GitHub Pages il gioco (ramo main) e, in anteprime/<numero>/, l'anteprima di ogni proposta degli amici
+# ancora aperta (rami proposta/<numero>). Le anteprime hanno un loro prefisso dei salvataggi (ZEN_PREFIX), niente
+# service worker e niente manifest, così non toccano le partite né l'app del gioco vero.
+# Qui non si esegue il codice delle proposte: si copiano solo i file.
+
+on:
+  push:
+    branches: [main]
+  # il robot delle proposte (proposte.yml) la fa partire quando unisce, aggiorna o cancella un'anteprima
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pagine
+  cancel-in-progress: true
+
+jobs:
+  costruisci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Gioco e anteprime
+        run: |
+          mkdir _site
+          git archive origin/main | tar -x -C _site
+          rm -rf _site/.github _site/tools _site/.claude _site/CLAUDE.md _site/.gitignore _site/anteprime
+          for b in $(git for-each-ref --format='%(refname:short)' 'refs/remotes/origin/proposta/'); do
+            n=${b##*/}
+            case "$n" in ''|*[!0-9]*) continue;; esac
+            d="_site/anteprime/$n"
+            mkdir -p "$d"
+            git archive "$b" | tar -x -C "$d"
+            rm -rf "$d/.github" "$d/tools" "$d/.claude" "$d/CLAUDE.md" "$d/.gitignore" "$d/sw.js" "$d/anteprime"
+            # prima di ogni altro script: salvataggi separati e numero dell'anteprima
+            sed -i "0,/<script/s##<script>window.ZEN_PREFIX='zen-a$n:';window.ZEN_PREVIEW=$n;</script>\n  <script#" "$d/index.html"
+            sed -i '/rel="manifest"/d' "$d/index.html"
+            echo "Anteprima della proposta $n"
+          done
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  pubblica:
+    needs: costruisci
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

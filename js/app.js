@@ -170,7 +170,7 @@
     screen.className = 'home';
     const top = h('header.topbar', null,
       h('div.brand', null,
-        h('div.logo', { html: '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" class="lg-a"/><path d="M14 27c3 5 7 7 10 7s7-2 10-7" class="lg-l"/><circle cx="18" cy="20" r="2.4" class="lg-e"/><circle cx="30" cy="20" r="2.4" class="lg-e"/></svg>' }),
+        h('div.logo', { on: { click: () => Z.Proposte && Z.Proposte.logoTap() }, html: '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" class="lg-a"/><path d="M14 27c3 5 7 7 10 7s7-2 10-7" class="lg-l"/><circle cx="18" cy="20" r="2.4" class="lg-e"/><circle cx="30" cy="20" r="2.4" class="lg-e"/></svg>' }),
         h('div', null, h('h1', { text: 'Rompicapo Zen' }), h('p.sub', { text: 'Respira. Pensa. Risolvi.' }))),
       modeButton());
     const grid = h('div.cards');
@@ -184,7 +184,8 @@
       card.addEventListener('click', () => setupSheet(id));
       grid.append(card);
     });
-    screen.append(top, grid, h('p.foot', { text: 'Ogni rompicapo è generato al momento: non ne vedrai mai due uguali.' }));
+    const prop = Z.Proposte ? Z.Proposte.homeButton() : null;
+    screen.append(top, prop || '', grid, h('p.foot', { text: 'Ogni rompicapo è generato al momento: non ne vedrai mai due uguali.' }));
   }
 
   /* Pannello della difficoltà: ogni scelta viene salvata subito per quel gioco */
@@ -251,6 +252,8 @@
       h('div.sheet-actions', null, h('button.btn.primary', { type: 'button', text: 'Ho capito', on: { click: closeOverlay } })),
     ]);
   }
+
+  Z.ui = { openSheet, closeOverlay, home: () => home() };
 
   function confirmSheet(text, yes, onYes) {
     openSheet([
@@ -637,7 +640,7 @@
     if ((e.ctrlKey || e.metaKey) && ['+', '-', '=', '0'].includes(e.key)) e.preventDefault();
   });
 
-  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !window.ZEN_PREVIEW) {
     navigator.serviceWorker.register('sw.js').catch(() => { /* facoltativo */ });
   }
 
@@ -646,4 +649,6 @@
   if (m && Z.GAMES[m[1]]) startGame(m[1]);
   else home();
   setTimeout(prefetch, 1500);
+  /* arrivati col link degli amici: il tasto compare subito */
+  if (Z.Proposte) Z.Proposte.ready.then(ok => { if (ok && !game) home(); });
 })();
