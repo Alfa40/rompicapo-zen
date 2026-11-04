@@ -33,8 +33,6 @@ jobs:
       REPO: ${{ github.repository }}
       KEY: ${{ secrets.RZ_ROBOT_KEY }}
       API: https://hustler-town-server.onrender.com
-      # file di lavoro del robot: fuori dal repository, così non finiscono mai nei commit delle proposte
-      T: ${{ runner.temp }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -50,8 +48,8 @@ jobs:
           if [ -z "$KEY" ]; then echo "Manca il segreto RZ_ROBOT_KEY"; exit 0; fi
           # il server gratuito si addormenta: la prima risposta può metterci un minuto
           curl -sSf --retry 3 --retry-delay 20 --max-time 90 -X POST "$API/rz/robot/todo" \
-            -H 'Content-Type: application/json' -d "$(jq -n --arg k "$KEY" '{key: $k}')" > "$T/todo.json"
-          jq -c '{merge, close, busy, queue, work: (.work.id // null)}' "$T/todo.json"
+            -H 'Content-Type: application/json' -d "$(jq -n --arg k "$KEY" '{key: $k}')" > "$RUNNER_TEMP/todo.json"
+          jq -c '{merge, close, busy, queue, work: (.work.id // null)}' "$RUNNER_TEMP/todo.json"
           echo "ok=si" >> "$GITHUB_OUTPUT"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -60,7 +58,7 @@ jobs:
         if: steps.todo.outputs.ok == 'si'
         run: |
           report() { curl -sSf --retry 3 --max-time 60 -X POST "$API/rz/robot/report" -H 'Content-Type: application/json' -d "$1" > /dev/null; }
-          for id in $(jq -r '.merge[]' "$T/todo.json"); do
+          for id in $(jq -r '.merge[]' "$RUNNER_TEMP/todo.json"); do
             b="proposta/$id"; ok=false; err=""
             if git ls-remote --exit-code --heads origin "$b" > /dev/null; then
               git fetch -q origin main "$b"
@@ -72,7 +70,7 @@ jobs:
                   git reset -q --hard origin/main
                   err="il codice ha un errore ($bad): chiedi a Claude di correggerlo con Chiedi modifiche"
                 elif git push -q origin main; then
-                  ok=true; touch "$T/pubblica"
+                  ok=true; touch "$RUNNER_TEMP/pubblica"
                   git push -q origin --delete "$b" || true
                 else
                   err="non riesco a salvarla nel gioco: riprova a pubblicarla"
@@ -92,9 +90,9 @@ jobs:
       - name: Proposte scartate → via il ramo
         if: steps.todo.outputs.ok == 'si'
         run: |
-          for id in $(jq -r '.close[]' "$T/todo.json"); do
+          for id in $(jq -r '.close[]' "$RUNNER_TEMP/todo.json"); do
             if git ls-remote --exit-code --heads origin "proposta/$id" > /dev/null; then
-              git push -q origin --delete "proposta/$id" && touch "$T/pubblica"
+              git push -q origin --delete "proposta/$id" && touch "$RUNNER_TEMP/pubblica"
             fi
             curl -sSf --retry 3 --max-time 60 -X POST "$API/rz/robot/report" -H 'Content-Type: application/json' \
               -d "$(jq -n --arg k "$KEY" --argjson id "$id" '{key: $k, id: $id, kind: "closed"}')" > /dev/null
@@ -106,11 +104,11 @@ jobs:
         id: prep
         if: steps.todo.outputs.ok == 'si'
         run: |
-          id=$(jq -r '.work.id // empty' "$T/todo.json")
+          id=$(jq -r '.work.id // empty' "$RUNNER_TEMP/todo.json")
           [ -n "$id" ] || { echo "Niente da preparare"; exit 0; }
           b="proposta/$id"
           git fetch -q origin main
-          change=$(jq -r '.work.change' "$T/todo.json")
+          change=$(jq -r '.work.change' "$RUNNER_TEMP/todo.json")
           conflitti=""
           if [ -n "$change" ] && git ls-remote --exit-code --heads origin "$b" > /dev/null; then
             # modifiche chieste dopo l'anteprima: si riparte dal ramo, aggiornato col gioco di adesso
@@ -125,9 +123,9 @@ jobs:
           r="EOF_$(openssl rand -hex 8)"
           {
             echo "req<<$r"
-            jq -r '"Proposta n. \(.work.id) di \(.work.name):\n---\n\(.work.text)\n---"' "$T/todo.json"
+            jq -r '"Proposta n. \(.work.id) di \(.work.name):\n---\n\(.work.text)\n---"' "$RUNNER_TEMP/todo.json"
             if [ -n "$change" ]; then
-              jq -r '"\nClaude aveva già risposto così:\n---\n\(.work.comment)\n---\nDopo aver provato (o letto la risposta) gli amici chiedono:\n---\n\(.work.change)\n---\nSe in questo ramo c'"'"'è già del lavoro, partine e cambia solo quello che chiedono."' "$T/todo.json"
+              jq -r '"\nClaude aveva già risposto così:\n---\n\(.work.comment)\n---\nDopo aver provato (o letto la risposta) gli amici chiedono:\n---\n\(.work.change)\n---\nSe in questo ramo c'"'"'è già del lavoro, partine e cambia solo quello che chiedono."' "$RUNNER_TEMP/todo.json"
             fi
             if [ -n "$conflitti" ]; then
               echo "Il gioco (main) è cambiato e l'ho appena unito a questo ramo, ma ci sono conflitti in: $conflitti"
@@ -168,11 +166,11 @@ jobs:
           if git diff --quiet origin/main HEAD; then echo "ok=si" >> "$GITHUB_OUTPUT"; exit 0; fi
           r=0
           ( set -e; for f in js/*.js js/games/*.js sw.js; do node --check "$f"; done
-            timeout 15m node tools/test.js; timeout 15m node tools/test-hints.js ) > "$T/controllo.log" 2>&1 || r=$?
-          tail -n 40 "$T/controllo.log"
+            timeout 15m node tools/test.js; timeout 15m node tools/test-hints.js ) > "$RUNNER_TEMP/controllo.log" 2>&1 || r=$?
+          tail -n 40 "$RUNNER_TEMP/controllo.log"
           if [ $r = 0 ]; then echo "ok=si" >> "$GITHUB_OUTPUT"; else echo "ok=no" >> "$GITHUB_OUTPUT"; fi
           d="EOF_$(openssl rand -hex 8)"
-          { echo "log<<$d"; tail -n 30 "$T/controllo.log"; echo "$d"; } >> "$GITHUB_OUTPUT"
+          { echo "log<<$d"; tail -n 30 "$RUNNER_TEMP/controllo.log"; echo "$d"; } >> "$GITHUB_OUTPUT"
 
       - name: Claude corregge (un tentativo)
         id: claude2
@@ -219,7 +217,7 @@ jobs:
           fi
           # controllo finale se c'era stato un errore
           if [ "$C1" = "no" ]; then
-            if ! ( set -e; for f in js/*.js js/games/*.js sw.js; do node --check "$f"; done; timeout 15m node tools/test.js; timeout 15m node tools/test-hints.js ) > "$T/controllo2.log" 2>&1; then
+            if ! ( set -e; for f in js/*.js js/games/*.js sw.js; do node --check "$f"; done; timeout 15m node tools/test.js; timeout 15m node tools/test-hints.js ) > "$RUNNER_TEMP/controllo2.log" 2>&1; then
               err="Il controllo automatico non passa nemmeno dopo la correzione: provala con attenzione prima di pubblicarla."
             fi
           fi
@@ -230,32 +228,32 @@ jobs:
             git config --local --unset-all http.https://github.com/.extraheader || true
             git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
             git push -f -q origin "HEAD:$BRANCH"
-            touch "$T/pubblica"
+            touch "$RUNNER_TEMP/pubblica"
           fi
           msg=$(printf '%s' "$msg" | sed 's/^          //')
           curl -sSf --retry 3 --retry-delay 20 --max-time 90 -X POST "$API/rz/robot/report" -H 'Content-Type: application/json' \
             -d "$(jq -n --arg k "$KEY" --argjson id "$ID" --argjson ch "$changed" --arg c "$msg" --arg e "$err" '{key: $k, id: $id, kind: "worked", changed: $ch, comment: $c, err: $e}')" > /dev/null
           echo "Proposta $ID: anteprima=$changed $err"
-          touch "$T/altro" "$T/riferito"
+          touch "$RUNNER_TEMP/altro" "$RUNNER_TEMP/riferito"
 
       # se un passo si rompe prima della risposta, la proposta non resta «Claude ci sta lavorando» per ore
       - name: Problema del robot → risposta nel gioco
         if: failure() && steps.todo.outputs.ok == 'si'
         run: |
-          id=$(jq -r '.work.id // empty' "$T/todo.json")
-          if [ -z "$id" ] || [ -f "$T/riferito" ]; then exit 0; fi
+          id=$(jq -r '.work.id // empty' "$RUNNER_TEMP/todo.json")
+          if [ -z "$id" ] || [ -f "$RUNNER_TEMP/riferito" ]; then exit 0; fi
           ch=false
           git ls-remote --exit-code --heads origin "proposta/$id" > /dev/null && ch=true
-          c=$(jq -r '.work.comment // ""' "$T/todo.json")
+          c=$(jq -r '.work.comment // ""' "$RUNNER_TEMP/todo.json")
           [ -n "$c" ] || c="Il robot ha avuto un problema prima che Claude potesse lavorarci."
           curl -sSf --retry 3 --retry-delay 20 --max-time 90 -X POST "$API/rz/robot/report" -H 'Content-Type: application/json' \
             -d "$(jq -n --arg k "$KEY" --argjson id "$id" --argjson ch "$ch" --arg c "$c" '{key: $k, id: $id, kind: "worked", changed: $ch, comment: $c, err: "Il robot ha avuto un problema: riprova più tardi con «Chiedi modifiche»."}')" > /dev/null
           echo "Proposta $id: segnalato il problema"
-          touch "$T/altro"
+          touch "$RUNNER_TEMP/altro"
 
       - name: Ripubblica il sito e prendi la prossima
         if: always() && steps.todo.outputs.ok == 'si'
         run: |
-          if [ -f "$T/pubblica" ]; then gh workflow run pagine.yml -R "$REPO" --ref main; fi
+          if [ -f "$RUNNER_TEMP/pubblica" ]; then gh workflow run pagine.yml -R "$REPO" --ref main; fi
           # dopo un lavoro di Claude si riparte: il prossimo giro prende la prossima in coda (o si ferma)
-          if [ -f "$T/altro" ]; then gh workflow run proposte.yml -R "$REPO" --ref main; fi
+          if [ -f "$RUNNER_TEMP/altro" ]; then gh workflow run proposte.yml -R "$REPO" --ref main; fi
