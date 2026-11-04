@@ -614,7 +614,7 @@
         const mod = e.ctrlKey || e.metaKey;
         if (mod && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); (e.shiftKey ? bRedo : bUndo).click(); return; }
         if (mod && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); bRedo.click(); return; }
-        if (!mod && (e.key === 'h' || e.key === 'H')) { bHint.click(); return; }
+        if (!mod && (e.key === 'h' || e.key === 'H') && !(view && view.letters)) { bHint.click(); return; } /* nel cruciverba H è una lettera */
         if (view && view.onKey && !won && view.onKey(e)) e.preventDefault();
       },
       fit,
