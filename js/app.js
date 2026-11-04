@@ -217,16 +217,15 @@
             value: String(Math.max(0, ch.findIndex(c => c.v === o[d.id]))), 'aria-label': d.label,
           });
           const cells = h('div.size-cells');
-          const lab = h('div.size-lab');
           const show = () => {
             const c = ch[+rng.value];
-            lab.textContent = c.label;
+            rng.setAttribute('aria-valuetext', c.label);
             cells.style.setProperty('--n', String(c.v));
           };
           rng.addEventListener('input', show);
           rng.addEventListener('change', () => pick(ch[+rng.value].v));
           show();
-          row = h('div.size-pick', null, h('div.size-prev', null, cells), h('div.size-side', null, lab, rng));
+          row = h('div.size-pick', null, h('div.size-prev', null, cells), h('div.size-side', null, rng));
         } else {
           row = h('div.chips', { role: 'radiogroup', 'aria-label': d.label });
           for (const c of d.choices) {
@@ -252,9 +251,17 @@
     const saved = Z.store.get(`save:${id}`, null);
     const done = Z.store.get(`done:${id}`, 0);
     const go = fresh => { closeOverlay(); startGame(id, fresh); };
+    const rulesBox = h('div.rules', { html: G.rules });
+    rulesBox.hidden = true;
+    const rulesToggle = h('button.btn.rules-toggle', { type: 'button', text: 'Come si gioca', 'aria-expanded': 'false' });
+    rulesToggle.addEventListener('click', () => {
+      rulesBox.hidden = !rulesBox.hidden;
+      rulesToggle.setAttribute('aria-expanded', String(!rulesBox.hidden));
+    });
     const card = openSheet([
       h('div.sheet-head', null, h('div.card-ic', { html: G.icon }), h('h2', { text: G.name })),
-      h('div.rules', { html: G.rules }),
+      rulesToggle,
+      rulesBox,
       h('h3.opt-title', { text: 'Difficoltà' }),
       optionsPanel(id),
       done ? h('p.opt-done', { text: `${done} risolti finora` }) : null,
