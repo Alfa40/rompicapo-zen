@@ -196,29 +196,51 @@
     const draw = () => {
       box.innerHTML = '';
       for (const d of G.options || []) {
-        const row = h('div.chips', { role: 'radiogroup', 'aria-label': d.label });
         const cur = d.choices.find(c => c.v === o[d.id]);
-        for (const c of d.choices) {
-          const ok = !c.need || c.need(o);
-          const b = h('button.opt-chip' + (c.v === o[d.id] ? '.on' : ''), {
-            type: 'button', role: 'radio', 'aria-checked': String(c.v === o[d.id]), text: c.label,
+        const pick = v => {
+          o[d.id] = v;
+          /* scelte non più compatibili tornano a una valida */
+          for (const e of G.options) {
+            const x = e.choices.find(y => y.v === o[e.id]);
+            if (x && x.need && !x.need(o)) o[e.id] = (e.choices.slice().reverse().find(y => !y.need || y.need(o)) || e.choices[0]).v;
+          }
+          Z.setOpts(id, o);
+          draw();
+          prefetch();
+        };
+        let row, sizeTxt = null;
+        if (d.id === 'size' && d.choices.length > 2) {
+          /* dimensione: barra da far scorrere col dito, con anteprima della griglia */
+          const ch = d.choices;
+          const rng = h('input.size-range', {
+            type: 'range', min: '0', max: String(ch.length - 1), step: '1',
+            value: String(Math.max(0, ch.findIndex(c => c.v === o[d.id]))), 'aria-label': d.label,
           });
-          b.disabled = !ok;
-          b.addEventListener('click', () => {
-            o[d.id] = c.v;
-            /* scelte non più compatibili tornano a una valida */
-            for (const e of G.options) {
-              const v = e.choices.find(x => x.v === o[e.id]);
-              if (v && v.need && !v.need(o)) o[e.id] = (e.choices.slice().reverse().find(x => !x.need || x.need(o)) || e.choices[0]).v;
-            }
-            Z.setOpts(id, o);
-            draw();
-            prefetch();
-          });
-          row.append(b);
+          const cells = h('div.size-cells');
+          sizeTxt = h('span.opt-value');
+          const show = () => {
+            const c = ch[+rng.value];
+            sizeTxt.textContent = c.label.includes('×') ? c.label : `${c.label} (${c.v}×${c.v})`;
+            rng.setAttribute('aria-valuetext', c.label);
+            cells.style.setProperty('--n', String(c.v));
+          };
+          rng.addEventListener('input', show);
+          rng.addEventListener('change', () => pick(ch[+rng.value].v));
+          show();
+          row = h('div.size-pick', null, h('div.size-prev', null, cells), h('div.size-side', null, rng));
+        } else {
+          row = h('div.chips', { role: 'radiogroup', 'aria-label': d.label });
+          for (const c of d.choices) {
+            const b = h('button.opt-chip' + (c.v === o[d.id] ? '.on' : ''), {
+              type: 'button', role: 'radio', 'aria-checked': String(c.v === o[d.id]), text: c.label,
+            });
+            b.disabled = !(!c.need || c.need(o));
+            b.addEventListener('click', () => pick(c.v));
+            row.append(b);
+          }
         }
         box.append(h('div.opt', null,
-          h('div.opt-label', { text: d.label }), row,
+          h('div.opt-label', null, d.label, sizeTxt ? ': ' : null, sizeTxt), row,
           cur && cur.help ? h('p.opt-help', { text: cur.help }) : null));
       }
     };
@@ -231,9 +253,17 @@
     const saved = Z.store.get(`save:${id}`, null);
     const done = Z.store.get(`done:${id}`, 0);
     const go = fresh => { closeOverlay(); startGame(id, fresh); };
+    const rulesBox = h('div.rules', { html: G.rules });
+    rulesBox.hidden = true;
+    const rulesToggle = h('button.btn.rules-toggle', { type: 'button', text: 'Come si gioca', 'aria-expanded': 'false' });
+    rulesToggle.addEventListener('click', () => {
+      rulesBox.hidden = !rulesBox.hidden;
+      rulesToggle.setAttribute('aria-expanded', String(!rulesBox.hidden));
+    });
     const card = openSheet([
       h('div.sheet-head', null, h('div.card-ic', { html: G.icon }), h('h2', { text: G.name })),
-      h('div.rules', { html: G.rules }),
+      rulesToggle,
+      rulesBox,
       h('h3.opt-title', { text: 'Difficoltà' }),
       optionsPanel(id),
       done ? h('p.opt-done', { text: `${done} risolti finora` }) : null,
