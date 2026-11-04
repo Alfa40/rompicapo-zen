@@ -585,3 +585,49 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spac
 .cw-item { text-align: left; border: none; background: none; color: var(--ink); font-size: 14.5px; line-height: 1.35; padding: 5px 4px; border-radius: 10px; }
 .cw-item.done { color: var(--ink-soft); opacity: 0.6; }
 .cw-item:active { background: var(--tint); }
+.cw-words { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 0; font-size: 15px; font-weight: 500; letter-spacing: 0.03em; }
+.cw-words .done { color: var(--ink-soft); opacity: 0.55; text-decoration: line-through; }
+
+/* ---------- Labirinto ---------- */
+.mz-svg { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+.mz-bg { fill: var(--surface); }
+.mz-wall { fill: none; stroke: var(--line-strong); stroke-width: 2.5px; stroke-linecap: round; stroke-linejoin: round; }
+.mz-start { fill: var(--accent); }
+.mz-end { fill: var(--second); }
+.mz-path { fill: none; stroke: var(--accent); stroke-width: 0.34; stroke-linecap: round; stroke-linejoin: round; opacity: 0.85; }
+.mz-head { fill: var(--accent-deep); }
+.mz-fl { fill: var(--second); opacity: 0.45; animation: mzfl 1.4s ease forwards; }
+@keyframes mzfl { to { opacity: 0; } }
+
+/* ---------- Frase cifrata ---------- */
+.cf { container-type: size; }
+.cf-lines { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: calc(100cqw / var(--cols) * 0.25); }
+.cf-row { display: flex; justify-content: center; }
+.cf-c { width: calc(100cqw / var(--cols)); display: grid; justify-items: center; gap: 2px; cursor: pointer; }
+.cf-l {
+  width: 86%; aspect-ratio: 1 / 1.05; display: grid; place-items: center; border-bottom: 3px solid var(--line-strong);
+  background: var(--surface); border-radius: 8px 8px 2px 2px; font-size: calc(100cqw / var(--cols) * 0.5); font-weight: 600; color: var(--accent-deep);
+  transition: background-color 0.15s;
+}
+.cf-n { font-size: calc(100cqw / var(--cols) * 0.27); color: var(--ink-soft); font-weight: 500; line-height: 1; }
+.cf-c.given .cf-l { color: var(--ink); }
+.cf-c.sel .cf-l { background: var(--accent-soft); border-bottom-color: var(--accent); }
+.cf-gap { width: calc(100cqw / var(--cols) * 0.6); }
+.cf-apo { width: calc(100cqw / var(--cols) * 0.3); font-size: calc(100cqw / var(--cols) * 0.5); color: var(--ink); text-align: center; }
+.cf-info { font-size: 14px; color: var(--ink-soft); text-align: center; min-height: 20px; }
+.cf-info b { color: var(--accent-deep); }
+
+/* ---------- Anagrammi ---------- */
+.an { container-type: size; display: grid; grid-template-rows: repeat(var(--rows), 1fr); }
+.an-row { display: grid; align-content: center; justify-items: center; gap: calc(100cqh / var(--rows) * 0.06); min-height: 0; }
+.an-clue { font-size: min(calc(100cqh / var(--rows) * 0.2), 16px); color: var(--ink-soft); text-align: center; line-height: 1.2; padding: 0 4px; }
+.an-tiles { display: flex; gap: calc(100cqw / var(--cols) * 0.1); }
+.an-t {
+  width: min(calc(100cqw / var(--cols) * 0.86), calc(100cqh / var(--rows) * 0.55)); aspect-ratio: 1; border-radius: 22%;
+  border: 2px solid var(--line); background: var(--surface); box-shadow: 0 3px 0 var(--edge); padding: 0;
+  font-size: min(calc(100cqw / var(--cols) * 0.45), calc(100cqh / var(--rows) * 0.3)); font-weight: 600; color: var(--ink);
+  display: grid; place-items: center; transition: background-color 0.2s, transform 0.12s;
+}
+.an-t.sel { background: var(--accent-soft); border-color: var(--accent); transform: translateY(-3px); }
+.an-row.ok .an-t { background: var(--accent); border-color: var(--accent-deep); color: var(--on-accent); }
+.an-row.ok .an-clue { color: var(--accent-deep); }

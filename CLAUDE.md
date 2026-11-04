@@ -1,7 +1,7 @@
 # Rompicapo Zen
 
-Web app in italiano con 11 rompicapo tradizionali (Sudoku, Ponti, Futoshiki, Calcudoku, Collega i colori,
-Stelle, Tubi, Luci, Porte colorate, Cruciverba, Parole nascoste) in stile cartoon vivace ma calmo, "zen". Pubblicata su GitHub Pages:
+Web app in italiano con 15 rompicapo tradizionali (Sudoku, Ponti, Futoshiki, Calcudoku, Collega i colori,
+Stelle, Tubi, Luci, Porte colorate, Cruciverba, Incastro, Parole nascoste, Labirinto, Frase cifrata, Anagrammi) in stile cartoon vivace ma calmo, "zen". Pubblicata su GitHub Pages:
 https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `main`, con `.github/workflows/pagine.yml`).
 
 ## Come è fatto
@@ -9,8 +9,9 @@ https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `mai
 - `js/core.js`: oggetto globale `window.Zen` (Z): registro dei giochi (`Z.register`), opzioni di difficoltà
   (`Z.defaultOpts`, `Z.getOpts`, `Z.setOpts`, `Z.optsSummary`), temi, `Z.store` (localStorage con prefisso), `Z.h` (DOM).
 - `js/numgrid.js`: griglie con numeri (Sudoku, Futoshiki, Calcudoku).
-- `js/games/crossword.js` e `js/games/wordsearch.js` contengono anche le loro parole (definizioni del cruciverba,
-  temi e chiavi delle parole nascoste): solo lettere A–Z senza accenti.
+- Giochi di parole: `js/games/crossword.js` (Cruciverba e Incastro) contiene il dizionario con le definizioni
+  (`Z.DICT`, usato anche da `anagram.js`); `wordsearch.js` ha i suoi temi e chiavi, `cipher.js` i proverbi.
+  Solo lettere A–Z senza accenti. Tastiera di lettere comune: `Z.letterPad` in `core.js`.
 - `js/games/<gioco>.js`: ogni gioco ha `options`, `generate(opt)` (ogni rompicapo è generato al momento e ha una sola
   soluzione), `init`, `view(ctx)`, `solved`, `hint` (il suggerimento spiega il ragionamento) e `_check`.
 - `js/app.js`: menu, scelta della difficoltà (salvata per gioco), partita, annulla/ripristina, zoom sulla griglia,

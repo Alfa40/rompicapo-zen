@@ -533,8 +533,7 @@ CINTURA|Tiene su i pantaloni`;
     return list;
   }
 
-  function generate(opt) {
-    const n = opt.size;
+  function layout(n) {
     let best = null;
     for (let t = 0; t < 12; t++) {
       const list = build(n);
@@ -555,84 +554,143 @@ CINTURA|Tiene su i pantaloni`;
     const starts = [...new Set(words.map(p => p.y * w + p.x))].sort((a, b) => a - b);
     for (const p of words) p.num = starts.indexOf(p.y * w + p.x) + 1;
     words.sort((a, b) => a.d - b.d || a.num - b.num);
-    /* lettere già scritte */
-    const cells = Z.range(w * h).filter(i => sol[i] !== '.');
-    const share = [0, 0.33, 0.12, 0][opt.giv] || 0;
-    const given = Z.shuffle(cells.slice()).slice(0, Math.round(cells.length * share)).sort((a, b) => a - b);
-    return { w, h, sol: sol.join(''), words, given, opt };
+    return { w, h, sol: sol.join(''), words };
   }
+  Z.DICT = { WORDS, CLUE };
 
   const cellsOf = (P, p) => Z.range(p.word.length).map(k => (p.y + p.d * k) * P.w + p.x + (1 - p.d) * k);
   const label = p => `${p.num} ${p.d ? 'verticale' : 'orizzontale'}`;
+  const dirName = p => (p.d ? 'verticale' : 'orizzontale');
 
-  function hint(P, st) {
-    const s = Z.clone(st);
-    const wrong = Z.range(P.w * P.h).filter(i => st.v[i] && st.v[i] !== P.sol[i]);
-    let p, why;
-    if (wrong.length) {
-      p = P.words.find(q => cellsOf(P, q).includes(wrong[0]));
-      why = `In <b>${label(p)}</b> c'è una lettera sbagliata. «${p.clue}»: la risposta è <b>${p.word}</b>. `;
-    } else {
-      const open = P.words.filter(q => cellsOf(P, q).some(i => st.v[i] !== P.sol[i]));
-      if (!open.length) return null;
-      /* la parola con più lettere già scritte grazie agli incroci è la più facile */
-      const known = q => cellsOf(P, q).filter(i => st.v[i]).length / q.word.length;
-      const top = Math.max(...open.map(known));
-      p = Z.pick(open.filter(q => known(q) === top));
-      const k = cellsOf(P, p).filter(i => st.v[i]).length;
-      why = `<b>${label(p)}</b>: «${p.clue}». ` + (k
-        ? `Avevi già ${k} lettere su ${p.word.length}, che restringono molto le possibilità: è <b>${p.word}</b>. `
-        : `La risposta è <b>${p.word}</b>. `);
-    }
-    for (const i of cellsOf(P, p)) s.v[i] = P.sol[i];
-    why += 'Ora le parole che la incrociano hanno una lettera in più da cui partire.';
-    return { state: s, focus: cellsOf(P, p), why };
+  function generate(opt) {
+    const P = layout(opt.size);
+    const cells = Z.range(P.w * P.h).filter(i => P.sol[i] !== '.');
+    const share = [0, 0.33, 0.12, 0][opt.giv] || 0;
+    P.given = Z.shuffle(cells.slice()).slice(0, Math.round(cells.length * share)).sort((a, b) => a - b);
+    return P;
   }
 
-  Z.register({
-    options: OPTIONS,
-    id: 'crossword',
-    name: 'Cruciverba',
-    hue: 300,
-    tagline: 'Parole incrociate, con le definizioni.',
-    rules: `<p>Scrivi nelle caselle le parole che rispondono alle <b>definizioni</b>: quelle <b>orizzontali</b> si leggono da sinistra a destra, quelle <b>verticali</b> dall'alto in basso.</p>
-      <p>Tocca una casella per sceglierla, toccala di nuovo per passare dall'orizzontale al verticale. Sopra la tastiera vedi la definizione della parola scelta; con le frecce passi alla successiva, e toccando la definizione vedi l'elenco completo.</p>
-      <p>Le parole si incrociano: ogni lettera trovata aiuta anche l'altra parola.</p>`,
-    icon: `<svg viewBox="0 0 64 64"><rect x="10" y="22" width="14" height="14" rx="3" class="ic-s ic-st"/><rect x="24" y="22" width="14" height="14" rx="3" class="ic-a"/><rect x="38" y="22" width="14" height="14" rx="3" class="ic-s ic-st"/><rect x="24" y="8" width="14" height="14" rx="3" class="ic-s ic-st"/><rect x="24" y="36" width="14" height="14" rx="3" class="ic-s ic-st"/><text x="31" y="33" class="ic-t ic-w">A</text></svg>`,
-    generate,
-    _check(P) {
-      if (!P || P.words.length < 6) return 'troppo poche parole';
-      const seen = new Set();
-      for (const p of P.words) {
-        if (!CLUE[p.word] || seen.has(p.word)) return 'parola non valida: ' + p.word;
-        seen.add(p.word);
-        if (cellsOf(P, p).map(i => P.sol[i]).join('') !== p.word) return 'schema incoerente: ' + p.word;
+  /* Incastro: quante soluzioni ha lo schema con l'elenco delle parole (si ferma a 2) */
+  function countFills(P, fixed) {
+    const slots = P.words.map(p => cellsOf(P, p));
+    const g = new Array(P.w * P.h).fill('');
+    for (const i of fixed) g[i] = P.sol[i];
+    const pool = P.words.map(p => p.word);
+    const used = new Array(pool.length).fill(false);
+    const done = new Array(slots.length).fill(false);
+    let found = 0, nodes = 0;
+    const fitsIn = (k, w) => w.length === slots[k].length && slots[k].every((i, j) => !g[i] || g[i] === w[j]);
+    const rec = () => {
+      if (found > 1 || ++nodes > 200000) return;
+      let best = -1, bc = null;
+      for (let k = 0; k < slots.length; k++) {
+        if (done[k]) continue;
+        const c = [];
+        for (let j = 0; j < pool.length; j++) if (!used[j] && fitsIn(k, pool[j])) c.push(j);
+        if (!c.length) return;
+        if (!bc || c.length < bc.length) { best = k; bc = c; }
       }
-      /* ogni sequenza di 2+ lettere in fila deve essere una parola con definizione */
-      for (const d of [0, 1]) {
-        const a = d ? P.h : P.w, b = d ? P.w : P.h;
-        for (let r = 0; r < b; r++) {
-          let run = '', st = -1;
-          for (let k = 0; k <= a; k++) {
-            const i = k < a ? (d ? k * P.w + r : r * P.w + k) : -1;
-            const c = i >= 0 ? P.sol[i] : '.';
-            if (c !== '.') { if (!run) st = i; run += c; continue; }
-            if (run.length > 1 && !P.words.some(p => p.d === d && p.word === run && p.y * P.w + p.x === st)) return 'parola in più: ' + run;
-            run = '';
-          }
+      if (best < 0) { found++; return; }
+      for (const j of bc) {
+        const prev = slots[best].map(i => g[i]);
+        slots[best].forEach((i, t) => { g[i] = pool[j][t]; });
+        used[j] = done[best] = true;
+        rec();
+        used[j] = done[best] = false;
+        slots[best].forEach((i, t) => { g[i] = prev[t]; });
+      }
+    };
+    rec();
+    return nodes > 200000 ? 2 : found;
+  }
+
+  function generateFit(opt) {
+    for (;;) {
+      const P = layout(opt.size);
+      /* una parola è già scritta per cominciare; se ne aggiungono finché la soluzione è una sola */
+      const first = Z.pick(P.words);
+      const given = cellsOf(P, first);
+      let ok = false;
+      for (let t = 0; t < 4; t++) {
+        if (countFills(P, given) === 1) { ok = true; break; }
+        const p = Z.pick(P.words.filter(q => !cellsOf(P, q).every(i => given.includes(i))));
+        given.push(...cellsOf(P, p).filter(i => !given.includes(i)));
+      }
+      if (!ok) continue;
+      P.given = given.sort((a, b) => a - b);
+      return P;
+    }
+  }
+
+  function hintFor(fit) {
+    return function (P, st) {
+      const s = Z.clone(st);
+      const wrong = Z.range(P.w * P.h).filter(i => st.v[i] && st.v[i] !== P.sol[i]);
+      const shape = q => cellsOf(P, q).map(i => (st.v[i] === P.sol[i] ? P.sol[i] : '_')).join(' ');
+      let p, why;
+      if (wrong.length) {
+        p = P.words.find(q => cellsOf(P, q).includes(wrong[0]));
+        why = fit ? `Nello spazio ${dirName(p)} che si illumina c'è una lettera sbagliata: lì va <b>${p.word}</b>. `
+          : `In <b>${label(p)}</b> c'è una lettera sbagliata. «${p.clue}»: la risposta è <b>${p.word}</b>. `;
+      } else {
+        const open = P.words.filter(q => cellsOf(P, q).some(i => st.v[i] !== P.sol[i]));
+        if (!open.length) return null;
+        if (fit) {
+          /* lo spazio in cui entra una sola delle parole ancora da mettere */
+          const placed = new Set(P.words.filter(q => !open.includes(q)).map(q => q.word));
+          const cand = q => [...new Set(P.words.map(r => r.word))].filter(w => w.length === q.word.length && !placed.has(w)
+            && cellsOf(P, q).every((i, j) => !st.v[i] || st.v[i] === w[j]));
+          let bestN = 1e9;
+          for (const q of open) { const c = cand(q).length; if (c < bestN) { bestN = c; p = q; } }
+          const k = cellsOf(P, p).filter(i => st.v[i]).length;
+          why = bestN === 1
+            ? (k ? `Nello spazio ${dirName(p)} che si illumina (${shape(p)}), con le lettere già scritte, fra le parole da ${p.word.length} lettere rimaste entra solo <b>${p.word}</b>. `
+              : `<b>${p.word}</b> è l'unica parola da ${p.word.length} lettere rimasta: va nello spazio ${dirName(p)} che si illumina. `)
+            : `Nello spazio ${dirName(p)} che si illumina potrebbero entrare ${bestN} parole da ${p.word.length} lettere; guardando gli incroci, quella giusta è <b>${p.word}</b>. `;
+        } else {
+          /* la parola con più lettere già scritte grazie agli incroci è la più facile */
+          const known = q => cellsOf(P, q).filter(i => st.v[i]).length / q.word.length;
+          const top = Math.max(...open.map(known));
+          p = Z.pick(open.filter(q => known(q) === top));
+          const k = cellsOf(P, p).filter(i => st.v[i]).length;
+          why = `<b>${label(p)}</b>: «${p.clue}». ` + (k
+            ? `Avevi già ${k} lettere su ${p.word.length}, che restringono molto le possibilità: è <b>${p.word}</b>. `
+            : `La risposta è <b>${p.word}</b>. `);
         }
       }
-      return '';
-    },
-    _test: { WORDS, CLUE },
-    init: P => {
-      const v = new Array(P.w * P.h).fill('');
-      for (const i of P.given) v[i] = P.sol[i];
-      return { v };
-    },
-    solved: (P, s) => Z.range(P.w * P.h).every(i => P.sol[i] === '.' || s.v[i] === P.sol[i]),
-    hint,
-    view(ctx) {
+      for (const i of cellsOf(P, p)) s.v[i] = P.sol[i];
+      why += 'Ora le parole che la incrociano hanno una lettera in più da cui partire.';
+      return { state: s, focus: cellsOf(P, p), why };
+    };
+  }
+
+  function check(P) {
+    if (!P || P.words.length < 6) return 'troppo poche parole';
+    const seen = new Set();
+    for (const p of P.words) {
+      if (!CLUE[p.word] || seen.has(p.word)) return 'parola non valida: ' + p.word;
+      seen.add(p.word);
+      if (cellsOf(P, p).map(i => P.sol[i]).join('') !== p.word) return 'schema incoerente: ' + p.word;
+    }
+    /* ogni sequenza di 2+ lettere in fila deve essere una parola dello schema */
+    for (const d of [0, 1]) {
+      const a = d ? P.h : P.w, b = d ? P.w : P.h;
+      for (let r = 0; r < b; r++) {
+        let run = '', st = -1;
+        for (let k = 0; k <= a; k++) {
+          const i = k < a ? (d ? k * P.w + r : r * P.w + k) : -1;
+          const c = i >= 0 ? P.sol[i] : '.';
+          if (c !== '.') { if (!run) st = i; run += c; continue; }
+          if (run.length > 1 && !P.words.some(p => p.d === d && p.word === run && p.y * P.w + p.x === st)) return 'parola in più: ' + run;
+          run = '';
+        }
+      }
+    }
+    return '';
+  }
+
+  function view(fit) {
+    return function (ctx) {
       const P = ctx.puzzle, W = P.w, H = P.h;
       const isGiven = new Set(P.given);
       let cur = null, sel = -1, dir = 0;
@@ -646,12 +704,11 @@ CINTURA|Tiene su i pantaloni`;
       for (let i = 0; i < W * H; i++) {
         if (P.sol[i] === '.') { const b = Z.h('span.cw-c.blank'); grid.append(b); cells.push(b); lets.push(null); continue; }
         const l = Z.h('span.cw-l');
-        const c = Z.h('span.cw-c', null, nums[i] ? Z.h('span.cw-n', { text: nums[i] }) : null, l);
+        const c = Z.h('span.cw-c', null, nums[i] && !fit ? Z.h('span.cw-n', { text: nums[i] }) : null, l);
         if (isGiven.has(i)) c.classList.add('given');
         c.addEventListener('pointerdown', e => {
           e.preventDefault();
-          if (sel === i) { if (slot(i, 1 - dir)) dir = 1 - dir; }
-          else { sel = i; if (!slot(i, dir)) dir = 1 - dir; }
+          if (sel === i) { if (slot(i, 1 - dir)) dir = 1 - dir; } else { sel = i; if (!slot(i, dir)) dir = 1 - dir; }
           paint();
         });
         grid.append(c); cells.push(c); lets.push(l);
@@ -665,33 +722,35 @@ CINTURA|Tiene su i pantaloni`;
         const p = curWord(), i = p ? P.words.indexOf(p) : -1;
         selectWord(P.words[(i + k + P.words.length) % P.words.length]);
       };
+      /* incastro: parole già scritte nello schema, lette così come sono */
+      const written = () => new Set(P.words.map(p => cellsOf(P, p).map(i => cur.v[i] || '_').join('')));
 
-      /* definizione e tastiera */
       const clueTx = Z.h('button.cw-clue-tx', { type: 'button', on: { click: showAll } });
       const bar = Z.h('div.cw-bar', null,
-        Z.h('button.key.cw-arrow', { type: 'button', 'aria-label': 'Definizione precedente', html: Z.ICONS.back, on: { click: () => step(-1) } }),
+        Z.h('button.key.cw-arrow', { type: 'button', 'aria-label': 'Parola precedente', html: Z.ICONS.back, on: { click: () => step(-1) } }),
         clueTx,
-        Z.h('button.key.cw-arrow.next', { type: 'button', 'aria-label': 'Definizione successiva', html: Z.ICONS.back, on: { click: () => step(1) } }));
-      const kb = Z.h('div.cw-kb');
-      for (const row of ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM']) {
-        const r = Z.h('div.cw-row');
-        for (const L of row) r.append(Z.h('button.key.cw-k', { type: 'button', text: L, on: { click: () => type(L) } }));
-        if (row[0] === 'Z') r.append(Z.h('button.key.tool.cw-k.wide', { type: 'button', 'aria-label': 'Cancella', html: Z.ICONS.erase, on: { click: back } }));
-        kb.append(r);
-      }
-      ctx.controls.append(Z.h('div.cw-ctl', null, bar, kb));
+        Z.h('button.key.cw-arrow.next', { type: 'button', 'aria-label': 'Parola successiva', html: Z.ICONS.back, on: { click: () => step(1) } }));
+      ctx.controls.append(Z.h('div.cw-ctl', null, bar, Z.letterPad(type, back)));
 
       function showAll() {
-        const sec = d => [Z.h('h3.cw-h', { text: d ? 'Verticali' : 'Orizzontali' }),
-          ...P.words.filter(p => p.d === d).map(p => Z.h('button.cw-item' + (cur && cellsOf(P, p).every(i => cur.v[i]) ? '.done' : ''), {
-            type: 'button', on: { click: () => { Z.ui.closeOverlay(); selectWord(p); } },
-          }, Z.h('b', { text: p.num + '. ' }), p.clue + ` (${p.word.length})`))];
-        Z.ui.openSheet([Z.h('div.cw-all', null, ...sec(0), ...sec(1)),
+        let body;
+        if (fit) {
+          const wr = written(), lens = [...new Set(P.words.map(p => p.word.length))].sort((a, b) => a - b);
+          body = lens.map(L => [Z.h('h3.cw-h', { text: `${L} lettere` }), Z.h('p.cw-words', null,
+            ...P.words.filter(p => p.word.length === L).map(p => p.word).sort().map(w => Z.h('span' + (wr.has(w) ? '.done' : ''), { text: w })))]).flat();
+        } else {
+          const sec = d => [Z.h('h3.cw-h', { text: d ? 'Verticali' : 'Orizzontali' }),
+            ...P.words.filter(p => p.d === d).map(p => Z.h('button.cw-item' + (cur && cellsOf(P, p).every(i => cur.v[i]) ? '.done' : ''), {
+              type: 'button', on: { click: () => { Z.ui.closeOverlay(); selectWord(p); } },
+            }, Z.h('b', { text: p.num + '. ' }), p.clue + ` (${p.word.length})`))];
+          body = [...sec(0), ...sec(1)];
+        }
+        Z.ui.openSheet([Z.h('div.cw-all', null, ...body),
           Z.h('div.sheet-actions', null, Z.h('button.btn', { type: 'button', text: 'Chiudi', on: { click: Z.ui.closeOverlay } }))]);
       }
       function type(L) {
         if (!cur) return;
-        if (sel < 0) { selectWord(P.words[0]); }
+        if (sel < 0) selectWord(P.words[0]);
         const p = curWord();
         if (!isGiven.has(sel) && cur.v[sel] !== L) {
           const s = Z.clone(cur);
@@ -734,7 +793,12 @@ CINTURA|Tiene su i pantaloni`;
           c.classList.toggle('word', on.has(i));
           c.classList.toggle('sel', i === sel);
         });
-        clueTx.innerHTML = p ? `<b>${label(p)}</b> · ${p.clue} <span>(${p.word.length})</span>` : 'Tocca una casella per vedere la definizione';
+        if (!p) { clueTx.textContent = fit ? 'Tocca una casella e scrivi una parola dell\'elenco' : 'Tocca una casella per vedere la definizione'; return; }
+        if (fit) {
+          const wr = written(), L = p.word.length;
+          const left = P.words.filter(q => q.word.length === L).map(q => q.word).filter(w => !wr.has(w)).sort();
+          clueTx.innerHTML = `<b>${L} lettere</b> · ${left.length ? left.join(', ') : 'tutte scritte'}`;
+        } else clueTx.innerHTML = `<b>${label(p)}</b> · ${p.clue} <span>(${p.word.length})</span>`;
       }
 
       return {
@@ -754,6 +818,48 @@ CINTURA|Tiene su i pantaloni`;
           return false;
         },
       };
-    },
+    };
+  }
+
+  const init = P => {
+    const v = new Array(P.w * P.h).fill('');
+    for (const i of P.given) v[i] = P.sol[i];
+    return { v };
+  };
+  const solved = (P, s) => Z.range(P.w * P.h).every(i => P.sol[i] === '.' || s.v[i] === P.sol[i]);
+
+  Z.register({
+    options: OPTIONS,
+    id: 'crossword',
+    name: 'Cruciverba',
+    hue: 300,
+    tagline: 'Parole incrociate, con le definizioni.',
+    rules: `<p>Scrivi nelle caselle le parole che rispondono alle <b>definizioni</b>: quelle <b>orizzontali</b> si leggono da sinistra a destra, quelle <b>verticali</b> dall'alto in basso.</p>
+      <p>Tocca una casella per sceglierla, toccala di nuovo per passare dall'orizzontale al verticale. Sopra la tastiera vedi la definizione della parola scelta; con le frecce passi alla successiva, e toccando la definizione vedi l'elenco completo.</p>
+      <p>Le parole si incrociano: ogni lettera trovata aiuta anche l'altra parola.</p>`,
+    icon: `<svg viewBox="0 0 64 64"><rect x="10" y="22" width="14" height="14" rx="3" class="ic-s ic-st"/><rect x="24" y="22" width="14" height="14" rx="3" class="ic-a"/><rect x="38" y="22" width="14" height="14" rx="3" class="ic-s ic-st"/><rect x="24" y="8" width="14" height="14" rx="3" class="ic-s ic-st"/><rect x="24" y="36" width="14" height="14" rx="3" class="ic-s ic-st"/><text x="31" y="33" class="ic-t ic-w">A</text></svg>`,
+    generate,
+    _check: check,
+    _test: { WORDS, CLUE },
+    init, solved,
+    hint: hintFor(false),
+    view: view(false),
+  });
+
+  Z.register({
+    options: [OPTIONS[0]],
+    id: 'incastro',
+    name: 'Incastro',
+    hue: 165,
+    tagline: 'Ogni parola al suo posto nello schema.',
+    rules: `<p>Hai l'elenco delle parole, divise per lunghezza: devi <b>incastrarle tutte</b> nello schema, una per ogni fila di caselle, in orizzontale o in verticale.</p>
+      <p>Tocca una casella e scrivi con la tastiera; sopra la tastiera vedi le parole ancora libere della lunghezza giusta, e toccandole vedi l'elenco completo. Qualche parola è già scritta per cominciare.</p>
+      <p>Comincia dalle lunghezze con poche parole: lì c'è meno da scegliere, e ogni parola messa dà lettere alle altre.</p>`,
+    icon: `<svg viewBox="0 0 64 64"><rect x="8" y="10" width="14" height="14" rx="3" class="ic-a"/><rect x="22" y="10" width="14" height="14" rx="3" class="ic-a"/><rect x="36" y="10" width="14" height="14" rx="3" class="ic-a"/><rect x="36" y="24" width="14" height="14" rx="3" class="ic-s ic-st"/><rect x="36" y="38" width="14" height="14" rx="3" class="ic-s ic-st"/><path d="M14 40h12M20 34v12" class="ic-l2"/></svg>`,
+    generate: generateFit,
+    _check(P) { return check(P) || (countFills(P, P.given) === 1 ? '' : 'NON unico'); },
+    init, solved,
+    hint: hintFor(true),
+    view: view(true),
   });
 })();

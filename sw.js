@@ -1,11 +1,11 @@
 /* Service worker: rende il gioco disponibile anche offline quando è servito via http(s) */
-const CACHE = 'rompicapo-zen-v12';
+const CACHE = 'rompicapo-zen-v13';
 const FILES = [
   './', 'index.html', 'css/style.css', 'icon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'manifest.webmanifest',
   'js/core.js', 'js/numgrid.js', 'js/app.js', 'js/worker.js', 'js/proposte.js',
   'js/games/sudoku.js', 'js/games/hashi.js', 'js/games/futoshiki.js', 'js/games/calcudoku.js',
   'js/games/flow.js', 'js/games/stars.js', 'js/games/pipes.js', 'js/games/lights.js', 'js/games/blocks.js',
-  'js/games/crossword.js', 'js/games/wordsearch.js',
+  'js/games/crossword.js', 'js/games/wordsearch.js', 'js/games/maze.js', 'js/games/cipher.js', 'js/games/anagram.js',
 ];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

@@ -150,6 +150,18 @@
     setTimeout(() => el.classList.remove('flash'), 1500);
   };
 
+  /* Tastiera di lettere sullo schermo (cruciverba, incastro, frase cifrata) */
+  Z.letterPad = function (type, back) {
+    const kb = Z.h('div.cw-kb');
+    for (const row of ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM']) {
+      const r = Z.h('div.cw-row');
+      for (const L of row) r.append(Z.h('button.key.cw-k', { type: 'button', text: L, on: { click: () => type(L) } }));
+      if (row[0] === 'Z') r.append(Z.h('button.key.tool.cw-k.wide', { type: 'button', 'aria-label': 'Cancella', html: Z.ICONS.erase, on: { click: back } }));
+      kb.append(r);
+    }
+    return kb;
+  };
+
   Z.ICONS = {
     back: '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
     undo: '<svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></svg>',
