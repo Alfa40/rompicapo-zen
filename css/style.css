@@ -212,6 +212,7 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spac
 .rules b { color: var(--ink); font-weight: 500; }
 .opt-title { margin: 16px 0 4px; font-size: 17px; font-weight: 600; color: var(--accent-deep); }
 .opts { display: grid; gap: 14px; margin-top: 6px; }
+.opt-value { color: var(--ink); font-weight: 700; }
 .opt-label { font-size: 14px; font-weight: 500; color: var(--ink-soft); margin-bottom: 6px; }
 .opts .chips { flex-wrap: wrap; gap: 6px; }
 .opt-chip {

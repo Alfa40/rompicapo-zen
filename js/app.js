@@ -208,7 +208,7 @@
           draw();
           prefetch();
         };
-        let row;
+        let row, sizeTxt = null;
         if (d.id === 'size' && d.choices.length > 2) {
           /* dimensione: barra da far scorrere col dito, con anteprima della griglia */
           const ch = d.choices;
@@ -217,8 +217,10 @@
             value: String(Math.max(0, ch.findIndex(c => c.v === o[d.id]))), 'aria-label': d.label,
           });
           const cells = h('div.size-cells');
+          sizeTxt = h('span.opt-value');
           const show = () => {
             const c = ch[+rng.value];
+            sizeTxt.textContent = c.label.includes('×') ? c.label : `${c.label} (${c.v}×${c.v})`;
             rng.setAttribute('aria-valuetext', c.label);
             cells.style.setProperty('--n', String(c.v));
           };
@@ -238,7 +240,7 @@
           }
         }
         box.append(h('div.opt', null,
-          h('div.opt-label', { text: d.label }), row,
+          h('div.opt-label', null, d.label, sizeTxt ? ': ' : null, sizeTxt), row,
           cur && cur.help ? h('p.opt-help', { text: cur.help }) : null));
       }
     };
