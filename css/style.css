@@ -543,3 +543,106 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spac
 .prop-changebox { display: grid; gap: 8px; margin-top: 10px; }
 .prop-confirm { margin-top: 10px; padding: 10px 12px; border-radius: 14px; background: var(--tint); }
 .prop-confirm p { margin: 0; font-weight: 500; }
+
+/* ---------- Parole nascoste ---------- */
+.ws { container-type: size; }
+.ws-grid {
+  position: absolute; inset: 0; display: grid; grid-template-columns: repeat(var(--n), 1fr); grid-template-rows: repeat(var(--n), 1fr);
+  background: var(--surface); border-radius: 18px; box-shadow: 0 4px 0 var(--edge); border: 2px solid var(--line);
+}
+.ws-c {
+  display: grid; place-items: center; font-weight: 600; color: var(--ink); position: relative; z-index: 1;
+  font-size: calc(100cqw / var(--n) * 0.55); line-height: 1; transition: color 0.3s;
+}
+.ws-c.ws-k { color: var(--accent-deep); text-decoration: underline; text-decoration-thickness: 0.08em; text-underline-offset: 0.12em; }
+.ws-caps { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+.ws-cap { stroke: hsl(var(--c, 140) 70% 62% / 0.42); stroke-width: 0.72; stroke-linecap: round; fill: none; }
+.ws-tmp { --c: var(--h); opacity: 0; stroke: hsl(var(--h) 60% 55% / 0.4); transition: opacity 0.15s; }
+.ws-tmp.on { opacity: 1; }
+.ws-ctl { width: 100%; max-width: 620px; display: grid; gap: 6px; }
+.ws-head { font-size: 13.5px; color: var(--ink-soft); text-align: center; }
+.ws-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 10px; max-height: 22vh; overflow: auto; }
+.ws-w { font-size: 14px; font-weight: 500; color: var(--ink); letter-spacing: 0.03em; transition: color 0.3s, opacity 0.3s; }
+.ws-w.found { color: var(--ink-soft); opacity: 0.55; text-decoration: line-through; }
+.ws-key { font-size: 14px; color: var(--ink-soft); text-align: center; }
+.ws-key b { color: var(--accent-deep); letter-spacing: 0.08em; }
+
+/* ---------- Cruciverba ---------- */
+.cw { container-type: size; }
+.cw-grid { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(var(--w), 1fr); grid-template-rows: repeat(var(--h), 1fr); }
+.cw-c {
+  position: relative; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--line-strong);
+  margin: -0.5px; font-size: calc(100cqw / var(--w) * 0.56); font-weight: 600; color: var(--accent-deep); cursor: pointer;
+  transition: background-color 0.15s;
+}
+.cw-c.blank { background: none; border: none; cursor: default; }
+.cw-c.given { color: var(--ink); }
+.cw-c.word { background: var(--accent-soft); }
+.cw-c.sel { background: var(--second-soft); box-shadow: inset 0 0 0 3px var(--accent); }
+.cw-n { position: absolute; top: 3%; left: 6%; font-size: 0.34em; font-weight: 600; color: var(--ink-soft); line-height: 1; pointer-events: none; }
+.cw-l { line-height: 1; }
+.cw-ctl { width: 100%; max-width: 620px; display: grid; gap: 6px; }
+.cw-bar { display: flex; gap: 6px; align-items: stretch; }
+.cw-arrow { width: 44px; flex: none; height: auto; min-height: 44px; }
+.cw-arrow.next svg { transform: scaleX(-1); }
+.cw-clue-tx {
+  flex: 1; min-height: 44px; padding: 6px 12px; border-radius: 14px; border: 2px solid var(--line); background: var(--surface);
+  color: var(--ink); font-size: 14.5px; line-height: 1.3; text-align: left;
+}
+.cw-clue-tx b { color: var(--accent-deep); font-weight: 600; }
+.cw-clue-tx span { color: var(--ink-soft); }
+.cw-kb { display: grid; gap: 5px; }
+.cw-row { display: flex; gap: 4px; justify-content: center; }
+.cw-k { flex: 1; max-width: 52px; height: 42px; font-size: 18px; padding: 0; }
+.cw-k.wide { flex: 1.6; max-width: 80px; }
+.cw-all { max-height: 60vh; overflow: auto; text-align: left; display: grid; gap: 2px; }
+.cw-h { font-size: 15px; margin: 10px 0 4px; color: var(--accent-deep); }
+.cw-item { text-align: left; border: none; background: none; color: var(--ink); font-size: 14.5px; line-height: 1.35; padding: 5px 4px; border-radius: 10px; }
+.cw-item.done { color: var(--ink-soft); opacity: 0.6; }
+.cw-item:active { background: var(--tint); }
+.cw-words { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 0; font-size: 15px; font-weight: 500; letter-spacing: 0.03em; }
+.cw-words .done { color: var(--ink-soft); opacity: 0.55; text-decoration: line-through; }
+
+/* ---------- Labirinto ---------- */
+.mz-svg { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+.mz-bg { fill: var(--surface); }
+.mz-wall { fill: none; stroke: var(--line-strong); stroke-width: 2.5px; stroke-linecap: round; stroke-linejoin: round; }
+.mz-start { fill: var(--accent); }
+.mz-end { fill: var(--second); }
+.mz-path { fill: none; stroke: var(--accent); stroke-width: 0.34; stroke-linecap: round; stroke-linejoin: round; opacity: 0.85; }
+.mz-head { fill: var(--accent-deep); }
+.mz-fl { fill: var(--second); opacity: 0.45; animation: mzfl 1.4s ease forwards; }
+@keyframes mzfl { to { opacity: 0; } }
+
+/* ---------- Frase cifrata ---------- */
+.cf { container-type: size; }
+.cf-lines { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: calc(100cqw / var(--cols) * 0.25); }
+.cf-row { display: flex; justify-content: center; }
+.cf-c { width: calc(100cqw / var(--cols)); display: grid; justify-items: center; gap: 2px; cursor: pointer; }
+.cf-l {
+  width: 86%; aspect-ratio: 1 / 1.05; display: grid; place-items: center; border-bottom: 3px solid var(--line-strong);
+  background: var(--surface); border-radius: 8px 8px 2px 2px; font-size: calc(100cqw / var(--cols) * 0.5); font-weight: 600; color: var(--accent-deep);
+  transition: background-color 0.15s;
+}
+.cf-n { font-size: calc(100cqw / var(--cols) * 0.27); color: var(--ink-soft); font-weight: 500; line-height: 1; }
+.cf-c.given .cf-l { color: var(--ink); }
+.cf-c.sel .cf-l { background: var(--accent-soft); border-bottom-color: var(--accent); }
+.cf-gap { width: calc(100cqw / var(--cols) * 0.6); }
+.cf-apo { width: calc(100cqw / var(--cols) * 0.3); font-size: calc(100cqw / var(--cols) * 0.5); color: var(--ink); text-align: center; }
+.cf-info { font-size: 14px; color: var(--ink-soft); text-align: center; min-height: 20px; }
+.cf-info b { color: var(--accent-deep); }
+
+/* ---------- Anagrammi ---------- */
+.an { container-type: size; display: grid; grid-template-rows: repeat(var(--rows), 1fr); }
+.an-row { display: grid; align-content: center; justify-items: center; gap: calc(100cqh / var(--rows) * 0.06); min-height: 0; }
+.an-clue { font-size: min(calc(100cqh / var(--rows) * 0.2), 16px); color: var(--ink-soft); text-align: center; line-height: 1.2; padding: 0 4px; }
+.an-tiles { display: flex; gap: calc(100cqw / var(--cols) * 0.1); }
+.an-t {
+  width: min(calc(100cqw / var(--cols) * 0.86), calc(100cqh / var(--rows) * 0.55)); aspect-ratio: 1; border-radius: 22%;
+  border: 2px solid var(--line); background: var(--surface); box-shadow: 0 3px 0 var(--edge); padding: 0;
+  font-size: min(calc(100cqw / var(--cols) * 0.45), calc(100cqh / var(--rows) * 0.3)); font-weight: 600; color: var(--ink);
+  display: grid; place-items: center; transition: background-color 0.2s, transform 0.12s;
+}
+.an-t.sel { background: var(--accent-soft); border-color: var(--accent); transform: translateY(-3px); }
+.an-row.ok .an-t { background: var(--accent); border-color: var(--accent-deep); color: var(--on-accent); }
+.an-row.ok .an-clue { color: var(--accent-deep); }
