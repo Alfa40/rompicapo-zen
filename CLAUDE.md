@@ -1,6 +1,6 @@
 # Rompicapo Zen
 
-Web app in italiano con 10 rompicapo tradizionali (Sudoku, Nonogramma, Ponti, Futoshiki, Calcudoku, Collega i colori,
+Web app in italiano con 9 rompicapo tradizionali (Sudoku, Ponti, Futoshiki, Calcudoku, Collega i colori,
 Stelle, Tubi, Luci, Porte colorate) in stile cartoon vivace ma calmo, "zen". Pubblicata su GitHub Pages:
 https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `main`, con `.github/workflows/pagine.yml`).
 

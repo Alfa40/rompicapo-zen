@@ -2,7 +2,7 @@
 self.window = self;
 importScripts(
   'core.js', 'numgrid.js',
-  'games/sudoku.js', 'games/nonogram.js', 'games/hashi.js', 'games/futoshiki.js', 'games/calcudoku.js',
+  'games/sudoku.js', 'games/hashi.js', 'games/futoshiki.js', 'games/calcudoku.js',
   'games/flow.js', 'games/stars.js', 'games/pipes.js', 'games/lights.js', 'games/blocks.js'
 );
 

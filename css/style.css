@@ -355,26 +355,6 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spac
 .key.tool { color: var(--ink-soft); }
 .key.tool.active { background: var(--accent); color: var(--on-accent); border-color: var(--accent-deep); }
 
-/* ---------- Nonogramma ---------- */
-.nono { display: grid; container-type: size; }
-.nono-corner { border-radius: 14px 0 0 0; }
-.nono-cc, .nono-rc { display: flex; align-items: center; color: var(--ink); font-weight: 500; font-size: calc(var(--u) * 0.48); line-height: 1.05; transition: opacity 0.3s, color 0.3s; }
-.nono-cc { flex-direction: column; justify-content: flex-end; padding-bottom: calc(var(--u) * 0.18); background: linear-gradient(var(--surface-2), var(--tint)); border-radius: 10px 10px 0 0; margin: 0 1px; }
-.nono-rc { justify-content: flex-end; gap: calc(var(--u) * 0.26); padding-right: calc(var(--u) * 0.22); background: linear-gradient(90deg, var(--surface-2), var(--tint)); border-radius: 10px 0 0 10px; margin: 1px 0; }
-.nono-cc.done, .nono-rc.done { color: var(--ink-soft); opacity: 0.45; }
-.nono-c { background: var(--surface); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); position: relative; cursor: pointer; transition: background-color 0.12s; }
-.nono-c.r5 { border-right: 2px solid var(--line-strong); }
-.nono-c.b5 { border-bottom: 2px solid var(--line-strong); }
-.nono-c.last-x { border-right: none; }
-.nono-c.last-y { border-bottom: none; }
-.nono-c.f { background: var(--accent); box-shadow: inset 0 -3px 0 hsl(var(--h) 45% 30% / 0.25); }
-.nono-c.x::after { content: ''; position: absolute; inset: 30%; background:
-  linear-gradient(45deg, transparent 42%, var(--ink-soft) 42%, var(--ink-soft) 58%, transparent 58%),
-  linear-gradient(-45deg, transparent 42%, var(--ink-soft) 42%, var(--ink-soft) 58%, transparent 58%); opacity: 0.6; border-radius: 2px; }
-.board.solved .nono-c { border-color: transparent; transition: background-color 1s ease; }
-.board.solved .nono-c.f { background: hsl(calc(var(--h) + (var(--px) - var(--py)) * 50) 62% 62%); }
-.board.solved .nono-c.x::after { opacity: 0; transition: opacity 0.6s; }
-
 /* ---------- Ponti ---------- */
 .hashi { overflow: visible; }
 .h-dots circle { fill: var(--line); }
