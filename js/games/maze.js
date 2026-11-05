@@ -94,7 +94,7 @@
     hue: 120,
     tagline: 'Trova la strada per uscire.',
     rules: `<p>Parti dall'<b>entrata</b> in alto a sinistra e arriva all'<b>uscita</b> in basso a destra, senza attraversare i muri.</p>
-      <p><b>Trascina il dito</b> lungo i corridoi per disegnare la strada, oppure usa le <b>freccette</b> (anche quelle della tastiera); tornando indietro sulla strada la cancelli. Tocca un punto della strada per ripartire da lì.</p>
+      <p><b>Trascina il dito</b> lungo i corridoi per disegnare la strada, oppure usa le <b>freccette</b> (anche quelle della tastiera). Sotto la griglia puoi scegliere «Scorrere col dito»: scorri verso l'alto, il basso, sinistra o destra e il pallino va in quella direzione; tornando indietro sulla strada la cancelli. Tocca un punto della strada per ripartire da lì.</p>
       <p>Dall'entrata all'uscita c'è <b>una sola strada</b>: tutte le altre finiscono in vicoli ciechi.</p>`,
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="10" class="ic-s"/><path d="M16 16h32v32H24M16 16v24M24 24h16v16H32v-8" class="ic-l2"/></svg>`,
     generate,
@@ -157,9 +157,18 @@
         }
         return moved;
       };
+      /* modo di comando: 'tasti' (freccette + trascinare lungo i corridoi) o 'touch' (scorrere il dito) */
+      let mode = Z.store.get('maze-mode', 'tasti') === 'touch' ? 'touch' : 'tasti';
+      let sw = null;
       svg.addEventListener('pointerdown', e => {
         if (!cur) return;
         e.preventDefault();
+        if (mode === 'touch') {
+          sw = { id: e.pointerId, x: e.clientX, y: e.clientY };
+          ctx.begin();
+          try { svg.setPointerCapture(e.pointerId); } catch (err) { /* ignorato */ }
+          return;
+        }
         const c = cellAt(e);
         if (c < 0) return;
         const s = Z.clone(cur);
@@ -171,13 +180,31 @@
         ctx.preview(s);
       });
       svg.addEventListener('pointermove', e => {
+        if (sw && sw.id === e.pointerId && cur) {
+          /* scorrendo il dito: un passo ogni mezza casella, nella direzione dominante */
+          const cell = svg.getBoundingClientRect().width / (n + 1.2), thr = Math.max(14, cell * 0.5);
+          let dx = e.clientX - sw.x, dy = e.clientY - sw.y;
+          for (let g = 0; g < n && Math.max(Math.abs(dx), Math.abs(dy)) >= thr; g++) {
+            const horiz = Math.abs(dx) >= Math.abs(dy);
+            const last = cur.p[cur.p.length - 1], x = last % n + (horiz ? Math.sign(dx) : 0), y = ((last / n) | 0) + (horiz ? 0 : Math.sign(dy));
+            if (horiz) { sw.x += Math.sign(dx) * thr; dx = e.clientX - sw.x; } else { sw.y += Math.sign(dy) * thr; dy = e.clientY - sw.y; }
+            if (x < 0 || y < 0 || x >= n || y >= n) continue;
+            const s = Z.clone(cur);
+            if (stepTo(s, y * n + x)) ctx.preview(s);
+          }
+          return;
+        }
         if (drag !== e.pointerId || !cur) return;
         const c = cellAt(e);
         if (c < 0) return;
         const s = Z.clone(cur);
         if (walk(s, c)) ctx.preview(s);
       });
-      const up = e => { if (drag !== e.pointerId) return; drag = null; ctx.end(); };
+      const up = e => {
+        if (sw && sw.id === e.pointerId) { sw = null; ctx.end(); return; }
+        if (drag !== e.pointerId) return;
+        drag = null; ctx.end();
+      };
       svg.addEventListener('pointerup', up);
       svg.addEventListener('pointercancel', up);
 
@@ -196,7 +223,19 @@
         pad.append(Z.h(`button.key.tool.mz-k.mz-${nm.toLowerCase()}`, { type: 'button', 'aria-label': label,
           html: `<svg viewBox="0 0 24 24"><path d="${path}"/></svg>`, on: { click: () => go(dx, dy) } }));
       }
-      ctx.controls.append(pad);
+      const sel = Z.h('div.mz-mode');
+      const setMode = m => {
+        mode = m; Z.store.set('maze-mode', m);
+        pad.style.display = m === 'touch' ? 'none' : '';
+        for (const b of sel.children) b.setAttribute('aria-pressed', String(b.dataset.m === m));
+      };
+      for (const [m, t] of [['tasti', 'Tasti'], ['touch', 'Scorrere col dito']]) {
+        const b = Z.h('button.tool.mz-m', { type: 'button', on: { click: () => setMode(m) } });
+        b.textContent = t; b.dataset.m = m;
+        sel.append(b);
+      }
+      ctx.controls.append(sel, pad);
+      setMode(mode);
       const onKey = e => {
         if (!el.isConnected) { document.removeEventListener('keydown', onKey); return; }
         if (e.ctrlKey || e.metaKey || e.altKey) return;

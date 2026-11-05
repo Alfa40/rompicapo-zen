@@ -618,6 +618,9 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spac
 .mz-pad { display: grid; grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(2, 48px); gap: 6px; justify-content: center; }
 .mz-k { width: 100%; height: 100%; padding: 0; }
 .mz-k svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.mz-mode { display: flex; gap: 6px; justify-content: center; margin-bottom: 8px; }
+.mz-m { padding: 6px 14px; border-radius: 999px; }
+.mz-m[aria-pressed="true"] { background: var(--accent); color: #fff; }
 .mz-up { grid-column: 2; grid-row: 1; }
 .mz-left { grid-column: 1; grid-row: 2; }
 .mz-down { grid-column: 2; grid-row: 2; }
