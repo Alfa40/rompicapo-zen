@@ -615,6 +615,13 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spac
 /* ---------- Labirinto ---------- */
 .mz-svg { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
 .mz-bg { fill: var(--surface); }
+.mz-pad { display: grid; grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(2, 48px); gap: 6px; justify-content: center; }
+.mz-k { width: 100%; height: 100%; padding: 0; }
+.mz-k svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.mz-up { grid-column: 2; grid-row: 1; }
+.mz-left { grid-column: 1; grid-row: 2; }
+.mz-down { grid-column: 2; grid-row: 2; }
+.mz-right { grid-column: 3; grid-row: 2; }
 .mz-wall { fill: none; stroke: var(--line-strong); stroke-width: 2.5px; stroke-linecap: round; stroke-linejoin: round; }
 .mz-start { fill: var(--accent); }
 .mz-end { fill: var(--second); }

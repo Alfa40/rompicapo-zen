@@ -94,7 +94,7 @@
     hue: 120,
     tagline: 'Trova la strada per uscire.',
     rules: `<p>Parti dall'<b>entrata</b> in alto a sinistra e arriva all'<b>uscita</b> in basso a destra, senza attraversare i muri.</p>
-      <p><b>Trascina il dito</b> lungo i corridoi per disegnare la strada; tornando indietro sulla strada la cancelli. Tocca un punto della strada per ripartire da lì.</p>
+      <p><b>Trascina il dito</b> lungo i corridoi per disegnare la strada, oppure usa le <b>freccette</b> (anche quelle della tastiera); tornando indietro sulla strada la cancelli. Tocca un punto della strada per ripartire da lì.</p>
       <p>Dall'entrata all'uscita c'è <b>una sola strada</b>: tutte le altre finiscono in vicoli ciechi.</p>`,
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="10" class="ic-s"/><path d="M16 16h32v32H24M16 16v24M24 24h16v16H32v-8" class="ic-l2"/></svg>`,
     generate,
@@ -180,6 +180,32 @@
       const up = e => { if (drag !== e.pointerId) return; drag = null; ctx.end(); };
       svg.addEventListener('pointerup', up);
       svg.addEventListener('pointercancel', up);
+
+      /* freccette: un passo nella direzione scelta (indietro sulla strada = la cancella) */
+      const go = (dx, dy) => {
+        if (!cur) return;
+        const last = cur.p[cur.p.length - 1], x = last % n + dx, y = ((last / n) | 0) + dy;
+        if (x < 0 || y < 0 || x >= n || y >= n) return;
+        const s = Z.clone(cur);
+        if (stepTo(s, y * n + x)) ctx.commit(s);
+      };
+      const DIRS = [['Up', 'Su', 0, -1, 'M12 19V6M6 12l6-6 6 6'], ['Left', 'Sinistra', -1, 0, 'M19 12H6M12 6l-6 6 6 6'],
+        ['Down', 'Giù', 0, 1, 'M12 5v13M6 12l6 6 6-6'], ['Right', 'Destra', 1, 0, 'M5 12h13M12 6l6 6-6 6']];
+      const pad = Z.h('div.mz-pad');
+      for (const [nm, label, dx, dy, path] of DIRS) {
+        pad.append(Z.h(`button.key.tool.mz-k.mz-${nm.toLowerCase()}`, { type: 'button', 'aria-label': label,
+          html: `<svg viewBox="0 0 24 24"><path d="${path}"/></svg>`, on: { click: () => go(dx, dy) } }));
+      }
+      ctx.controls.append(pad);
+      const onKey = e => {
+        if (!el.isConnected) { document.removeEventListener('keydown', onKey); return; }
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        const D = DIRS.find(d => e.key === 'Arrow' + d[0]);
+        if (!D) return;
+        e.preventDefault();
+        go(D[2], D[3]);
+      };
+      document.addEventListener('keydown', onKey);
 
       return {
         el, aspect: 1,
