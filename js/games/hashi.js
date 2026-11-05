@@ -317,9 +317,27 @@
           g.classList.toggle('cand', sel >= 0 && i !== sel && edgeBetween(sel, i) >= 0);
         });
       }
+      /* modalità «Frecce»: il riquadro salta da un'isola all'altra; «Ponte» e una freccia fanno il ponte */
+      const nearest = (i, d) => {
+        const [dx, dy] = Z.DIRS[d], [x, y] = pts[i];
+        let best = i, bs = 1e9;
+        pts.forEach(([px, py], j) => {
+          const a = (px - x) * dx + (py - y) * dy, b = Math.abs((px - x) * dy) + Math.abs((py - y) * dx);
+          if (j === i || a <= 0) return;
+          const sc = a + 2 * b;
+          if (sc < bs) { bs = sc; best = j; }
+        });
+        return best;
+      };
       return {
         el: svg, aspect: W / H,
         render(s) { cur = s; paint(); },
+        cursor: () => Z.gridCursor(ctx, {
+          el: i => isEls[i], step: nearest,
+          tip: 'Le frecce passano da un\'isola all\'altra.',
+          keys: [{ label: 'Ponte', icon: Z.ICONS.bridge, dir: true, tip: 'Scegli con una freccia verso quale isola fare il ponte (di nuovo: doppio, poi lo togli).',
+            act(i, d) { const e = neighbor(i, ...Z.DIRS[d]); if (e >= 0) cycle(e); else Z.flashEl(isEls[i]); } }],
+        }),
         flash(list) { (list || []).forEach(i => Z.flashEl(isEls[i])); },
       };
     },

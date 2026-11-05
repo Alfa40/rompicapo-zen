@@ -134,6 +134,11 @@
         el, aspect: 1,
         render(s) { cur = s; cells.forEach((c, i) => c.classList.toggle('on', !!s.on[i])); },
         flash(list) { (list || []).forEach(i => Z.flashEl(cells[i])); },
+        cursor: () => Z.gridCursor(ctx, {
+          w: n, h: n, el: i => cells[i],
+          tip: 'Sposta il riquadro con le frecce e tocca la lanterna.',
+          keys: [{ label: 'Tocca la lanterna', icon: Z.ICONS.tap, act: i => { if (!cur) return; const s = Z.clone(cur); press(n, s.on, i); ctx.commit(s); } }],
+        }),
       };
     },
   });

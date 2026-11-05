@@ -793,6 +793,7 @@ CINTURA|Tiene su i pantaloni`;
           c.classList.toggle('word', on.has(i));
           c.classList.toggle('sel', i === sel);
         });
+        if (sel >= 0) ctx.mark(cells[sel], true);
         if (!p) { clueTx.textContent = fit ? 'Tocca una casella e scrivi una parola dell\'elenco' : 'Tocca una casella per vedere la definizione'; return; }
         if (fit) {
           const wr = written(), L = p.word.length;
@@ -804,6 +805,15 @@ CINTURA|Tiene su i pantaloni`;
       return {
         el, aspect: W / H, letters: true,
         render(s) { cur = s; paint(); },
+        /* modalità «Frecce»: le frecce spostano la casella, «Gira» passa da orizzontale a verticale */
+        cursor() {
+          const pad = Z.arrowPad({
+            compact: true,
+            onDir: d => { const [dx, dy] = Z.DIRS[d]; move(dx, dy); },
+            keys: [{ label: 'Gira', icon: Z.ICONS.swap, act: () => { if (sel >= 0 && slot(sel, 1 - dir)) { dir = 1 - dir; paint(); } } }],
+          });
+          return { el: pad.el };
+        },
         flash(list) { (list || []).forEach(i => Z.flashEl(cells[i])); },
         onKey(e) {
           if (e.ctrlKey || e.metaKey || e.altKey) return false;

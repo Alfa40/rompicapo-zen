@@ -166,10 +166,19 @@
           t.outer.classList.toggle('wet', !!f.wet[i]);
         });
       }
+      const turn = (i, k) => { if (!cur) return; const s = Z.clone(cur); s.r[i] += k; ctx.commit(s); };
       return {
         el: svg, aspect: 1,
         render(s) { cur = s; paint(); },
         flash(list) { (list || []).forEach(i => Z.flashEl(tiles[i].outer)); },
+        cursor: () => Z.gridCursor(ctx, {
+          w: n, h: n, el: i => tiles[i].outer,
+          tip: 'Sposta il riquadro con le frecce e gira il pezzo.',
+          keys: [
+            { label: 'Gira', icon: Z.ICONS.rotate, act: i => turn(i, 1) },
+            { label: 'Indietro', icon: Z.ICONS.rotateBack, act: i => turn(i, -1) },
+          ],
+        }),
       };
     },
   });

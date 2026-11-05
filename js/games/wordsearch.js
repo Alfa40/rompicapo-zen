@@ -229,8 +229,36 @@
       const keyEl = Z.h('div.ws-key');
       ctx.controls.append(Z.h('div.ws-ctl', null, head, list, keyEl));
 
+      /* modalità «Frecce»: «Inizio parola» sulla prima lettera, poi le frecce fino all'ultima e «Fine parola» */
+      let from = -1;
+      const aligned = (a, b) => { const dx = b % n - a % n, dy = ((b / n) | 0) - ((a / n) | 0); return !dx || !dy || Math.abs(dx) === Math.abs(dy); };
+      const take = (s, t) => {
+        if (s === t) return;
+        const i = P.words.findIndex((p, k) => {
+          if (cur.f[k]) return false;
+          const c = cellsOf(n, p);
+          return (c[0] === s && c[c.length - 1] === t) || (c[0] === t && c[c.length - 1] === s);
+        });
+        if (i < 0) { Z.flashEl(cells[t]); return; }
+        const ns = Z.clone(cur);
+        ns.f[i] = 1;
+        ctx.commit(ns);
+      };
       return {
         el, aspect: 1,
+        cursor: () => Z.gridCursor(ctx, {
+          w: n, h: n, el: i => cells[i],
+          tip: 'Vai sulla prima lettera di una parola e tocca «Inizio parola».',
+          keys: [{ label: (i, on) => (on ? 'Fine parola' : 'Inizio parola'), icon: Z.ICONS.pen, pen: true,
+            tip: 'Vai sull\'ultima lettera (in diagonale: una freccia alla volta, a scaletta) e tocca «Fine parola».',
+            act(j, prev) {
+              if (!cur) return false;
+              if (prev < 0) from = j;
+              if (aligned(from, j)) { line(tmp, from, j); tmp.classList.add('on'); } else tmp.classList.remove('on');
+              return true;
+            },
+            stop(j) { tmp.classList.remove('on'); if (from >= 0 && aligned(from, j)) take(from, j); from = -1; } }],
+        }),
         render(s) {
           cur = s;
           capsG.innerHTML = '';

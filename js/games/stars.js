@@ -365,10 +365,23 @@
           c.classList.toggle('bad', bad.has(i));
         });
       }
+      /* comandi con le frecce */
+      const put = (i, v) => { if (!cur) return; const s = Z.clone(cur); s.c[i] = s.c[i] === v ? 0 : v; ctx.commit(s); };
       return {
         el, aspect: 1,
         render(s) { cur = s; paint(); },
         flash(list) { (list || []).forEach(i => Z.flashEl(cells[i])); },
+        cursor: () => Z.gridCursor(ctx, {
+          w: n, h: n, el: i => cells[i],
+          tip: 'Sposta il riquadro con le frecce, poi scegli cosa mettere.',
+          keys: [
+            { label: 'Stella', icon: Z.ICONS.star, act: i => put(i, 1) },
+            { label: 'Puntino', icon: Z.ICONS.dot, act: i => put(i, 2) },
+            { label: 'Cancella', icon: Z.ICONS.erase, act: i => { if (cur && cur.c[i]) { const s = Z.clone(cur); s.c[i] = 0; ctx.commit(s); } } },
+            { label: 'Puntini in fila', icon: Z.ICONS.pen, pen: true, tip: 'Muovendoti metti un puntino in ogni casella vuota. Tocca di nuovo per smettere.',
+              act: i => { if (cur && cur.c[i] === 0) { const s = Z.clone(cur); s.c[i] = 2; ctx.commit(s); } } },
+          ],
+        }),
       };
     },
   });

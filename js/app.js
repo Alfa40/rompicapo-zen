@@ -348,12 +348,14 @@
     const bRedo = h('button.tool', { type: 'button', html: Z.ICONS.redo + '<span>Ripristina</span>' });
     const bHint = h('button.tool', { type: 'button', html: Z.ICONS.hint + '<span>Suggerimento</span>' });
     const bNew = h('button.tool', { type: 'button', html: Z.ICONS.fresh + '<span>Nuovo</span>' });
-    const toolbar = h('nav.toolbar', null, bUndo, bRedo, bHint, bNew);
+    const bArrows = h('button.tool.t-arrows', { type: 'button', title: 'Gioca con le frecce invece di toccare la griglia', 'aria-pressed': 'false', html: Z.ICONS.arrows + '<span>Frecce</span>' });
+    const toolbar = h('nav.toolbar', null, bUndo, bRedo, bHint, bArrows, bNew);
+    const padZone = h('div.pad-zone');
     const hintText = h('div.hint-tx');
     const hintBox = h('div.hint-box', { role: 'status', 'aria-live': 'polite' },
       h('div.hint-ic', { html: Z.ICONS.hint }), hintText,
       h('button.hint-x', { type: 'button', 'aria-label': 'Chiudi spiegazione', html: Z.ICONS.cross, on: { click: () => hideHint() } }));
-    screen.append(bar, wrap, hintBox, controls, toolbar);
+    screen.append(bar, wrap, hintBox, padZone, controls, toolbar);
     let hinting = false;
     function showHint(html) {
       /* "il 1" -> "l'1", "il 8" -> "l'8", "il 11" -> "l'11" */
@@ -405,6 +407,15 @@
       },
       preview(ns) { if (won) return; cur = ns; view.render(cur); },
       begin() { gestureStart = JSON.stringify(cur); },
+      /* casella scelta con le frecce: si evidenzia (se non quiet) e, sulla griglia ingrandita, la vista la segue */
+      mark(t, quiet) {
+        const moved = t !== markT;
+        markT = t || null; markQuiet = !!quiet;
+        if (moved) follow();
+        placeMark();
+        clearTimeout(markTimer);
+        markTimer = setTimeout(placeMark, 330);
+      },
       end() {
         if (gestureStart !== null && gestureStart !== JSON.stringify(cur)) {
           undo.push(gestureStart);
@@ -418,7 +429,10 @@
 
     /* ---------- Zoom solo sulla griglia (le griglie grandi hanno caselle piccole) ---------- */
     const Zm = { s: 1, tx: 0, ty: 0, max: 1, bw: 0, bh: 0, ww: 0, wh: 0 };
-    const zoomUI = h('div.zoom-ui', null,
+    let panMode = false, pan = null;
+    const bPan = h('button.zoom-btn.pan-btn', { type: 'button', title: 'Sposta la griglia con un dito', 'aria-label': 'Sposta la griglia con un dito', 'aria-pressed': 'false', html: Z.ICONS.hand,
+      on: { click: () => { panMode = !panMode; bPan.classList.toggle('on', panMode); bPan.setAttribute('aria-pressed', String(panMode)); wrap.classList.toggle('panning', panMode); } } });
+    const zoomUI = h('div.zoom-ui', null, bPan,
       h('button.zoom-btn', { type: 'button', 'aria-label': 'Ingrandisci la griglia', text: '+', on: { click: () => zoomAt(Zm.s * 1.6) } }),
       h('button.zoom-btn', { type: 'button', 'aria-label': 'Riduci la griglia', text: '−', on: { click: () => zoomAt(Zm.s / 1.6) } }));
     function clampZoom() {
@@ -435,6 +449,34 @@
       view.el.style.height = Math.floor(Zm.bh * Zm.s) + 'px';
       view.el.style.transform = Zm.s > 1 ? `translate(${Zm.tx}px, ${Zm.ty}px)` : '';
       wrap.classList.toggle('zoomed', Zm.s > 1.01);
+      placeMark();
+    }
+
+    /* evidenziazione della casella scelta con le frecce */
+    const markEl = h('div.cur-mark');
+    let markT = null, markQuiet = true, markTimer = 0;
+    function placeMark() {
+      const t = markT;
+      if (!t || markQuiet || !view || !t.isConnected) { markEl.hidden = true; return; }
+      const r = t.getBoundingClientRect(), W = wrap.getBoundingClientRect();
+      markEl.hidden = false;
+      markEl.style.left = (r.left - W.left - 3) + 'px';
+      markEl.style.top = (r.top - W.top - 3) + 'px';
+      markEl.style.width = (r.width + 6) + 'px';
+      markEl.style.height = (r.height + 6) + 'px';
+    }
+    /* sulla griglia ingrandita, sposta la vista finché la casella scelta è ben visibile */
+    function follow() {
+      const t = markT;
+      if (!t || !view || !t.isConnected || Zm.s <= 1.01) return;
+      const r = t.getBoundingClientRect(), W = wrap.getBoundingClientRect();
+      const m = Math.min(60, W.width / 5, W.height / 5);
+      let dx = 0, dy = 0;
+      if (r.left < W.left + m) dx = W.left + m - r.left; else if (r.right > W.right - m) dx = W.right - m - r.right;
+      if (r.top < W.top + m) dy = W.top + m - r.top; else if (r.bottom > W.bottom - m) dy = W.bottom - m - r.bottom;
+      if (!dx && !dy) return;
+      Zm.tx += dx; Zm.ty += dy;
+      applyZoom();
     }
     /* zoom verso un punto (coordinate rispetto al centro del campo) */
     function zoomAt(ns, px = 0, py = 0) {
@@ -546,6 +588,47 @@
         applyZoom();
       }
     }, { passive: false });
+    /* tasto «Sposta»: con la griglia ingrandita un dito sposta la vista invece di giocare */
+    wrap.addEventListener('pointerdown', e => {
+      if (!panMode || Zm.s <= 1.01 || (e.target.closest && e.target.closest('.zoom-ui'))) return;
+      e.stopPropagation(); e.preventDefault();
+      if (touches.size > 1) { pan = null; return; }
+      pan = { id: e.pointerId, x: e.clientX, y: e.clientY, tx: Zm.tx, ty: Zm.ty };
+      try { wrap.setPointerCapture(e.pointerId); } catch (err) { /* ok */ }
+    }, true);
+    wrap.addEventListener('pointermove', e => {
+      if (!pan || e.pointerId !== pan.id) return;
+      e.stopPropagation(); e.preventDefault();
+      if (touches.size > 1) { pan = null; return; }
+      Zm.tx = pan.tx + e.clientX - pan.x; Zm.ty = pan.ty + e.clientY - pan.y;
+      applyZoom();
+    }, true);
+    const panEnd = e => { if (pan && e.pointerId === pan.id) { e.stopPropagation(); pan = null; } };
+    wrap.addEventListener('pointerup', panEnd, true);
+    wrap.addEventListener('pointercancel', panEnd, true);
+
+    /* modalità «Frecce»: ogni gioco ha i suoi comandi (view.cursor), scelta salvata per gioco */
+    let curPad = null;
+    const arrowsOn = () => !!Z.store.get(`arrows:${id}`, 0);
+    function openPad() {
+      closePad();
+      if (!view || !view.cursor || !arrowsOn()) return;
+      curPad = view.cursor();
+      padZone.append(curPad.el);
+      if (curPad.render && cur) curPad.render(cur);
+      fit();
+    }
+    function closePad() {
+      if (curPad && curPad.off) curPad.off();
+      curPad = null;
+      padZone.innerHTML = '';
+    }
+    bArrows.addEventListener('click', () => {
+      Z.store.set(`arrows:${id}`, arrowsOn() ? 0 : 1);
+      bArrows.classList.toggle('on', arrowsOn());
+      bArrows.setAttribute('aria-pressed', String(arrowsOn()));
+      if (arrowsOn()) openPad(); else { closePad(); fit(); }
+    });
 
     function begin() {
       wrap.innerHTML = '';
@@ -555,10 +638,19 @@
       Z.store.set('homeTheme', theme.id);
       themeName.textContent = theme.name;
       lvPill.textContent = P.opt ? Z.optsSummary(G, P.opt) : 'Difficoltà';
+      closePad();
+      markT = null;
       view = G.view(ctx);
       view.el.classList.add('board');
+      const draw = view.render.bind(view);
+      view.render = st => { draw(st); if (curPad && curPad.render) curPad.render(st); placeMark(); };
       Zm.s = 1; Zm.tx = 0; Zm.ty = 0;
-      wrap.append(view.el, zoomUI);
+      wrap.append(view.el, markEl, zoomUI);
+      bArrows.hidden = !view.cursor;
+      bArrows.classList.toggle('on', arrowsOn());
+      bArrows.setAttribute('aria-pressed', String(arrowsOn()));
+      toolbar.classList.toggle('five', !!view.cursor);
+      openPad();
       fit();
       requestAnimationFrame(fit);
       view.render(cur);

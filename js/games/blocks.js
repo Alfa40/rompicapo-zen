@@ -369,8 +369,51 @@
       svg.addEventListener('pointerup', end);
       svg.addEventListener('pointercancel', end);
 
+      /* modalità «Frecce»: il riquadro passa da un blocco all'altro; «Sposta» e una freccia lo fanno scorrere */
+      const center = i => {
+        const b = P.blocks[i], [x, y] = cur.pos[i];
+        return [x + b.shape.reduce((t, c) => t + c[0], 0) / b.shape.length, y + b.shape.reduce((t, c) => t + c[1], 0) / b.shape.length];
+      };
+      const left = () => P.blocks.map((b, i) => i).filter(i => !cur.removed[i]);
+      const nearestBlock = (i, d) => {
+        const [dx, dy] = Z.DIRS[d], [x, y] = center(i);
+        let best = i, bs = 1e9;
+        for (const j of left()) {
+          const [px, py] = center(j), a = (px - x) * dx + (py - y) * dy, b = Math.abs((px - x) * dy) + Math.abs((py - y) * dx);
+          if (j === i || a <= 0.01) continue;
+          if (a + 2 * b < bs) { bs = a + 2 * b; best = j; }
+        }
+        return best;
+      };
+      const closest = i => {
+        if (!cur || !cur.removed[i]) return i;
+        const [x, y] = center(i);
+        let best = i, bd = 1e9;
+        for (const j of left()) { const [px, py] = center(j), dd = Math.hypot(px - x, py - y); if (dd < bd) { bd = dd; best = j; } }
+        return best;
+      };
+      function slide(i, d) {
+        if (!cur || cur.removed[i]) return;
+        const [dx, dy] = Z.DIRS[d], b = P.blocks[i];
+        if ((b.lock === 'h' && dy) || (b.lock === 'v' && dx)) { Z.flashEl(groups[i].querySelector('.blk-in')); return; }
+        const occ = occupancy(P, cur.pos, cur.removed);
+        let [x, y] = cur.pos[i];
+        while (fits(P, b.shape, x + dx, y + dy, occ, i)) { x += dx; y += dy; }
+        const side = { l: 'left', r: 'right', u: 'top', d: 'bottom' }[d];
+        const out = P.doors.find(o => o.side === side && o.color === b.color && lockOk(b.lock, o.side) && atDoor(P, b.shape, x, y, o));
+        if (out) { ctx.begin(); exit(i, x, y, out); return; }
+        if (x === cur.pos[i][0] && y === cur.pos[i][1]) { Z.flashEl(groups[i].querySelector('.blk-in')); return; }
+        const s = Z.clone(cur);
+        s.pos[i] = [x, y];
+        ctx.commit(s);
+      }
       return {
         el: svg, aspect: (W + 2 * m) / (H + 2 * m),
+        cursor: () => Z.gridCursor(ctx, {
+          el: i => groups[i].querySelector('.blk-in'), step: nearestBlock, fix: closest,
+          tip: 'Le frecce passano da un blocco all\'altro.',
+          keys: [{ label: 'Sposta', icon: Z.ICONS.move, dir: true, tip: 'Scegli con una freccia dove far scorrere il blocco.', act: slide }],
+        }),
         render(s) {
           cur = s;
           groups.forEach((g, i) => {
