@@ -175,17 +175,51 @@
         h('div.logo', { on: { click: () => Z.Proposte && Z.Proposte.logoTap() }, html: '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" class="lg-a"/><path d="M14 27c3 5 7 7 10 7s7-2 10-7" class="lg-l"/><circle cx="18" cy="20" r="2.4" class="lg-e"/><circle cx="30" cy="20" r="2.4" class="lg-e"/></svg>' }),
         h('div', null, h('h1', { text: 'Rompicapo Zen' }), h('p.sub', { text: 'Respira. Pensa. Risolvi.' }))),
       modeButton());
-    const grid = h('div.cards');
-    Z.ORDER.forEach((id, k) => {
-      const G = Z.GAMES[id];
-      const saved = Z.store.get(`save:${id}`, null);
-      const card = h('button.card', { type: 'button', style: { '--h': G.hue, '--k': k } },
-        h('div.card-ic', { html: G.icon }),
-        h('div.card-tx', null, h('h2', { text: G.name }), h('p', { text: G.tagline })),
-        saved ? h('span.badge', { text: 'In corso' }) : null);
-      card.addEventListener('click', () => needsTutorial(id) ? tutorial(G, () => setupSheet(id)) : setupSheet(id));
-      grid.append(card);
-    });
+    const CATS = [
+      { id: 'numeri', name: 'Numeri', ids: ['sudoku', 'futoshiki', 'calcudoku'] },
+      { id: 'logica', name: 'Logica', ids: ['hashi', 'stars', 'lights'] },
+      { id: 'percorsi', name: 'Percorsi e colori', ids: ['flow', 'pipes', 'blocks', 'maze'] },
+      { id: 'parole', name: 'Parole', ids: ['crossword', 'incastro', 'wordsearch', 'cipher', 'anagram'] }
+    ];
+    /* i giochi non elencati finiscono in «Altri giochi» */
+    const listed = new Set(CATS.flatMap(c => c.ids));
+    const rest = Z.ORDER.filter(id => !listed.has(id));
+    if (rest.length) CATS.push({ id: 'altri', name: 'Altri giochi', ids: rest });
+    const openSet = new Set(Z.store.get('catOpen', []));
+    const grid = h('div.cats');
+    for (const cat of CATS) {
+      const ids = cat.ids.filter(id => Z.GAMES[id]);
+      if (!ids.length) continue;
+      const inCorso = ids.filter(id => Z.store.get(`save:${id}`, null)).length;
+      const open = openSet.has(cat.id);
+      const body = h('div.cards');
+      const head = h('button.cat-head', { type: 'button', 'aria-expanded': String(open) },
+        h('span.cat-name', { text: cat.name }),
+        h('span.cat-n', { text: ids.length + (inCorso ? ` · ${inCorso} in corso` : '') }),
+        h('span.cat-arrow', { 'aria-hidden': 'true', text: '▾' }));
+      const sec = h('section.cat' + (open ? '.open' : ''), null, head, body);
+      body.hidden = !open;
+      head.addEventListener('click', () => {
+        const now = !sec.classList.contains('open');
+        sec.classList.toggle('open', now);
+        head.setAttribute('aria-expanded', String(now));
+        body.hidden = !now;
+        const cur = new Set(Z.store.get('catOpen', []));
+        if (now) cur.add(cat.id); else cur.delete(cat.id);
+        Z.store.set('catOpen', [...cur]);
+      });
+      ids.forEach((id, j) => {
+        const G = Z.GAMES[id];
+        const saved = Z.store.get(`save:${id}`, null);
+        const card = h('button.card', { type: 'button', style: { '--h': G.hue, '--k': j } },
+          h('div.card-ic', { html: G.icon }),
+          h('div.card-tx', null, h('h2', { text: G.name }), h('p', { text: G.tagline })),
+          saved ? h('span.badge', { text: 'In corso' }) : null);
+        card.addEventListener('click', () => needsTutorial(id) ? tutorial(G, () => setupSheet(id)) : setupSheet(id));
+        body.append(card);
+      });
+      grid.append(sec);
+    }
     const prop = Z.Proposte ? Z.Proposte.homeButton() : null;
     screen.append(top, prop || '', grid, h('p.foot', { text: 'Ogni rompicapo è generato al momento: non ne vedrai mai due uguali.' }));
   }

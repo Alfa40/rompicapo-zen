@@ -1,5 +1,5 @@
 /* Service worker: rende il gioco disponibile anche offline quando è servito via http(s) */
-const CACHE = 'rompicapo-zen-v18';
+const CACHE = 'rompicapo-zen-v19';
 const FILES = [
   './', 'index.html', 'css/style.css', 'icon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'manifest.webmanifest',
   'js/core.js', 'js/numgrid.js', 'js/app.js', 'js/worker.js', 'js/proposte.js',
