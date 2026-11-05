@@ -176,8 +176,8 @@
       });
       const onMove = e => {
         if (sw && sw.id === e.pointerId && cur) {
-          /* scorrendo il dito: un passo ogni mezza casella, nella direzione dominante */
-          const cell = svg.getBoundingClientRect().width / (n + 1.2), thr = Math.max(14, cell * 0.5);
+          /* scorrendo il dito: un passo ogni casella intera, nella direzione dominante */
+          const cell = svg.getBoundingClientRect().width / (n + 1.2), thr = Math.max(28, cell * 1.0);
           let dx = e.clientX - sw.x, dy = e.clientY - sw.y;
           for (let g = 0; g < n && Math.max(Math.abs(dx), Math.abs(dy)) >= thr; g++) {
             const horiz = Math.abs(dx) >= Math.abs(dy);
