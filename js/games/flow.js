@@ -311,10 +311,36 @@
           else { r.style.fill = ''; r.classList.remove('on'); }
         });
       }
+      /* modalità «Frecce»: «Disegna» parte da un pallino (o da un punto di un percorso) e le frecce allungano il percorso */
+      let penC = -1;
+      function penStep(j, from) {
+        if (!cur) return false;
+        const s = Z.clone(cur);
+        if (from < 0) {
+          if (endColor[j] >= 0) { penC = endColor[j]; s.p[penC] = [j]; }
+          else { const c = owner(s, j); if (c < 0) return false; penC = c; s.p[c].length = s.p[c].indexOf(j) + 1; }
+          ctx.commit(s);
+          return true;
+        }
+        const pp = s.p[penC], head = pp[pp.length - 1], pos = pp.indexOf(j);
+        if (pos >= 0) { pp.length = pos + 1; ctx.commit(s); return true; }
+        if (head !== from || !NB[head].includes(j) || complete(P, cur, penC)) return false;
+        if (endColor[j] >= 0 && endColor[j] !== penC) return false;
+        s.p.forEach((q, k) => { if (k !== penC) { const at = q.indexOf(j); if (at >= 0) q.length = at; } });
+        pp.push(j);
+        ctx.commit(s);
+        return complete(P, cur, penC) ? 'stop' : true;
+      }
       return {
         el: svg, aspect: 1,
         render(s) { cur = s; paint(); },
         flash(list) { (list || []).forEach(c => Z.flashEl(endEls[c])); },
+        cursor: () => Z.gridCursor(ctx, {
+          w: n, h: n, el: i => cellEls[i], start: P.ends[0][0],
+          tip: 'Porta il riquadro su un pallino e tocca «Disegna».',
+          keys: [{ label: (i, on) => (on ? 'Smetti' : 'Disegna'), icon: Z.ICONS.pen, pen: true,
+            tip: 'Le frecce allungano il percorso; tornando indietro lo accorci.', act: penStep }],
+        }),
       };
     },
   });

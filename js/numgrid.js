@@ -93,7 +93,16 @@
       digitBtns.forEach((b, k) => b.classList.toggle('done', counts[k + 1] >= n));
       noteBtn.classList.toggle('active', noteMode);
       if (o.afterPaint) o.afterPaint(v, cells);
+      if (sel >= 0) ctx.mark(cells[sel], true);
     }
+    const moveSel = (dx, dy) => {
+      if (sel < 0) sel = 0;
+      else {
+        const x = (sel % n + dx + n) % n, y = (((sel / n) | 0) + dy + n) % n;
+        sel = y * n + x;
+      }
+      paint();
+    };
 
     return {
       el, aspect: 1,
@@ -116,17 +125,11 @@
         if (k === 'Backspace' || k === 'Delete') { erase(); return true; }
         if (k === 'n' || k === 'N') { noteMode = !noteMode; paint(); return true; }
         const dirs = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
-        if (dirs[k]) {
-          if (sel < 0) sel = 0;
-          else {
-            const x = (sel % n + dirs[k][0] + n) % n, y = (((sel / n) | 0) + dirs[k][1] + n) % n;
-            sel = y * n + x;
-          }
-          paint();
-          return true;
-        }
+        if (dirs[k]) { moveSel(dirs[k][0], dirs[k][1]); return true; }
         return false;
       },
+      /* modalità «Frecce»: le frecce spostano la casella scelta, i numeri restano sotto */
+      cursor: () => ({ el: Z.arrowPad({ compact: true, onDir: d => moveSel(...Z.DIRS[d]) }).el }),
     };
   };
 

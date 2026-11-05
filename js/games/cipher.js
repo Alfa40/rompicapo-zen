@@ -168,7 +168,7 @@ CHI VUOL ESSER LIETO SIA`.split('\n').map(s => s.trim()).filter(Boolean);
     hint,
     view(ctx) {
       const P = ctx.puzzle, dec = decode(P), giv = new Set(P.given.map(String));
-      let cur = null, sel = null;
+      let cur = null, sel = null, at = -1;
       /* righe di al massimo COLS caselle, senza spezzare le parole */
       const COLS = 11;
       const words = P.text.split(' ');
@@ -194,9 +194,10 @@ CHI VUOL ESSER LIETO SIA`.split('\n').map(s => s.trim()).filter(Boolean);
           const l = Z.h('span.cf-l');
           const c = Z.h('span.cf-c', null, l, Z.h('span.cf-n', { text: n }));
           c.dataset.n = n;
-          c.addEventListener('pointerdown', e => { e.preventDefault(); sel = String(n); paint(); });
+          const k = cells.length;
+          c.addEventListener('pointerdown', e => { e.preventDefault(); sel = String(n); at = k; paint(); });
           row.append(c);
-          cells.push({ c, l, n: String(n) });
+          cells.push({ c, l, n: String(n), row: lines.indexOf(ln) });
         }
         box.append(row);
       }
@@ -232,6 +233,8 @@ CHI VUOL ESSER LIETO SIA`.split('\n').map(s => s.trim()).filter(Boolean);
           c.classList.toggle('given', giv.has(n));
           c.classList.toggle('sel', n === sel);
         }
+        if (sel && (at < 0 || cells[at].n !== sel)) at = cells.findIndex(o => o.n === sel);
+        if (at >= 0) ctx.mark(cells[at].c, true);
         const found = Object.values(cur.m).filter(Boolean).length, all = Object.keys(dec).length;
         info.innerHTML = sel
           ? `Numero <b>${sel}</b> · ${cur.m[sel] ? `ora è la <b>${cur.m[sel]}</b>` : 'scrivi la lettera'} · lettere ${found} di ${all}`
@@ -240,6 +243,22 @@ CHI VUOL ESSER LIETO SIA`.split('\n').map(s => s.trim()).filter(Boolean);
       return {
         el, aspect: COLS / (rows * 1.55 + 0.3), letters: true,
         render(s) { cur = s; paint(); },
+        /* modalità «Frecce»: destra/sinistra vanno alla casella vicina, su/giù alla riga sopra o sotto */
+        cursor() {
+          const go = d => {
+            if (at < 0) at = 0;
+            else if (d === 'l' || d === 'r') at = Math.max(0, Math.min(cells.length - 1, at + (d === 'r' ? 1 : -1)));
+            else {
+              const row = cells[at].row + (d === 'd' ? 1 : -1), x = cells[at].c.getBoundingClientRect().left;
+              let best = -1, bd = 1e9;
+              cells.forEach((o, k) => { if (o.row === row) { const dd = Math.abs(o.c.getBoundingClientRect().left - x); if (dd < bd) { bd = dd; best = k; } } });
+              if (best >= 0) at = best;
+            }
+            sel = cells[at].n;
+            paint();
+          };
+          return { el: Z.arrowPad({ compact: true, onDir: go }).el };
+        },
         flash(list) { const set = new Set((list || []).map(String)); cells.forEach(o => { if (set.has(o.n)) Z.flashEl(o.c); }); },
         onKey(e) {
           if (e.ctrlKey || e.metaKey || e.altKey) return false;

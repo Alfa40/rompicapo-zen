@@ -150,6 +150,118 @@
     setTimeout(() => el.classList.remove('flash'), 1500);
   };
 
+  /* ---------- Comandi con le frecce (modalità «Frecce» della partita) ---------- */
+  Z.DIRS = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] };
+  /* tenendo premuto un tasto, si ripete */
+  const repeatBtn = (b, fn) => {
+    let t = null;
+    const stop = () => { clearTimeout(t); clearInterval(t); t = null; };
+    b.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      stop();
+      fn();
+      t = setTimeout(() => { t = setInterval(fn, 110); }, 380);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, stop));
+    b.addEventListener('click', e => { if (e.detail === 0) fn(); }); /* tastiera */
+  };
+  /* o.onDir(d) con d = 'u' | 'd' | 'l' | 'r'; o.keys: [{ label, icon, act, on() }]; o.compact: frecce in fila */
+  Z.arrowPad = function (o) {
+    const el = Z.h('div.apad' + (o.compact ? '.compact' : ''));
+    const arrows = Z.h('div.apad-arrows');
+    for (const [d, lab] of [['u', 'Su'], ['l', 'Sinistra'], ['r', 'Destra'], ['d', 'Giù']]) {
+      const b = Z.h('button.key.apad-a.' + d, { type: 'button', 'aria-label': lab, html: Z.ICONS.back });
+      repeatBtn(b, () => o.onDir(d));
+      arrows.append(b);
+    }
+    el.append(arrows);
+    const keys = (o.keys || []).map(k => {
+      const b = Z.h('button.key.apad-k', { type: 'button' });
+      b.addEventListener('click', () => k.act());
+      return b;
+    });
+    if (keys.length) el.append(Z.h('div.apad-keys', null, ...keys));
+    const tip = Z.h('p.apad-tip');
+    if (!o.compact) el.append(tip);
+    const refresh = () => {
+      (o.keys || []).forEach((k, i) => {
+        const label = typeof k.label === 'function' ? k.label() : k.label;
+        keys[i].innerHTML = (k.icon || '') + '<span>' + label + '</span>';
+        keys[i].classList.toggle('on', !!(k.on && k.on()));
+      });
+      const t = o.tip ? o.tip() : '';
+      tip.textContent = t || '';
+      tip.hidden = !t;
+    };
+    refresh();
+    return { el, refresh };
+  };
+
+  /* Cursore su una griglia (o su isole/blocchi): le frecce lo spostano, la vista lo segue.
+     o: { w, h, el(i), start, ok(i), step(i, d), fix(i), keys: [{ label, icon, act(i) -> nuovo i?,
+          dir: true (tasto che aspetta una freccia: act(i, d)), pen: true (acceso/spento: act(i, from, d) a ogni passo) }] } */
+  Z.gridCursor = function (ctx, o) {
+    let i = o.start || 0, armed = -1, pen = -1;
+    if (o.ok && !o.ok(i)) { const k = Z.range(o.w * o.h).find(o.ok); i = k === undefined ? 0 : k; }
+    const move = (j, d) => {
+      if (o.step) return o.step(j, d);
+      const [dx, dy] = Z.DIRS[d];
+      let x = j % o.w, y = (j / o.w) | 0;
+      for (;;) {
+        x += dx; y += dy;
+        if (x < 0 || y < 0 || x >= o.w || y >= o.h) return j;
+        const k = y * o.w + x;
+        if (!o.ok || o.ok(k)) return k;
+      }
+    };
+    const show = () => { ctx.mark(o.el(i)); pad.refresh(); };
+    const keys = o.keys.map((k, n) => ({
+      label: typeof k.label === 'function' ? () => k.label(i, pen === n) : k.label,
+      icon: k.icon,
+      on: () => armed === n || pen === n,
+      act() {
+        if (k.dir) { armed = armed === n ? -1 : n; pad.refresh(); return; }
+        armed = -1;
+        if (k.pen) {
+          if (pen === n) { pen = -1; if (k.stop) k.stop(i); show(); return; }
+          if (k.act(i, -1, null) === false) { Z.flashEl(o.el(i)); show(); return; }
+          pen = n; show(); return;
+        }
+        const r = k.act(i);
+        if (typeof r === 'number') i = r;
+        show();
+      },
+    }));
+    const pad = Z.arrowPad({
+      keys,
+      tip: () => (armed >= 0 ? (o.keys[armed].tip || 'Scegli la direzione con una freccia.') : pen >= 0 ? (o.keys[pen].tip || '') : (o.tip || '')),
+      onDir(d) {
+        if (armed >= 0) {
+          const k = o.keys[armed];
+          armed = -1;
+          const r = k.act(i, d);
+          if (typeof r === 'number') i = r;
+          show();
+          return;
+        }
+        const j = move(i, d);
+        if (j === i) return;
+        if (pen >= 0) {
+          const r = o.keys[pen].act(j, i, d);
+          if (r === false) { Z.flashEl(o.el(j)); return; }
+          if (r === 'stop') pen = -1;
+        }
+        i = j;
+        show();
+      },
+    });
+    return {
+      el: pad.el,
+      render() { if (o.fix) i = o.fix(i); show(); },
+      off() { pen = -1; armed = -1; ctx.mark(null); },
+    };
+  };
+
   /* Tastiera di lettere sullo schermo (cruciverba, incastro, frase cifrata) */
   Z.letterPad = function (type, back) {
     const kb = Z.h('div.cw-kb');
@@ -175,6 +287,17 @@
     moon: '<svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
     auto: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>',
     fill: '<svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="3" fill="currentColor"/></svg>',
+    arrows: '<svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><path d="M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg>',
+    hand: '<svg viewBox="0 0 24 24"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12"/><path d="M11 11.5v-7a1.5 1.5 0 0 1 3 0V12"/><path d="M14 11.5V6.5a1.5 1.5 0 0 1 3 0V14"/><path d="M8 12.5a1.5 1.5 0 0 0-3 0V15a6 6 0 0 0 6 6h1a5 5 0 0 0 5-5v-2"/></svg>',
+    star: '<svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>',
+    dot: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>',
+    rotate: '<svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-2-4.9"/><path d="M19 4v4h-4"/></svg>',
+    rotateBack: '<svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 0 2-4.9"/><path d="M5 4v4h4"/></svg>',
+    tap: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="currentColor"/><circle cx="12" cy="12" r="8"/></svg>',
+    bridge: '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="3"/><circle cx="19" cy="12" r="3"/><path d="M8 10.5h8M8 13.5h8"/></svg>',
+    move: '<svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>',
+    pen: '<svg viewBox="0 0 24 24"><path d="M4 20l1-4L16 5l3 3L8 19z"/></svg>',
+    swap: '<svg viewBox="0 0 24 24"><path d="M5 9h13l-3-3M19 15H6l3 3"/></svg>',
     cross: '<svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg>',
   };
 })();

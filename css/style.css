@@ -665,3 +665,44 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spac
 .tut-step { min-height: 5.5em; font-size: 17px; animation: tut-in 0.35s ease; }
 @keyframes tut-in { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .tut-step { animation: none; } }
+
+/* ---------- Comandi: modalità «Frecce» e tasto «Sposta» ---------- */
+.toolbar.five { grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.toolbar.five .tool { font-size: 11.5px; padding: 8px 2px; }
+.tool.on { background: var(--accent); border-color: var(--accent-deep); color: var(--on-accent); }
+.tool.on svg { color: var(--on-accent); }
+.tool[hidden] { display: none; }
+.pad-zone:empty { display: none; }
+.apad { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 8px; flex-wrap: wrap; }
+.apad-arrows { display: grid; grid-template-columns: repeat(3, 46px); grid-template-rows: repeat(3, 42px); gap: 4px; }
+.apad-a { height: auto; }
+.apad-a svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.apad-a.u { grid-area: 1 / 2; } .apad-a.u svg { transform: rotate(90deg); }
+.apad-a.l { grid-area: 2 / 1; }
+.apad-a.r { grid-area: 2 / 3; } .apad-a.r svg { transform: rotate(180deg); }
+.apad-a.d { grid-area: 3 / 2; } .apad-a.d svg { transform: rotate(-90deg); }
+.apad-keys { display: grid; grid-template-columns: repeat(2, minmax(84px, 1fr)); gap: 6px; }
+.apad-k { height: 42px; display: flex; gap: 6px; padding: 0 12px; font-size: 14.5px; justify-content: center; align-items: center; color: var(--ink); }
+.apad-k svg { width: 20px; height: 20px; flex: none; fill: none; stroke: var(--accent-deep); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.apad-k.on { background: var(--accent); border-color: var(--accent-deep); color: var(--on-accent); }
+.apad-k.on svg { stroke: var(--on-accent); }
+.apad-tip { flex-basis: 100%; margin: 0; text-align: center; font-size: 13px; color: var(--ink-soft); }
+.apad-tip[hidden] { display: none; }
+.apad.compact { gap: 6px; flex-wrap: nowrap; }
+.apad.compact .apad-arrows { grid-template-columns: repeat(4, 46px); grid-template-rows: 38px; }
+.apad.compact .apad-a { grid-area: auto; }
+.apad.compact .apad-a.l { order: 1; } .apad.compact .apad-a.u { order: 2; } .apad.compact .apad-a.d { order: 3; } .apad.compact .apad-a.r { order: 4; }
+.apad.compact .apad-keys { grid-template-columns: none; grid-auto-flow: column; }
+.apad.compact .apad-k { height: 38px; }
+.cur-mark {
+  position: absolute; z-index: 2; pointer-events: none; border-radius: 10px;
+  border: 3px solid var(--second); box-shadow: 0 0 0 3px hsl(var(--h2) 80% 60% / 0.25), 0 0 14px hsl(var(--h2) 80% 55% / 0.45);
+  transition: left 0.12s, top 0.12s, width 0.12s, height 0.12s;
+}
+.cur-mark[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .cur-mark { transition: none; } }
+.pan-btn { display: none; }
+.board-wrap.zoomed .pan-btn { display: grid; }
+.pan-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.pan-btn.on { background: var(--accent); border-color: var(--accent-deep); color: var(--on-accent); }
+.board-wrap.zoomed.panning { cursor: grab; }

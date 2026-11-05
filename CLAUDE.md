@@ -14,6 +14,10 @@ https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `mai
   Solo lettere A–Z senza accenti. Tastiera di lettere comune: `Z.letterPad` in `core.js`.
 - `js/games/<gioco>.js`: ogni gioco ha `options`, `generate(opt)` (ogni rompicapo è generato al momento e ha una sola
   soluzione), `init`, `view(ctx)`, `solved`, `hint` (il suggerimento spiega il ragionamento) e `_check`.
+- Comandi con le frecce (tasto «Frecce» nella barra, scelta salvata per gioco): il gioco espone `view.cursor()`,
+  di solito con `Z.gridCursor(ctx, {...})` (riquadro mosso dalle frecce e tasti del gioco) o `Z.arrowPad({compact})`
+  per i giochi che hanno già una casella scelta; `ctx.mark(el, quiet)` evidenzia e fa seguire la vista sulla griglia
+  ingrandita. Il tasto «Sposta» (mano, accanto a + e −) fa spostare la griglia ingrandita con un dito.
 - `js/app.js`: menu, scelta della difficoltà (salvata per gioco), partita, annulla/ripristina, zoom sulla griglia,
   salvataggio della partita in corso, rompicapo preparati in anticipo in `js/worker.js` (tutti tranne il Sudoku).
 - `js/proposte.js`: proposte degli amici (tasto «Migliora il gioco» nel menu, solo col codice degli amici).
