@@ -1,8 +1,9 @@
 /* Rompicapo Zen — proposte degli amici per migliorare il gioco.
    Chi apre il gioco col link segreto (?amici=CODICE, oppure scrive il codice toccando 5 volte il logo) vede nel menu
    il tasto «Migliora il gioco»: scrive una proposta, Claude la prepara da solo su GitHub e ne pubblica un'anteprima
-   (anteprime/<numero>/). Poi chiunque abbia il codice può provarla e pubblicarla nel gioco, chiedere modifiche o
-   scartarla: non serve l'approvazione di nessuno.
+   (anteprime/<numero>/). Poi chiunque abbia il codice può provarla, chiedere modifiche o scartarla; pubblicarla nel
+   gioco può solo il proprietario, col suo codice «capo-…» (?capo=CODICE o 5 tocchi sul logo; vale anche come codice
+   degli amici).
    Il server è quello di Hustler Town (percorsi /rz/…, dati separati); il robot è .github/workflows/proposte.yml. */
 (function () {
   'use strict';
@@ -10,17 +11,22 @@
   const API = window.ZEN_API || 'https://hustler-town-server.onrender.com';
   /* impronta SHA-256 del codice degli amici (il codice vero non è nel codice del gioco) */
   const KEY_HASH = '592564b2e5388b009b3d4cb5d98bc1e2e9804a4a0334a2e3298edcd3baedb6eb';
+  /* impronta del codice del proprietario: solo lui può pubblicare le anteprime nel gioco */
+  const OWNER_HASH = '416e91c54d19eb46bf56512cb50b3fde210a9e3a514cc1876ca8b2354c6c8855';
   const PREVIEW = window.ZEN_PREVIEW || 0;
 
   async function sha256(s) {
     const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
     return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
   }
-  const key = () => Z.store.get('amici', '');
+  const owner = () => Z.store.get('capo', '');
+  const key = () => Z.store.get('amici', '') || owner();
   async function tryKey(k) {
     k = String(k || '').trim();
     if (!k || !crypto.subtle) return false;
-    if (await sha256(k) !== KEY_HASH) return false;
+    const hk = await sha256(k);
+    if (hk === OWNER_HASH) { Z.store.set('capo', k); return true; }
+    if (hk !== KEY_HASH) return false;
     Z.store.set('amici', k);
     return true;
   }
@@ -43,7 +49,7 @@
       let last;
       for (let t = 0; t < 3; t++) {
         try {
-          const r = await fetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: key(), ...body }) });
+          const r = await fetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: key(), owner: owner() || undefined, ...body }) });
           const d = await r.json().catch(() => ({}));
           if (!r.ok) throw Object.assign(new Error(d.error || 'errore ' + r.status), { soft: r.status < 500 });
           return d;
@@ -62,7 +68,7 @@
   const STATUS = {
     coda: p => p.queuePos ? (p.queuePos === 1 ? 'La prossima per Claude' : `In coda (${p.queuePos}ª)`) : 'In coda',
     lavoro: () => 'Claude ci sta lavorando…',
-    pronta: () => 'Anteprima pronta',
+    pronta: () => owner() ? 'Anteprima pronta' : 'Anteprima pronta · da pubblicare',
     nulla: () => 'Claude ha bisogno di più dettagli',
     pubblicare: () => 'In pubblicazione…',
     pubblicata: () => 'Nel gioco',
@@ -205,7 +211,7 @@
       h('div.prop-form', null,
         h('label.opt-label', { text: 'La tua proposta' }), text,
         h('div.prop-row', null, name, send), msg,
-        h('p.opt-help', { text: 'Claude la prepara da solo e ne fa un\'anteprima. Chiunque abbia il codice degli amici può poi pubblicarla nel gioco.' })),
+        h('p.opt-help', { text: 'Claude la prepara da solo e ne fa un\'anteprima da provare. A pubblicarla nel gioco ci pensa il proprietario del gioco.' })),
     ];
     if (!list) return out;
     const open = list.filter(p => ['coda', 'lavoro', 'nulla'].includes(p.status));
@@ -268,7 +274,8 @@
       el.append(
         h('div.prop-actions', null,
           h('a.btn.primary', { href: previewUrl(p.id), target: '_blank', rel: 'noopener', text: 'Prova l\'anteprima' }),
-          h('button.btn.primary', { type: 'button', text: 'Pubblica nel gioco', on: { click: () => confirmIn(el, 'Pubblicarla nel gioco per tutti?', 'Pubblica', act('publish')) } })),
+          owner() ? h('button.btn.primary', { type: 'button', text: 'Pubblica nel gioco', on: { click: () => confirmIn(el, 'Pubblicarla nel gioco per tutti?', 'Pubblica', act('publish')) } }) : null),
+        owner() ? null : h('p.opt-help', { text: 'Provala e, se serve, chiedi modifiche: a pubblicarla nel gioco ci pensa il proprietario.' }),
         h('div.prop-actions', null, ask,
           h('button.btn.prop-no', { type: 'button', text: 'Scarta', on: { click: () => confirmIn(el, 'Scartare questa proposta?', 'Scarta', act('reject')) } })),
         box);
@@ -290,9 +297,9 @@
     box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
-  /* ?amici=CODICE nel link: si ricorda il codice e lo si toglie dall'indirizzo */
+  /* ?amici=CODICE (o ?capo=CODICE) nel link: si ricorda il codice e lo si toglie dall'indirizzo */
   const ready$ = (async () => {
-    const m = /[?&]amici=([^&#]+)/.exec(location.search);
+    const m = /[?&](?:amici|capo)=([^&#]+)/.exec(location.search);
     if (!m || PREVIEW) return false;
     const ok = await tryKey(decodeURIComponent(m[1]));
     history.replaceState(null, '', location.pathname + location.hash);

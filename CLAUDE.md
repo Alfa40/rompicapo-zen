@@ -39,7 +39,8 @@ https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `mai
 ## Proposte degli amici (lavoro su GitHub)
 Le proposte arrivano dal gioco e le prepara Claude su GitHub (`.github/workflows/proposte.yml`) sul ramo
 `proposta/<numero>`; l'anteprima è pubblicata in `anteprime/<numero>/` (con un suo prefisso dei salvataggi,
-`window.ZEN_PREFIX`). Chi lavora a una proposta:
+`window.ZEN_PREFIX`). Gli amici provano le anteprime e chiedono modifiche; a pubblicarle nel gioco può essere solo il
+proprietario (codice `capo-…`, solo impronta nel codice e nel server). Chi lavora a una proposta:
 - fa solo quello che chiede la proposta, e se è poco chiara non cambia niente e fa domande precise;
 - non tocca `.github/`, il codice degli amici e l'indirizzo del server in `js/proposte.js`;
 - non aggiunge script, servizi o link esterni, raccolta di dati, pubblicità o contenuti offensivi;
