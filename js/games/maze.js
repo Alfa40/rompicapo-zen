@@ -94,7 +94,7 @@
     hue: 120,
     tagline: 'Trova la strada per uscire.',
     rules: `<p>Parti dall'<b>entrata</b> in alto a sinistra e arriva all'<b>uscita</b> in basso a destra, senza attraversare i muri.</p>
-      <p><b>Trascina il dito</b> lungo i corridoi per disegnare la strada, oppure usa le <b>freccette</b> (anche quelle della tastiera). Sotto la griglia puoi scegliere «Scorrere col dito»: scorri verso l'alto, il basso, sinistra o destra e il pallino va in quella direzione; tornando indietro sulla strada la cancelli. Tocca un punto della strada per ripartire da lì.</p>
+      <p><b>Trascina il dito</b> lungo i corridoi per disegnare la strada, oppure usa le <b>freccette</b> (anche quelle della tastiera). Sotto la griglia puoi scegliere «Scorrere col dito»: scorri in un punto qualsiasi dello schermo (tranne sui tasti) verso l'alto, il basso, sinistra o destra e il pallino va in quella direzione; tornando indietro sulla strada la cancelli. Tocca un punto della strada per ripartire da lì.</p>
       <p>Dall'entrata all'uscita c'è <b>una sola strada</b>: tutte le altre finiscono in vicoli ciechi.</p>`,
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="10" class="ic-s"/><path d="M16 16h32v32H24M16 16v24M24 24h16v16H32v-8" class="ic-l2"/></svg>`,
     generate,
@@ -163,12 +163,7 @@
       svg.addEventListener('pointerdown', e => {
         if (!cur) return;
         e.preventDefault();
-        if (mode === 'touch') {
-          sw = { id: e.pointerId, x: e.clientX, y: e.clientY };
-          ctx.begin();
-          try { svg.setPointerCapture(e.pointerId); } catch (err) { /* ignorato */ }
-          return;
-        }
+        if (mode === 'touch') return; /* in questo modo ci pensa il tocco su tutto lo schermo */
         const c = cellAt(e);
         if (c < 0) return;
         const s = Z.clone(cur);
@@ -179,7 +174,7 @@
         try { svg.setPointerCapture(e.pointerId); } catch (err) { /* ignorato */ }
         ctx.preview(s);
       });
-      svg.addEventListener('pointermove', e => {
+      const onMove = e => {
         if (sw && sw.id === e.pointerId && cur) {
           /* scorrendo il dito: un passo ogni mezza casella, nella direzione dominante */
           const cell = svg.getBoundingClientRect().width / (n + 1.2), thr = Math.max(14, cell * 0.5);
@@ -199,14 +194,33 @@
         if (c < 0) return;
         const s = Z.clone(cur);
         if (walk(s, c)) ctx.preview(s);
-      });
+      };
       const up = e => {
         if (sw && sw.id === e.pointerId) { sw = null; ctx.end(); return; }
         if (drag !== e.pointerId) return;
         drag = null; ctx.end();
       };
+      svg.addEventListener('pointermove', onMove);
       svg.addEventListener('pointerup', up);
       svg.addEventListener('pointercancel', up);
+      /* scorrere il dito: vale su tutto lo schermo, tranne su tasti, campi di testo e finestre aperte */
+      const SKIP = 'button, a, input, select, textarea, label, [role=dialog], [role=button], .sheet';
+      const gDown = e => {
+        if (!el.isConnected) { off(); return; }
+        if (mode !== 'touch' || !cur || sw || (e.target.closest && e.target.closest(SKIP))) return;
+        if (document.querySelector('[role=dialog]')) return;
+        sw = { id: e.pointerId, x: e.clientX, y: e.clientY };
+        ctx.begin();
+      };
+      const gMove = e => { if (sw && sw.id === e.pointerId) { if (e.cancelable) e.preventDefault(); onMove(e); } };
+      const off = () => {
+        for (const [t, f] of [['pointerdown', gDown], ['pointermove', gMove], ['pointerup', up], ['pointercancel', up]]) document.removeEventListener(t, f);
+        document.documentElement.classList.remove('mz-swipe');
+      };
+      document.addEventListener('pointerdown', gDown);
+      document.addEventListener('pointermove', gMove, { passive: false });
+      document.addEventListener('pointerup', up);
+      document.addEventListener('pointercancel', up);
 
       /* freccette: un passo nella direzione scelta (indietro sulla strada = la cancella) */
       const go = (dx, dy) => {
@@ -227,6 +241,7 @@
       const setMode = m => {
         mode = m; Z.store.set('maze-mode', m);
         pad.style.display = m === 'touch' ? 'none' : '';
+        document.documentElement.classList.toggle('mz-swipe', m === 'touch');
         for (const b of sel.children) b.setAttribute('aria-pressed', String(b.dataset.m === m));
       };
       for (const [m, t] of [['tasti', 'Tasti'], ['touch', 'Scorrere col dito']]) {
@@ -237,7 +252,7 @@
       ctx.controls.append(sel, pad);
       setMode(mode);
       const onKey = e => {
-        if (!el.isConnected) { document.removeEventListener('keydown', onKey); return; }
+        if (!el.isConnected) { document.removeEventListener('keydown', onKey); off(); return; }
         if (e.ctrlKey || e.metaKey || e.altKey) return;
         const D = DIRS.find(d => e.key === 'Arrow' + d[0]);
         if (!D) return;
