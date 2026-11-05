@@ -145,17 +145,19 @@
   }
 
   /* ---------- Overlay / finestre ---------- */
-  function closeOverlay() { overlay.classList.remove('show'); overlay.innerHTML = ''; }
-  function openSheet(content, cls) {
+  function closeOverlay() { overlay.classList.remove('show'); overlay.innerHTML = ''; overlay.dataset.locked = ''; }
+  /* locked: la finestra si chiude solo coi suoi pulsanti (niente tocco fuori né Esc) */
+  function openSheet(content, cls, locked) {
     overlay.innerHTML = '';
+    overlay.dataset.locked = locked ? '1' : '';
     const card = h('div.sheet' + (cls ? '.' + cls : ''), { role: 'dialog', 'aria-modal': 'true' }, content);
     overlay.append(card);
     overlay.classList.add('show');
-    overlay.onclick = e => { if (e.target === overlay) closeOverlay(); };
+    overlay.onclick = e => { if (e.target === overlay && !overlay.dataset.locked) closeOverlay(); };
     return card;
   }
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && overlay.classList.contains('show')) { closeOverlay(); return; }
+    if (e.key === 'Escape' && overlay.classList.contains('show')) { if (!overlay.dataset.locked) closeOverlay(); return; }
     if (game && !overlay.classList.contains('show')) game.key(e);
   });
 
@@ -181,7 +183,7 @@
         h('div.card-ic', { html: G.icon }),
         h('div.card-tx', null, h('h2', { text: G.name }), h('p', { text: G.tagline })),
         saved ? h('span.badge', { text: 'In corso' }) : null);
-      card.addEventListener('click', () => setupSheet(id));
+      card.addEventListener('click', () => needsTutorial(id) ? tutorial(G, () => setupSheet(id)) : setupSheet(id));
       grid.append(card);
     });
     const prop = Z.Proposte ? Z.Proposte.homeButton() : null;
@@ -255,7 +257,7 @@
     const go = fresh => { closeOverlay(); startGame(id, fresh); };
     const rulesBox = h('div.rules', { html: G.rules });
     rulesBox.hidden = true;
-    const rulesToggle = h('button.btn.rules-toggle', { type: 'button', text: 'Come si gioca', 'aria-expanded': 'false' });
+    const rulesToggle = h('button.rules-btn.rules-toggle', { type: 'button', html: Z.ICONS.help + '<span>Regole</span>', 'aria-expanded': 'false' });
     rulesToggle.addEventListener('click', () => {
       rulesBox.hidden = !rulesBox.hidden;
       rulesToggle.setAttribute('aria-expanded', String(!rulesBox.hidden));
@@ -275,9 +277,40 @@
     card.style.setProperty('--h', G.hue);
   }
 
+  /* Tutorial obbligatorio la prima volta che si apre un gioco: le regole un passo alla volta.
+     Chi ci ha già giocato (partita salvata o risolti) non lo rivede. */
+  const needsTutorial = id => !Z.store.get(`tut:${id}`, 0) && !Z.store.get(`done:${id}`, 0) && !Z.store.get(`save:${id}`, null);
+  function tutorial(G, then) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = G.rules;
+    const steps = [...tmp.children].map(e => e.outerHTML);
+    if (!steps.length) steps.push(G.rules);
+    let k = 0;
+    const draw = () => {
+      const last = k === steps.length - 1;
+      const card = openSheet([
+        h('div.sheet-head', null, h('div.card-ic', { html: G.icon }),
+          h('div', null, h('p.tut-kicker', { text: 'Prima partita · Regole' }), h('h2', { text: G.name }))),
+        h('div.tut-dots', { 'aria-label': `Passo ${k + 1} di ${steps.length}` },
+          ...steps.map((x, i) => h('span' + (i === k ? '.on' : i < k ? '.past' : '')))),
+        h('div.rules.tut-step', { html: steps[k] }),
+        h('div.sheet-actions', null,
+          k ? h('button.btn', { type: 'button', text: 'Indietro', on: { click: () => { k--; draw(); } } }) : null,
+          h('button.btn.primary', { type: 'button', text: last ? 'Ho capito, giochiamo' : 'Avanti', on: { click: () => {
+            if (!last) { k++; draw(); return; }
+            Z.store.set(`tut:${G.id}`, 1);
+            closeOverlay();
+            if (then) then();
+          } } })),
+      ], 'tut', true);
+      card.style.setProperty('--h', G.hue);
+    };
+    draw();
+  }
+
   function rulesSheet(G) {
     openSheet([
-      h('div.sheet-head', null, h('div.card-ic', { html: G.icon }), h('h2', { text: 'Come si gioca' })),
+      h('div.sheet-head', null, h('div.card-ic', { html: G.icon }), h('h2', { text: 'Regole' })),
       h('div.rules', { html: G.rules }),
       h('div.sheet-actions', null, h('button.btn.primary', { type: 'button', text: 'Ho capito', on: { click: closeOverlay } })),
     ]);
@@ -308,7 +341,7 @@
     const bar = h('header.gbar', null,
       h('button.icon-btn', { type: 'button', title: 'Menu', 'aria-label': 'Torna al menu', html: Z.ICONS.back, on: { click: home } }),
       h('div.gtitle', null, h('b', { text: G.name }), h('span', null, lvPill, themeName)),
-      h('button.icon-btn', { type: 'button', title: 'Come si gioca', 'aria-label': 'Come si gioca', html: Z.ICONS.help, on: { click: () => rulesSheet(G) } }));
+      h('button.rules-btn', { type: 'button', title: 'Regole del gioco', html: Z.ICONS.help + '<span>Regole</span>', on: { click: () => rulesSheet(G) } }));
     const wrap = h('div.board-wrap');
     const controls = h('div.controls');
     const bUndo = h('button.tool', { type: 'button', html: Z.ICONS.undo + '<span>Annulla</span>' });
@@ -657,6 +690,8 @@
       cur = saved.s; undo = saved.u || []; redo = saved.r || [];
       begin();
     } else newPuzzle();
+    /* aperto da un collegamento diretto senza passare dal menu */
+    if (needsTutorial(id)) tutorial(G);
   }
 
   window.addEventListener('resize', () => { if (game) game.fit(); });

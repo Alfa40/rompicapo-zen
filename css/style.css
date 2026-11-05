@@ -247,6 +247,14 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spac
 .gtitle { flex: 1; min-width: 0; text-align: center; display: grid; gap: 2px; }
 .gtitle b { font-size: 21px; font-weight: 600; color: var(--accent-deep); }
 .gtitle > span { display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--ink-soft); }
+.rules-btn {
+  flex: none; display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px 0 11px;
+  border: 2px solid var(--accent-deep); border-radius: 14px; background: var(--accent); color: var(--on-accent);
+  font-weight: 600; font-size: 15px; box-shadow: 0 3px 0 var(--accent-deep); transition: transform 0.12s, box-shadow 0.12s;
+}
+.rules-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.rules-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--accent-deep); }
+@media (max-width: 360px) { .rules-btn { padding: 0 10px; font-size: 14px; } .rules-btn svg { display: none; } }
 .lv-pill { background: var(--accent-soft); color: var(--accent-deep); padding: 1px 10px; border-radius: 99px; font-weight: 500; font-size: 13px; border: none; cursor: pointer; }
 .theme-name::before { content: '❀ '; color: var(--second); }
 .board-wrap { flex: 1; min-height: 220px; display: flex; align-items: center; justify-content: center; position: relative; }
@@ -647,3 +655,13 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spac
 .an-t.sel { background: var(--accent-soft); border-color: var(--accent); transform: translateY(-3px); }
 .an-row.ok .an-t { background: var(--accent); border-color: var(--accent-deep); color: var(--on-accent); }
 .an-row.ok .an-clue { color: var(--accent-deep); }
+
+/* ---------- Tutorial della prima partita ---------- */
+.tut-kicker { margin: 0 0 2px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-soft); }
+.tut-dots { display: flex; gap: 6px; margin: 10px 0 4px; }
+.tut-dots span { width: 8px; height: 8px; border-radius: 99px; background: var(--line); transition: width 0.3s, background 0.3s; }
+.tut-dots span.past { background: var(--accent-soft); }
+.tut-dots span.on { width: 22px; background: var(--accent); }
+.tut-step { min-height: 5.5em; font-size: 17px; animation: tut-in 0.35s ease; }
+@keyframes tut-in { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .tut-step { animation: none; } }
