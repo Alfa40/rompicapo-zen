@@ -120,6 +120,38 @@
     },
   };
   TAGS.incastro = TAGS.crossword;
+  /* solitari di carte (js/games/cards.js) */
+  const FOUND = ['portare le carte sulle pile dei semi', 'Quando una carta può salire sulla pila del suo seme, di solito conviene: libera spazio sul tavolo.'];
+  const DRAW = ['capire quando girare il mazzo', 'Prima di girare il mazzo controlla con calma tutte le mosse sul tavolo.'];
+  const NEAR = {
+    play: ['trovare la carta vicina', 'Cerca le carte di un valore in più o in meno di quella girata: il colore e il seme non contano.'],
+    plan: ['scegliere la catena più lunga', 'Quando puoi prendere più carte, guarda cosa viene dopo ciascuna e scegli quella che ti porta più lontano.'],
+    draw: DRAW,
+  };
+  Object.assign(TAGS, {
+    klondike: {
+      found: FOUND,
+      reveal: ['scoprire le carte coperte', 'Dai la precedenza alle mosse che girano una carta coperta, soprattutto nelle colonne più alte.'],
+      waste: ['rimettere in gioco gli scarti', 'Prima di girare il mazzo guarda se la carta in cima agli scarti può scendere su una colonna.'],
+      king: ['usare bene le colonne vuote', 'In una colonna vuota va solo un Re: scegli quello che libera più carte.'],
+      shift: ['spostare gruppi per liberare carte', 'Spostare un gruppo da una colonna all’altra può liberare proprio la carta che ti serve.'],
+      draw: DRAW,
+    },
+    freecell: {
+      found: FOUND,
+      build: ['costruire scale ordinate', 'Metti le carte in scala, colore diverso e un valore in meno: le scale si spostano più facilmente.'],
+      cell: ['usare le celle con giudizio', 'Le celle sono poche: mettici una carta solo se libera qualcosa di utile, e svuotale presto.'],
+      empty: ['sfruttare le colonne vuote', 'Una colonna vuota raddoppia le carte che puoi spostare insieme: non riempirla troppo presto.'],
+    },
+    pyramid: {
+      king: ['togliere i Re', 'Il Re vale 13 da solo: appena è libero, toglilo.'],
+      pair: ['trovare le coppie che fanno 13', 'Ripassa le coppie: A+Q, 2+J, 3+10, 4+9, 5+8, 6+7. Guarda solo le carte libere.'],
+      waste: ['usare la carta degli scarti', 'La carta in cima agli scarti può fare coppia con una della piramide: guardala sempre prima di girare il mazzo.'],
+      draw: DRAW,
+    },
+    tripeaks: NEAR,
+    golf: NEAR,
+  });
 
   /* ---------- utilità ---------- */
   const clone = o => JSON.parse(JSON.stringify(o));
@@ -285,7 +317,7 @@
   function tagsToSolve(id, P) {
     const G = Z.GAMES[id], need = {};
     let s = G.init(P), k = 0;
-    while (!G.solved(P, s) && k++ < 3000) {
+    while (!G.solved(P, s) && k++ < (G.hintCap || 3000)) {
       const r = G.hint(P, s);
       if (!r) break;
       if (r.tag && r.tag !== 'wrong') need[r.tag] = (need[r.tag] || 0) + 1;
@@ -364,7 +396,7 @@
         }
         let st = G.init(P), n = 0;
         const found = [];
-        while (!G.solved(P, st) && n++ < 3000) {
+        while (!G.solved(P, st) && n++ < (G.hintCap || 3000)) {
           const r = G.hint(P, st);
           if (!r) break;
           if (r.tag === d.tag) found.push({ s: clone(st), r });
@@ -382,7 +414,13 @@
   function mini(d) {
     const G = Z.GAMES[d.id];
     let P = null;
-    for (let t = 0; t < 5 && !P; t++) P = G.generate(d.opt);
+    /* le smazzate dei solitari sono casuali: per il quiz se ne cerca una che si possa vincere */
+    for (let t = 0; t < 12; t++) {
+      const Q = G.generate(d.opt);
+      if (!Q) continue;
+      P = Q;
+      if (!G.winnable || G.winnable(Q)) break;
+    }
     if (P) P.opt = d.opt;
     return { P, s: P ? G.init(P) : null };
   }

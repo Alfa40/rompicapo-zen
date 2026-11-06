@@ -4,7 +4,7 @@ importScripts(
   'core.js', 'numgrid.js',
   'games/sudoku.js', 'games/hashi.js', 'games/futoshiki.js', 'games/calcudoku.js',
   'games/flow.js', 'games/stars.js', 'games/pipes.js', 'games/lights.js', 'games/blocks.js',
-  'games/crossword.js', 'games/wordsearch.js', 'games/maze.js', 'games/cipher.js', 'games/anagram.js', 'stats.js'
+  'games/crossword.js', 'games/wordsearch.js', 'games/maze.js', 'games/cipher.js', 'games/anagram.js', 'games/cards.js', 'stats.js'
 );
 
 /* messaggio: { id, opt, key, n } → risponde con { id, key, P } per ogni rompicapo e infine { done: true } */

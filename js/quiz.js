@@ -9,14 +9,22 @@
   const MIN = 8;
   const SLOW = 90000;
   /* ragionamenti che non si possono preparare come esercizio */
-  const SKIP = { blocks: ['reset'], maze: ['corridor'], crossword: ['only'], incastro: ['clue'] };
+  const SKIP = { blocks: ['reset'], maze: ['corridor'], crossword: ['only'], incastro: ['clue'],
+    klondike: ['draw', 'shift'], freecell: ['cell', 'empty'], pyramid: ['draw'], tripeaks: ['draw'], golf: ['draw'] };
+  const NEAR = { play: 'Prendi una carta vicina a quella girata.', plan: 'Prendi una carta vicina a quella girata: ce n’è più di una.' };
+  const CARD_TASK = {
+    klondike: { found: 'Porta una carta sulla pila del suo seme.', reveal: 'Fai una mossa che gira una carta coperta.', waste: 'Rimetti in gioco la carta degli scarti.', king: 'Metti un Re nella colonna vuota.' },
+    freecell: { found: 'Porta una carta sulla pila del suo seme.', build: 'Fai scendere una carta su un’altra, in scala.' },
+    pyramid: { king: 'Togli un Re.', pair: 'Togli due carte della piramide che fanno 13.', waste: 'Fai coppia con la carta degli scarti.' },
+    tripeaks: NEAR, golf: NEAR,
+  };
   const TASK = {
     crossword: 'Scrivi una parola sicura.', incastro: 'Metti una parola sicura al suo posto.', anagram: 'Ricomponi la parola che resta.',
     flow: 'Completa un percorso sicuro.', maze: 'Trova la strada giusta fino al prossimo bivio.', wordsearch: 'Trova la parola che manca.',
     blocks: 'Fai uscire un blocco.', lights: 'Tocca una lanterna che fa parte della soluzione.', pipes: 'Gira un pezzo nel verso giusto.',
     hashi: 'Metti un ponte sicuro.', stars: 'Fai una mossa sicura: una stella o un puntino.', cipher: 'Scopri una lettera sicura.',
   };
-  const task = (id, t) => (id === 'stars' ? (t === 'place' || t === 'advanced' ? 'Metti una stella sicura.' : 'Metti un puntino sicuro: una casella dove la stella non può stare.')
+  const task = (id, t) => (CARD_TASK[id] ? CARD_TASK[id][t] || 'Fai una mossa utile.' : id === 'stars' ? (t === 'place' || t === 'advanced' ? 'Metti una stella sicura.' : 'Metti un puntino sicuro: una casella dove la stella non può stare.')
     : TASK[id] || 'Trova una mossa sicura: un numero che sei certo vada lì.');
   const SKIP_IC = '<svg viewBox="0 0 24 24"><path d="M6 6l7 6-7 6M16 6v12"/></svg>';
 

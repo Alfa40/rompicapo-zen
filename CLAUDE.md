@@ -1,7 +1,7 @@
 # Rompicapo Zen
 
 Web app in italiano con 15 rompicapo tradizionali (Sudoku, Ponti, Futoshiki, Calcudoku, Collega i colori,
-Stelle, Tubi, Luci, Porte colorate, Cruciverba, Incastro, Parole nascoste, Labirinto, Frase cifrata, Anagrammi) in stile cartoon vivace ma calmo, "zen". Pubblicata su GitHub Pages:
+Stelle, Tubi, Luci, Porte colorate, Cruciverba, Incastro, Parole nascoste, Labirinto, Frase cifrata, Anagrammi) e 5 solitari di carte (Solitario classico, FreeCell, Piramide, TriPeaks, Golf) in stile cartoon vivace ma calmo, "zen". Pubblicata su GitHub Pages:
 https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `main`, con `.github/workflows/pagine.yml`).
 
 ## Come è fatto
@@ -31,6 +31,12 @@ https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `mai
   worker (una situazione di un rompicapo vero in cui serve proprio quel ragionamento), adattivi (8–11, dal più facile),
   senza suggerimenti, si possono saltare; le mosse sbagliate tornano indietro; mini rompicapo finale; poi
   `Z.Stats.quizDone` scrive profilo (`quiz:<id>`, `weak:<id>`, `path:<id>`) e mostra un resoconto.
+- Solitari: `js/games/cards.js` (carte francesi). Sono 5 giochi con id e dati separati (`klondike`, `freecell`,
+  `pyramid`, `tripeaks`, `golf`) ma con `family: 'solitari'`: nel menu (categoria «Carte») c'è una sola scheda e il
+  gioco si sceglie nel pannello della difficoltà (`FAMILIES` in `app.js`). **Eccezione voluta**: le smazzate sono
+  casuali come nel vero solitario (`random: true`), alcune non si vincono. `hint` cerca una strada con una ricerca a
+  tempo (conosce le carte coperte ma non le nomina); se non c'è, restituisce null e `stuck(P, s)` spiega con
+  gentilezza. `winnable(P)` serve al mini rompicapo del quiz.
 - `js/app.js`: menu, scelta della difficoltà (salvata per gioco), partita, annulla/ripristina, zoom sulla griglia,
   salvataggio della partita in corso, rompicapo preparati in anticipo in `js/worker.js` (tutti tranne il Sudoku).
 - `js/proposte.js`: proposte degli amici (tasto «Migliora il gioco» nel menu, solo col codice degli amici).

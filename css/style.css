@@ -837,3 +837,39 @@ html.mz-swipe button, html.mz-swipe a, html.mz-swipe input { touch-action: manip
 .pc-lv { display: inline-block; justify-self: start; background: var(--accent-soft); color: var(--accent-deep); padding: 3px 12px; border-radius: 99px; font-weight: 500; font-size: 14px; }
 .pc-focus { padding: 10px 12px; border-radius: 14px; background: var(--tint); font-size: 14.5px; }
 .pc-focus b { font-weight: 600; color: var(--accent-deep); }
+
+/* ---------- Solitari di carte (js/games/cards.js) ---------- */
+/* carte francesi: faccia chiara come le carte vere, rosso e nero fissi; il dorso prende il colore del tema */
+:root { --cd-face: hsl(40 40% 98%); --cd-edge: hsl(30 12% 70%); --cd-ink: hsl(230 18% 18%); --cd-red: hsl(4 68% 46%); --cd-shadow: 0 1px 2px hsl(230 30% 20% / .25); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cd-face: hsl(40 22% 88%); --cd-edge: hsl(30 8% 45%); --cd-ink: hsl(230 22% 14%); --cd-red: hsl(4 62% 42%); --cd-shadow: 0 1px 3px hsl(0 0% 0% / .5); } }
+:root[data-theme="dark"] { --cd-face: hsl(40 22% 88%); --cd-edge: hsl(30 8% 45%); --cd-ink: hsl(230 22% 14%); --cd-red: hsl(4 62% 42%); --cd-shadow: 0 1px 3px hsl(0 0% 0% / .5); }
+.cards-t { position: relative; container-type: size; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.cd, .cd-slot { position: absolute; box-sizing: border-box; border-radius: calc(var(--cw) * .1cqw); }
+.cd { background: var(--cd-face); border: 1px solid var(--cd-edge); color: var(--cd-ink); box-shadow: var(--cd-shadow);
+  font: 600 calc(var(--cw) * .3cqw) / 1 'Fredoka', system-ui, sans-serif; cursor: pointer;
+  transition: left .28s ease, top .28s ease, opacity .35s ease, transform .2s ease, box-shadow .2s ease; }
+.cd.red { color: var(--cd-red); }
+.cd-k { position: absolute; left: 7%; top: 5%; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.cd-k i { font-style: normal; font-size: .9em; }
+.cd-s { position: absolute; right: 8%; bottom: 6%; font-size: 1.6em; line-height: 1; }
+.cd.down { background: var(--accent); border-color: var(--accent-deep);
+  background-image: repeating-linear-gradient(45deg, transparent 0 4px, hsl(0 0% 100% / .16) 4px 6px); }
+.cd.down > span { visibility: hidden; }
+.cd.sel { transform: translateY(-4%); box-shadow: 0 0 0 2px var(--accent-deep), 0 4px 10px hsl(230 30% 20% / .3); }
+.cd.dim:not(.sel) { filter: brightness(.94); }
+.cd.gone { opacity: 0; pointer-events: none; transform: scale(.85); }
+.cd.flash { animation: cd-flash 1.4s ease; }
+@keyframes cd-flash { 0%, 100% { box-shadow: var(--cd-shadow); } 25%, 65% { box-shadow: 0 0 0 3px var(--accent), 0 0 14px var(--accent); } }
+.cd-slot { border: 1.5px dashed var(--line-strong); display: grid; place-items: center; color: var(--ink-soft); cursor: pointer; }
+.cd-slot svg { width: 45%; height: 45%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; opacity: 0; }
+.cd-slot.empty-st svg { opacity: .8; }
+.cd-slot.none { opacity: .35; }
+.cd-slot.none svg { opacity: 0; }
+.cd-slot.flash { animation: cd-flash 1.4s ease; }
+.cd-sl { font: 600 calc(var(--cw) * .42cqw) 'Fredoka', system-ui, sans-serif; opacity: .45; }
+.cd-sl.r { color: var(--cd-red); }
+.cd-cell { background: var(--surface-2); }
+b.cd-n { white-space: nowrap; color: var(--cd-ink); background: var(--cd-face); border: 1px solid var(--cd-edge); border-radius: 5px; padding: 0 4px; font-weight: 600; }
+b.cd-n.r { color: var(--cd-red); }
+.fam-dot { color: inherit; opacity: .75; font-size: .85em; }
+@media (prefers-reduced-motion: reduce) { .cd { transition: none; } }

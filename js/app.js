@@ -179,7 +179,8 @@
       { id: 'numeri', name: 'Numeri', ids: ['sudoku', 'futoshiki', 'calcudoku'] },
       { id: 'logica', name: 'Logica', ids: ['hashi', 'stars', 'lights'] },
       { id: 'percorsi', name: 'Percorsi e colori', ids: ['flow', 'pipes', 'blocks', 'maze'] },
-      { id: 'parole', name: 'Parole', ids: ['crossword', 'incastro', 'wordsearch', 'cipher', 'anagram'] }
+      { id: 'parole', name: 'Parole', ids: ['crossword', 'incastro', 'wordsearch', 'cipher', 'anagram'] },
+      { id: 'carte', name: 'Carte', ids: ['klondike', 'freecell', 'pyramid', 'tripeaks', 'golf'] }
     ];
     /* i giochi non elencati finiscono in «Altri giochi» */
     const listed = new Set(CATS.flatMap(c => c.ids));
@@ -191,11 +192,13 @@
       const ids = cat.ids.filter(id => Z.GAMES[id]);
       if (!ids.length) continue;
       const inCorso = ids.filter(id => Z.store.get(`save:${id}`, null)).length;
+      /* i giochi di una stessa famiglia (i solitari) hanno una sola scheda: il gioco si sceglie con la difficoltà */
+      const shown = ids.filter((id, j) => !Z.GAMES[id].family || ids.findIndex(x => Z.GAMES[x].family === Z.GAMES[id].family) === j);
       const open = openSet.has(cat.id);
       const body = h('div.cards');
       const head = h('button.cat-head', { type: 'button', 'aria-expanded': String(open) },
         h('span.cat-name', { text: cat.name }),
-        h('span.cat-n', { text: ids.length + (inCorso ? ` · ${inCorso} in corso` : '') }),
+        h('span.cat-n', { text: shown.length + (inCorso ? ` · ${inCorso} in corso` : '') }),
         h('span.cat-arrow', { 'aria-hidden': 'true', text: '▾' }));
       const sec = h('section.cat' + (open ? '.open' : ''), null, head, body);
       body.hidden = !open;
@@ -208,12 +211,14 @@
         if (now) cur.add(cat.id); else cur.delete(cat.id);
         Z.store.set('catOpen', [...cur]);
       });
-      ids.forEach((id, j) => {
+      shown.forEach((id0, j) => {
+        const F = Z.GAMES[id0].family && FAMILIES[Z.GAMES[id0].family];
+        const id = F ? familyPick(Z.GAMES[id0].family) : id0;
         const G = Z.GAMES[id];
-        const saved = Z.store.get(`save:${id}`, null);
-        const card = h('button.card', { type: 'button', style: { '--h': G.hue, '--k': j } },
-          h('div.card-ic', { html: G.icon }),
-          h('div.card-tx', null, h('h2', { text: G.name }), h('p', { text: G.tagline })),
+        const saved = F ? ids.some(x => Z.GAMES[x].family === G.family && Z.store.get(`save:${x}`, null)) : Z.store.get(`save:${id}`, null);
+        const card = h('button.card', { type: 'button', style: { '--h': F ? F.hue : G.hue, '--k': j } },
+          h('div.card-ic', { html: (F && F.icon) || G.icon }),
+          h('div.card-tx', null, h('h2', { text: F ? F.name : G.name }), h('p', { text: F ? F.tagline : G.tagline })),
           saved ? h('span.badge', { text: 'In corso' }) : null);
         card.addEventListener('click', () => needsTutorial(id) ? tutorial(G, () => setupSheet(id)) : setupSheet(id));
         body.append(card);
@@ -224,6 +229,32 @@
     const path = Z.Percorso ? Z.Percorso.homeButton() : null;
     screen.append(top, path || '', prop || '', grid, h('p.foot', { text: 'Ogni rompicapo è generato al momento: non ne vedrai mai due uguali.' }));
 
+  }
+
+  /* Famiglie di giochi con una sola scheda nel menu: si ricorda l'ultimo scelto */
+  const FAMILIES = {
+    solitari: { name: 'Solitari', hue: 130, tagline: 'Classico, FreeCell, Piramide, TriPeaks e Golf.' },
+  };
+  const familyOf = f => Z.ORDER.filter(x => Z.GAMES[x].family === f);
+  function familyPick(f) {
+    const ids = familyOf(f), last = Z.store.get('fam:' + f, null);
+    return ids.includes(last) ? last : (ids.find(x => Z.store.get(`save:${x}`, null)) || ids[0]);
+  }
+  /* scelta del gioco della famiglia, in cima al pannello della difficoltà */
+  function familyChips(G) {
+    const row = h('div.chips.fam-chips', { role: 'radiogroup', 'aria-label': 'Gioco' });
+    for (const x of familyOf(G.family)) {
+      const on = x === G.id, X = Z.GAMES[x];
+      const b = h('button.opt-chip' + (on ? '.on' : ''), { type: 'button', role: 'radio', 'aria-checked': String(on) },
+        X.name, Z.store.get(`save:${x}`, null) ? h('small.fam-dot', { text: ' · in corso' }) : null);
+      b.addEventListener('click', () => {
+        if (on) return;
+        Z.store.set('fam:' + G.family, x);
+        if (needsTutorial(x)) tutorial(X, () => setupSheet(x)); else setupSheet(x);
+      });
+      row.append(b);
+    }
+    return h('div.opt', null, h('div.opt-label', null, 'Gioco'), row);
   }
 
   /* Pannello della difficoltà: ogni scelta viene salvata subito per quel gioco */
@@ -298,11 +329,13 @@
       rulesBox.hidden = !rulesBox.hidden;
       rulesToggle.setAttribute('aria-expanded', String(!rulesBox.hidden));
     });
+    if (G.family) Z.store.set('fam:' + G.family, id);
     const card = openSheet([
       h('div.sheet-head', null, h('div.card-ic', { html: G.icon }), h('h2', { text: G.name })),
       rulesToggle,
       rulesBox,
-      h('h3.opt-title', { text: 'Difficoltà' }),
+      h('h3.opt-title', { text: G.family ? 'Gioco e difficoltà' : 'Difficoltà' }),
+      G.family ? familyChips(G) : null,
       optionsPanel(id),
       done ? h('p.opt-done', { text: `${done} risolti finora` }) : null,
       h('div.sheet-actions', null,
@@ -833,7 +866,8 @@
       const k = JSON.stringify(cur);
       if (pend && pend.key === k) { reveal(); return; }
       const r = G.hint(P, cur);
-      if (!r) return;
+      /* solitari: smazzata bloccata, lo si dice con gentilezza */
+      if (!r) { if (G.stuck) showHint(G.stuck(P, cur)); return; }
       const T = Z.Stats.TAGS[id] && Z.Stats.TAGS[id][r.tag];
       const tip = r.tip || (T ? 'Un consiglio: ' + T[1] : '');
       if (!tip) { pend = { r, key: k }; reveal(); return; }
