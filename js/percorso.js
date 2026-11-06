@@ -23,13 +23,27 @@
   /* ---------- tasto nel menu ---------- */
   function homeButton() {
     const open = anyOpen();
-    const best = Z.ORDER.map(left).reduce((a, b) => Math.min(a, b), S.UNLOCK);
-    const b = h('button.prop-btn.pc-btn' + (open ? '' : '.locked'), { type: 'button', 'aria-label': open ? 'Percorso' : 'Percorso, bloccato' },
+    const b = h('button.prop-btn.pc-btn' + (open ? '' : '.locked'), { type: 'button', 'aria-label': 'Percorso' },
       h('span.prop-ic', { html: open ? PATH : LOCK }),
       h('span', null, h('b', { text: 'Percorso' }),
-        h('small', { text: open ? 'Come giochi, gioco per gioco, e cosa allenare' : `Si sblocca dopo ${S.UNLOCK} partite finite a un gioco: ${best === 1 ? 'te ne manca 1' : 'te ne mancano ' + best}` })));
-    b.addEventListener('click', () => (open ? list() : lockedSheet()));
+        h('small', { text: open ? 'Come giochi, gioco per gioco, e cosa allenare' : `Sblocca un gioco con un breve quiz, oppure giocando ${S.UNLOCK} partite` })));
+    b.addEventListener('click', () => list());
     return b;
+  }
+  /* gioco ancora bloccato: quiz oppure partite */
+  function unlockSheet(id) {
+    const G = Z.GAMES[id], n = S.finished(id).length;
+    const card = Z.ui.openSheet([
+      h('div.sheet-head', null, h('div.card-ic', { html: G.icon }), h('h2', { text: G.name })),
+      h('p.rules', { text: `Il Percorso di ${G.name} si sblocca in due modi:` }),
+      h('ul.pc-ways', null,
+        h('li', null, h('b', { text: 'Con il quiz: ' }), 'una decina di esercizi brevi, senza suggerimenti, ognuno su un ragionamento del gioco, più un piccolo rompicapo finale. Puoi saltare quelli che non sai fare: servono a capire da dove partire.'),
+        h('li', null, h('b', { text: `Con ${S.UNLOCK} partite finite: ` }), `ne hai finite ${n}.`)),
+      h('div.sheet-actions', null,
+        h('button.btn', { type: 'button', text: 'Non ora', on: { click: Z.ui.closeOverlay } }),
+        h('button.btn.primary', { type: 'button', text: 'Fai il quiz', on: { click: () => Z.Quiz.start(id) } })),
+    ]);
+    card.style.setProperty('--h', G.hue);
   }
   function lockedSheet() {
     const rows = Z.ORDER.map(id => ({ id, n: S.finished(id).length })).sort((a, b) => b.n - a.n).slice(0, 5);
@@ -67,17 +81,17 @@
     if (ios && !standalone()) screen.append(h('p.pc-note', { text: 'Consiglio: aggiungi il gioco alla schermata Home (Condividi → Aggiungi alla schermata Home). Così Safari non cancella i tuoi dati se non giochi per qualche giorno.' }));
     const grid = h('div.cards');
     /* prima i giochi sbloccati, poi quelli più vicini allo sblocco */
-    const order = Z.ORDER.slice().sort((a, b) => S.finished(b).length - S.finished(a).length);
+    const order = Z.ORDER.slice().sort((a, b) => (S.unlocked(b) - S.unlocked(a)) || (S.finished(b).length - S.finished(a).length));
     order.forEach((id, k) => {
-      const G = Z.GAMES[id], fin = S.finished(id), open = fin.length >= S.UNLOCK;
+      const G = Z.GAMES[id], fin = S.finished(id), open = S.unlocked(id);
       const a = open ? agg(fin.slice(-10)) : null;
       const card = h('button.card.pc-card' + (open ? '' : '.locked'), { type: 'button', style: { '--h': G.hue, '--k': k }, 'aria-disabled': open ? null : 'true' },
         h('div.card-ic', { html: G.icon }),
         h('div.card-tx', null, h('h2', { text: G.name }),
-          open ? h('p', { text: `${fin.length} partite · ${a.prec == null ? '' : pct(a.prec) + ' mosse giuste'}` })
-            : h('div.pc-lockline', null, h('span.pc-bar', null, h('i', { style: { width: (fin.length / S.UNLOCK * 100) + '%' } })), h('small', { text: `${fin.length} di ${S.UNLOCK} partite` }))),
+          open ? h('p', { text: fin.length ? `${fin.length} ${fin.length === 1 ? 'partita' : 'partite'}${a.prec == null ? '' : ' · ' + pct(a.prec) + ' mosse giuste'}` : 'Quiz fatto: il Percorso è pronto' })
+            : h('div.pc-lockline', null, h('span.pc-bar', null, h('i', { style: { width: (fin.length / S.UNLOCK * 100) + '%' } })), h('small', { text: `${fin.length} di ${S.UNLOCK} · o fai il quiz` }))),
         open ? null : h('span.pc-lockic', { html: LOCK }));
-      if (open) card.addEventListener('click', () => report(id));
+      card.addEventListener('click', () => (open ? report(id) : unlockSheet(id)));
       grid.append(card);
     });
     screen.append(grid, h('p.foot', { text: 'I dati restano solo su questo dispositivo e non si mescolano tra un gioco e l\'altro.' }));
@@ -107,9 +121,10 @@
   }
   function words(id) {
     const fin = S.finished(id), A = agg(fin.slice(-10)), good = [], train = [];
-    if (A.prec != null && A.prec >= 0.9) good.push('Le tue mosse sono molto precise: quasi sempre vanno dritte verso la soluzione.');
+    if (!fin.length) { /* niente partite: solo il quiz, più sotto */ }
+    else if (A.prec != null && A.prec >= 0.9) good.push('Le tue mosse sono molto precise: quasi sempre vanno dritte verso la soluzione.');
     else if (A.prec != null && A.prec >= 0.8) good.push('La gran parte delle tue mosse è giusta.');
-    if (A.hints < 0.3) good.push('Risolvi quasi sempre in autonomia, senza suggerimenti.');
+    if (fin.length && A.hints < 0.3) good.push('Risolvi quasi sempre in autonomia, senza suggerimenti.');
     if (A.pz >= 3 && A.pzOk / A.pz >= 0.6) good.push('Quando ti fermi a pensare, dopo arriva quasi sempre la mossa giusta: il tuo ragionamento funziona.');
     if (fin.length >= 8) {
       const e = agg(fin.slice(0, 4)), l = agg(fin.slice(-4));
@@ -122,6 +137,13 @@
     if (A.prec != null && A.prec < 0.75) train.push('Ogni tanto una mossa va nella direzione sbagliata: prima di confermarla, cerca un motivo sicuro.');
     if (A.changes > 3) train.push('Cambi idea abbastanza spesso: quando hai un dubbio, cerca una conferma prima di muovere.');
     if (A.hints > 1.5) train.push('Usi spesso il Suggerimento: leggi con calma la spiegazione, è lo stesso ragionamento che servirà le prossime volte.');
+    /* poche partite: si usa anche il quiz */
+    const Q = Z.store.get('quiz:' + id, null), T = S.TAGS[id] || {};
+    if (Q && fin.length < 5) {
+      const ok = Object.keys(Q.res).filter(t => Q.res[t] === 1 && T[t]), no = Object.keys(Q.res).filter(t => Q.res[t] < 1 && T[t]).sort((a, b) => Q.res[a] - Q.res[b]);
+      if (ok.length) good.push('Nel quiz hai mostrato di saper già ' + Z.fmtList(ok.map(t => T[t][0])) + '.');
+      if (no.length && !train.some(x => x.includes(T[no[0]][0]))) train.push(`Nel quiz è stato più difficile ${T[no[0]][0]}. ${T[no[0]][1]}`);
+    }
     if (!good.length) good.push('Stai costruendo il tuo modo di giocare: ogni partita aiuta.');
     if (!train.length) train.push('Non vedo punti deboli chiari: prova pure una difficoltà più alta.');
     return { good: good.slice(0, 3), train: train.slice(0, 2), A, wk };
@@ -174,7 +196,7 @@
       ['Suggerimenti a partita', A.hints.toLocaleString('it-IT', { maximumFractionDigits: 1 })],
     ];
     const precVals = last.map(g => { const d = g.ok + g.err + g.away; return d ? g.ok / d : null; }).filter(v => v != null);
-    const more = h('details.pc-more', null, h('summary', { text: 'I numeri' }),
+    const more = !fin.length ? h('p.pc-note', { text: 'I numeri e i grafici compariranno dopo le prime partite.' }) : h('details.pc-more', null, h('summary', { text: 'I numeri' }),
       h('p.pc-help', { text: 'Ultime 10 partite. «Dubbi» sono le mosse sbagliate o che si allontanano dalla soluzione, i ripensamenti, Annulla e i suggerimenti. I tocchi corretti subito non contano.' }),
       h('div.pc-tiles', null, ...tiles.map(([k, v]) => h('div.pc-tile', null, h('b', { text: v }), h('small', { text: k })))),
       chart('Mosse giuste, partita per partita', precVals, v => pct(v), [0, 1]),
@@ -184,7 +206,7 @@
           h('span.pc-bar.warn', null, h('i', { style: { width: Math.min(100, x.r * 100) + '%' } })),
           h('small', { text: x.r < 0.05 ? 'sicuro' : x.r < 0.25 ? 'qualche dubbio' : 'da allenare' })))) : null);
     const reps = Z.store.get('replay:' + id, []);
-    const games = h('section.pc-games', null, h('h3', { text: 'Le ultime partite' }),
+    const games = !all.length ? null : h('section.pc-games', null, h('h3', { text: 'Le ultime partite' }),
       ...all.slice(-8).reverse().map(g => {
         const k = reps.findIndex(r => r.pid === g.pid), d = g.ok + g.err + g.away;
         return h('div.pc-grow', null,
@@ -195,7 +217,8 @@
     const go = h('section.pc-go', { style: { '--h': G.hue } },
       h('button.btn.primary', { type: 'button', on: { click: () => next(id) } }, h('span', { html: PATH }), 'Prossimo passo'),
       h('p', { text: 'Un rompicapo scelto per te: la difficoltà segue come giochi e insiste sui ragionamenti in cui fai più fatica.' }));
-    screen.append(go, box, more, games);
+    screen.append(go, box, more, games || '',
+      h('p.pc-quiz', null, h('button.btn', { type: 'button', text: Z.store.get('quiz:' + id, null) ? 'Rifai il quiz' : 'Fai il quiz', on: { click: () => Z.Quiz.start(id) } })));
   }
 
   /* ---------- prossimo passo: rompicapo preparato su misura (js/stats.js, nel worker) ---------- */

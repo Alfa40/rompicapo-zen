@@ -167,7 +167,8 @@
 
   const games = id => store.get('stat:' + id, []);
   const finished = id => games(id).filter(g => g.done);
-  const unlocked = id => finished(id).length >= UNLOCK;
+  /* un gioco si sblocca con UNLOCK partite finite oppure col quiz (js/quiz.js) */
+  const unlocked = id => finished(id).length >= UNLOCK || !!store.get('quiz:' + id, null);
   function pauseLimit(id) {
     const meds = finished(id).slice(-10).map(g => g.med).filter(Boolean);
     return Math.min(90000, Math.max(PAUSE_MIN, median(meds) * 4));
@@ -315,6 +316,8 @@
   function job(d) {
     if (d.job === 'need') return { jobId: d.jobId, job: 'need', id: d.id, need: tagsToSolve(d.id, d.P) };
     if (d.job === 'make') return Object.assign({ jobId: d.jobId }, make(d));
+    if (d.job === 'exercise') return Object.assign({ jobId: d.jobId, job: 'exercise' }, exercise(d) || { none: true });
+    if (d.job === 'mini') return Object.assign({ jobId: d.jobId, job: 'mini' }, mini(d));
     return { jobId: d.jobId, job: d.job, error: 'sconosciuto' };
   }
   /* genera qualche rompicapo e tiene quello che fa usare di più i ragionamenti difficili per te */
@@ -332,6 +335,67 @@
       if (!best || sc > best.sc) best = { P, sc, need };
     }
     return { job: 'make', id: d.id, P: best && best.P, need: best && best.need };
+  }
+
+  /* ---------- Quiz: esercizi mirati («trova la mossa») per un ragionamento ----------
+     Si gioca un rompicapo vero col Suggerimento finché il prossimo passo richiede proprio quel ragionamento: quella
+     situazione è l'esercizio. Si completa quando lo stato fa progressi fino a goal (una mossa giusta; per alcuni giochi
+     tutta la parola o il percorso). */
+  const FULL = new Set(['crossword', 'incastro', 'anagram', 'flow', 'maze']);
+  const ANA_TAG = p => (p.w.length <= 5 ? 'short' : p.w.length <= 7 ? 'mid' : 'long');
+  function exercise(d) {
+    const G = Z.GAMES[d.id], f = progressOf(d.id), t0 = Date.now();
+    const gen = opt => { let P = null; for (let t = 0; t < 3 && !P; t++) P = G.generate(opt); if (P) P.opt = opt; return P; };
+    for (let o = 0; o < d.opts.length; o++) {
+      const opt = d.opts[o], until = t0 + d.ms * (o + 1) / d.opts.length;
+      while (Date.now() < until) {
+        const P = gen(opt);
+        if (!P) continue;
+        if (d.id === 'wordsearch' || d.id === 'anagram') {
+          /* tutte le parole già fatte tranne una del tipo voluto */
+          const ks = P.words.map((p, i) => i).filter(i => (d.id === 'wordsearch' ? WS_DIR(P.words[i]) : ANA_TAG(P.words[i])) === d.tag);
+          if (!ks.length) continue;
+          const k = ks[Math.floor(Math.random() * ks.length)], st = G.init(P);
+          if (d.id === 'wordsearch') st.f = st.f.map((_, i) => (i === k ? 0 : 1));
+          else st.o = P.words.map((p, i) => (i === k ? p.start : p.w));
+          const fin = clone(st);
+          if (d.id === 'wordsearch') fin.f[k] = 1; else fin.o[k] = P.words[k].w;
+          return { P, s: st, tag: d.tag, goal: f(P, fin).ok };
+        }
+        let st = G.init(P), n = 0;
+        const found = [];
+        while (!G.solved(P, st) && n++ < 3000) {
+          const r = G.hint(P, st);
+          if (!r) break;
+          if (r.tag === d.tag) found.push({ s: clone(st), r });
+          st = r.state;
+        }
+        if (!found.length) continue;
+        const x = found[Math.floor(Math.random() * found.length)];
+        const goal = FULL.has(d.id) ? f(P, x.r.state).ok : exProgress(d.id, d.tag, P, x.s).ok + 1;
+        return { P, s: x.s, tag: d.tag, goal };
+      }
+    }
+    return null;
+  }
+  /* mini rompicapo finale: piccolo e completo */
+  function mini(d) {
+    const G = Z.GAMES[d.id];
+    let P = null;
+    for (let t = 0; t < 5 && !P; t++) P = G.generate(d.opt);
+    if (P) P.opt = d.opt;
+    return { P, s: P ? G.init(P) : null };
+  }
+  /* progressi di uno stato (per il quiz) */
+  const progress = (id, P, st) => { const f = progressOf(id); try { return f ? f(P, st) : { ok: 0, bad: 0 }; } catch (e) { return { ok: 0, bad: 0 }; } };
+  /* nelle Stelle un esercizio chiede una stella (posto obbligato, trucco avanzato) oppure un puntino (gli altri) */
+  const STAR_TAGS = new Set(['place', 'advanced']);
+  function exProgress(id, tag, P, st) {
+    if (id !== 'stars') return progress(id, P, st);
+    const S2 = new Set(P.sol), want = STAR_TAGS.has(tag) ? 1 : 2;
+    let ok = 0, bad = 0;
+    st.c.forEach((v, i) => { if (v) { if ((v === 1) === S2.has(i)) { if (v === want) ok++; } else bad++; } });
+    return { ok, bad };
   }
 
   /* ---------- Percorso: scala di difficoltà e livello del giocatore (per gioco) ---------- */
@@ -411,5 +475,21 @@
     return { opt, P, focus, harder, r: p.r };
   }
 
-  Z.Stats = { recorder, job, judge, diff, patch, games, finished, unlocked, isDoubt, nextStep, pathOf, quality, UNLOCK, TAGS, RUNGS, newPid: () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7) };
+  /* fine del quiz: il profilo del gioco parte dai risultati (res: { tag: punteggio 0..1 }, ordinati dal più facile) */
+  function quizDone(id, res, mini) {
+    const tags = Object.keys(TAGS[id] || {}).filter(t => t in res);
+    const W = store.get('weak:' + id, { doubt: {}, need: {} });
+    for (const t of tags) { W.need[t] = (W.need[t] || 0) + 2; W.doubt[t] = (W.doubt[t] || 0) + 2 * (1 - res[t]); }
+    store.set('weak:' + id, W);
+    let num = 0, den = 0;
+    tags.forEach((t, j) => { num += res[t] * (j + 1); den += j + 1; });
+    const f = den ? num / den : 0.3;
+    const r = Math.max(0, Math.min(RUNGS - 1, 0.5 + f * 5 + (mini && mini.ok && !mini.err ? 1 : 0)));
+    const p = store.get('path:' + id, null) || { n: 0 };
+    p.r = r;
+    store.set('path:' + id, p);
+    store.set('quiz:' + id, { d: Date.now(), res, mini: mini || null });
+  }
+
+  Z.Stats = { recorder, job, work, judge, diff, patch, games, finished, unlocked, isDoubt, nextStep, pathOf, quality, optsAt, progress, exProgress, quizDone, FULL, UNLOCK, TAGS, RUNGS, newPid: () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7) };
 })();

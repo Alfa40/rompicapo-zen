@@ -819,6 +819,14 @@ html.mz-swipe button, html.mz-swipe a, html.mz-swipe input { touch-action: manip
 .rp-legend span { display: flex; align-items: center; gap: 5px; }
 .rp-legend i { width: 12px; height: 12px; border-radius: 3px; background: var(--line); }
 .pc-go { margin: 0 0 16px; display: grid; gap: 6px; }
+.pc-ways { margin: 4px 0 0; padding-left: 20px; display: grid; gap: 8px; line-height: 1.45; color: var(--ink); font-size: 15px; }
+.pc-ways b { color: var(--accent-deep); font-weight: 600; }
+.pc-quiz { text-align: center; margin: 0 0 16px; }
+.qz-task { margin: 2px 0 4px; text-align: center; font-weight: 500; color: var(--accent-deep); }
+.qz-msg { margin: 6px 0 0; min-height: 1.5em; text-align: center; font-weight: 500; border-radius: 12px; padding: 2px 8px; }
+.qz-msg.ok { background: var(--rp-ok-soft); }
+.qz-msg.no { background: var(--rp-doubt-soft); }
+.qz-tools { grid-template-columns: repeat(2, 1fr); }
 .pc-go .btn { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 18px; font-weight: 600; padding: 14px 20px; }
 .pc-go .btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .pc-go p { margin: 0; font-size: 13.5px; color: var(--ink-soft); text-align: center; line-height: 1.4; }
