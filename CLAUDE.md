@@ -41,7 +41,8 @@ https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `mai
   salvataggio della partita in corso, rompicapo preparati in anticipo in `js/worker.js` (tutti tranne il Sudoku).
 - `js/proposte.js`: proposte degli amici (tasto «Migliora il gioco» nel menu, solo col codice degli amici).
 - `css/style.css`: stile; colori come variabili derivate da `--h`, tema chiaro/scuro automatico.
-- `sw.js`: funziona anche offline. **Se aggiungi un file del gioco mettilo in `FILES` e aumenta il numero di `CACHE`.**
+- `sw.js`: funziona anche offline. **Se aggiungi un file del gioco mettilo in `FILES` e aumenta il numero di `CACHE`; aumenta allo stesso numero anche
+  `?v=` dei file in `index.html`** (così il telefono non mescola file nuovi e vecchi).
 
 ## Regole del gioco (da rispettare se la richiesta non dice esplicitamente il contrario)
 - Tutto in italiano, testi brevi e gentili.

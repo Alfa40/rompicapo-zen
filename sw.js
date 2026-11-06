@@ -1,5 +1,5 @@
 /* Service worker: rende il gioco disponibile anche offline quando è servito via http(s) */
-const CACHE = 'rompicapo-zen-v25';
+const CACHE = 'rompicapo-zen-v26';
 const FILES = [
   './', 'index.html', 'css/style.css', 'icon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'manifest.webmanifest',
   'js/core.js', 'js/numgrid.js', 'js/app.js', 'js/worker.js', 'js/proposte.js', 'js/stats.js', 'js/percorso.js', 'js/quiz.js',
@@ -16,10 +16,12 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    fetch(e.request).then(r => {
+    /* si chiede sempre al server se il file è cambiato (no-cache): così dopo un aggiornamento non si mescolano
+       file nuovi e vecchi tenuti dal browser */
+    fetch(e.request, { cache: 'no-cache' }).then(r => {
       const copy = r.clone();
       caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
       return r;
-    }).catch(() => caches.match(e.request))
+    }).catch(() => caches.match(e.request, { ignoreSearch: true }))
   );
 });
