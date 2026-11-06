@@ -195,7 +195,7 @@
       const what = was === 1 ? 'La stella' : 'Il puntino', g = was === 1 ? 'a' : 'o';
       return {
         state: s, focus: [i],
-        why: `${what} in ${Z.cellName(i, n)} non è corrett${g}: porterebbe a una contraddizione. L'ho tolt${g}.` +
+        tag: 'wrong', why: `${what} in ${Z.cellName(i, n)} non è corrett${g}: porterebbe a una contraddizione. L'ho tolt${g}.` +
           (wrong.length > 1 ? ` Ci sono altre ${wrong.length - 1} caselle da rivedere.` : ''),
       };
     }
@@ -210,7 +210,7 @@
         free.forEach(i => { s.c[i] = 1; });
         return {
           state: s, focus: free,
-          why: `In ${U.name} servono ${star} e restano solo ${free.length === 1 ? 'un posto libero' : free.length + ' posti liberi'} (le altre caselle sono già escluse): ${free.length === 1 ? 'la stella va lì' : 'le stelle vanno lì'}.`,
+          tag: 'place', why: `In ${U.name} servono ${star} e restano solo ${free.length === 1 ? 'un posto libero' : free.length + ' posti liberi'} (le altre caselle sono già escluse): ${free.length === 1 ? 'la stella va lì' : 'le stelle vanno lì'}.`,
         };
       }
     }
@@ -222,7 +222,7 @@
       }
       if (around.length) {
         around.forEach(j => { s.c[j] = 2; });
-        return { state: s, focus: around, why: 'Le stelle non possono toccarsi, nemmeno in diagonale: tutte le caselle attorno a questa stella sono vuote. Le ho segnate con un puntino.' };
+        return { state: s, focus: around, tag: 'touch', why: 'Le stelle non possono toccarsi, nemmeno in diagonale: tutte le caselle attorno a questa stella sono vuote. Le ho segnate con un puntino.' };
       }
     }
     for (const U of Z.shuffle(units.slice())) {
@@ -230,7 +230,7 @@
       if (have === k && free.length) {
         free.forEach(i => { s.c[i] = 2; });
         const name = U.name[0].toUpperCase() + U.name.slice(1);
-        return { state: s, focus: free, why: `${name} ha già ${k === 1 ? 'la sua stella' : 'le sue ' + k + ' stelle'}: le altre caselle sono vuote. Le ho segnate con un puntino.` };
+        return { state: s, focus: free, tag: 'full', why: `${name} ha già ${k === 1 ? 'la sua stella' : 'le sue ' + k + ' stelle'}: le altre caselle sono vuote. Le ho segnate con un puntino.` };
       }
     }
     /* 4) una stella qui toglierebbe spazio a una riga, colonna o regione */
@@ -261,7 +261,7 @@
           s.c[i] = 2;
           return {
             state: s, focus: [i],
-            why: `Prova a immaginare una stella in ${Z.cellName(i, n)}: le caselle attorno diventerebbero vuote e ${U.name} non avrebbe più spazio per ${k === 1 ? 'la sua stella' : 'le sue ' + k + ' stelle'}. Quindi qui non può esserci una stella: ho messo un puntino.`,
+            tag: 'imagine', why: `Prova a immaginare una stella in ${Z.cellName(i, n)}: le caselle attorno diventerebbero vuote e ${U.name} non avrebbe più spazio per ${k === 1 ? 'la sua stella' : 'le sue ' + k + ' stelle'}. Quindi qui non può esserci una stella: ho messo un puntino.`,
           };
         }
       }
@@ -272,7 +272,7 @@
     s.c[i] = 1;
     return {
       state: s, focus: [i],
-      why: `Non ci sono mosse dirette. Un trucco avanzato: se alcune regioni stanno tutte dentro lo stesso numero di righe (o colonne), quelle righe sono "riservate" a loro e nelle altre caselle di quelle righe non possono esserci stelle. Ecco una stella della soluzione, in ${Z.cellName(i, n)}.`,
+      tag: 'advanced', why: `Non ci sono mosse dirette. Un trucco avanzato: se alcune regioni stanno tutte dentro lo stesso numero di righe (o colonne), quelle righe sono "riservate" a loro e nelle altre caselle di quelle righe non possono esserci stelle. Ecco una stella della soluzione, in ${Z.cellName(i, n)}.`,
     };
   }
 

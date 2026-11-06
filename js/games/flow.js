@@ -197,12 +197,13 @@
     s.p[c] = path;
     const border = path.filter(i => i % n === 0 || i % n === n - 1 || i < n || i >= n * n - n).length;
     let why = `Ecco il percorso del <b>${NAMES[c]}</b>. `;
+    const tag = forced === c ? 'forced' : border > path.length / 2 ? 'border' : 'fill';
     if (forced === c) why += 'Uno dei suoi pallini aveva una sola casella libera accanto: da lì il percorso è obbligato e si può seguire passo passo. ';
     else if (border > path.length / 2) why += 'Corre lungo il bordo: i percorsi che seguono i bordi lasciano spazio agli altri colori nel centro. ';
     else why += 'Ricorda che ogni casella va riempita: un percorso che isola una casella o un piccolo angolo è sempre sbagliato. ';
     if (wasThere) why += "Il tuo percorso per questo colore era diverso: l'ho sostituito. ";
     if (cut) why += 'Ho accorciato i percorsi che passavano di qui.';
-    return { state: s, focus: [c], why };
+    return { state: s, focus: [c], why, tag };
   }
 
   Z.register({

@@ -95,7 +95,7 @@
       ? 'Un metodo utile è "inseguire le luci": per spegnere una lanterna accesa tocca quella subito sotto, così riga dopo riga le luci scendono verso il basso. '
       : "Ho calcolato l'insieme più piccolo di tocchi che spegne tutto. ";
     why += left ? `Questa lanterna fa parte della soluzione: ne restano altre ${left} da toccare.` : "Era l'ultimo tocco!";
-    return { state: s, focus: [i], why };
+    return { state: s, focus: [i], why, tag: chase.includes(i) ? 'chase' : 'calc' };
   }
 
   Z.register({
@@ -110,6 +110,7 @@
     generate,
     _test: { solve, press },
     init: P => ({ on: P.start.slice() }),
+    progress(P, s) { const x = solve(P.n, s.on); return { ok: x ? -x.reduce((a, b) => a + b, 0) : 0, bad: 0 }; },
     solved: (P, s) => s.on.every(v => !v),
     hint,
     view(ctx) {

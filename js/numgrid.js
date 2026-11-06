@@ -150,7 +150,7 @@
       s.v[i] = 0; s.m[i] = 0;
       return {
         state: s, focus: [i],
-        why: `Il <b>${d}</b> in ${Z.cellName(i, n)} non è corretto: seguendo le regole porterebbe, prima o poi, a una contraddizione. L'ho tolto, così riparti da una base sicura.` +
+        tag: 'wrong', why: `Il <b>${d}</b> in ${Z.cellName(i, n)} non è corretto: seguendo le regole porterebbe, prima o poi, a una contraddizione. L'ho tolto, così riparti da una base sicura.` +
           (wrong.length > 1 ? ` Attenzione: ci sono altri ${wrong.length - 1} numeri da rivedere.` : ''),
       };
     }
@@ -164,9 +164,9 @@
       }
       if (nk.length) {
         const i = Z.pick(nk), d = P.sol[i];
-        const why = o.naked(i, d, lv, info);
+        const why = o.naked(i, d, lv, info), tag = 'naked';
         place(i, d);
-        return { state: s, focus: [i], why };
+        return { state: s, focus: [i], why, tag };
       }
       const hs = [];
       for (const U of o.units) for (let d = 1; d <= n; d++) {
@@ -176,9 +176,9 @@
       }
       if (hs.length) {
         const [U, d, i] = Z.pick(hs);
-        const why = o.hidden(U, d, i, lv, info);
+        const why = o.hidden(U, d, i, lv, info), tag = 'hidden';
         place(i, d);
-        return { state: s, focus: [i], why };
+        return { state: s, focus: [i], why, tag };
       }
     }
     /* Nessuna deduzione semplice: casella con meno candidati */
@@ -194,7 +194,7 @@
     place(best, d);
     return {
       state: s, focus: [best],
-      why: `Qui non c'è una mossa immediata. In ${Z.cellName(best, n)} restano i candidati ${Z.fmtList(list.map(x => '<b>' + x + '</b>'))}: ` +
+      tag: 'guess', why: `Qui non c'è una mossa immediata. In ${Z.cellName(best, n)} restano i candidati ${Z.fmtList(list.map(x => '<b>' + x + '</b>'))}: ` +
         `per scartare quelli sbagliati bisogna seguire una catena di conseguenze finché non si arriva a una contraddizione. Il valore giusto è <b>${d}</b>.`,
     };
   };

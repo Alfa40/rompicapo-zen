@@ -54,7 +54,7 @@
     let why = `«${p.clue}»: con le lettere ${p.start.split('').sort().join(' ')} si forma <b>${p.w}</b>. `;
     why += k ? `Avevi già ${k} lettere al posto giusto. ` : '';
     why += 'Un metodo: cerca i gruppi di lettere che in italiano stanno spesso insieme (CH, GL, GN, SC, -ONE, -INO, -ATO) e prova a metterli in fondo o all\'inizio.';
-    return { state: s, focus: [i], why };
+    return { state: s, focus: [i], why, tag: p.w.length <= 5 ? 'short' : p.w.length <= 7 ? 'mid' : 'long' };
   }
 
   Z.register({

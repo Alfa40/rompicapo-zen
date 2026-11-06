@@ -129,7 +129,7 @@
     let why = `<b>${p.w}</b> comincia alla riga ${p.y + 1}, colonna ${p.x + 1} e prosegue ${DIR_NAME[p.dx + ',' + p.dy]}. `;
     why += `Per trovarla conviene partire dalla lettera più rara della parola, la <b>${rare}</b>: nella griglia ce ne sono solo ${count(rare)}, e intorno a ciascuna si controlla se continua la parola. `;
     why += left.length > 1 ? `Restano ${left.length - 1} parole.` : `Era l'ultima: le lettere rimaste formano la chiave <b>${P.key}</b>.`;
-    return { state: s, focus: cellsOf(n, p), why };
+    return { state: s, focus: cellsOf(n, p), why, tag: !p.dy ? (p.dx > 0 ? 'row' : 'rowBack') : !p.dx ? (p.dy > 0 ? 'col' : 'colBack') : 'diag' };
   }
 
   Z.register({
@@ -215,7 +215,7 @@
           const c = cellsOf(n, p);
           return (c[0] === s && c[c.length - 1] === t) || (c[0] === t && c[c.length - 1] === s);
         });
-        if (i < 0) return;
+        if (i < 0) { if (ctx.miss) ctx.miss(); return; }
         const ns = Z.clone(cur);
         ns.f[i] = 1;
         ctx.commit(ns);
@@ -239,7 +239,7 @@
           const c = cellsOf(n, p);
           return (c[0] === s && c[c.length - 1] === t) || (c[0] === t && c[c.length - 1] === s);
         });
-        if (i < 0) { Z.flashEl(cells[t]); return; }
+        if (i < 0) { Z.flashEl(cells[t]); if (ctx.miss) ctx.miss(); return; }
         const ns = Z.clone(cur);
         ns.f[i] = 1;
         ctx.commit(ns);

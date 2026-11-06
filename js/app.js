@@ -187,7 +187,9 @@
       grid.append(card);
     });
     const prop = Z.Proposte ? Z.Proposte.homeButton() : null;
-    screen.append(top, prop || '', grid, h('p.foot', { text: 'Ogni rompicapo è generato al momento: non ne vedrai mai due uguali.' }));
+    const path = Z.Percorso ? Z.Percorso.homeButton() : null;
+    screen.append(top, path || '', prop || '', grid, h('p.foot', { text: 'Ogni rompicapo è generato al momento: non ne vedrai mai due uguali.' }));
+
   }
 
   /* Pannello della difficoltà: ogni scelta viene salvata subito per quel gioco */
@@ -316,7 +318,7 @@
     ]);
   }
 
-  Z.ui = { openSheet, closeOverlay, home: () => home() };
+  Z.ui = { openSheet, closeOverlay, home: () => home(), applyTheme, startGame: (id, fresh, from) => startGame(id, fresh, from), setupSheet: id => setupSheet(id), screen };
 
   function confirmSheet(text, yes, onYes) {
     openSheet([
@@ -328,8 +330,9 @@
   }
 
   /* ---------- Partita ---------- */
-  function startGame(id, fresh) {
+  function startGame(id, fresh, from) {
     const G = Z.GAMES[id];
+    const src = from || 'menu'; /* 'percorso' se la partita viene dal Percorso */
     currentId = id;
     const key = `save:${id}`;
     const saved = !fresh && Z.store.get(key, null);
@@ -372,6 +375,8 @@
     }
 
     let P, cur, undo = [], redo = [], view = null, won = false, gestureStart = null;
+    /* Percorso: registra in silenzio ogni mossa e il suo tempo (js/stats.js); niente si vede durante la partita */
+    let rec = null, hintTag = null;
 
     /* Cronologia illimitata; se lo spazio del browser non basta si salvano solo le mosse più recenti */
     const save = () => {
@@ -400,12 +405,15 @@
       get state() { return cur; },
       commit(ns) {
         if (won) return;
+        if (rec) { if (hinting) rec.hint(cur, ns, hintTag); else rec.move(cur, ns); }
         undo.push(JSON.stringify(cur));
         redo = [];
         if (!hinting) hideHint();
         set(ns);
       },
       preview(ns) { if (won) return; cur = ns; view.render(cur); },
+      /* tentativo che non cambia niente ma è sbagliato (es. una selezione che non è una parola) */
+      miss() { if (!won && rec) rec.miss(); },
       begin() { gestureStart = JSON.stringify(cur); },
       /* casella scelta con le frecce: si evidenzia (se non quiet) e, sulla griglia ingrandita, la vista la segue */
       mark(t, quiet) {
@@ -418,6 +426,7 @@
       },
       end() {
         if (gestureStart !== null && gestureStart !== JSON.stringify(cur)) {
+          if (rec) rec.move(JSON.parse(gestureStart), cur);
           undo.push(gestureStart);
           redo = [];
           hideHint();
@@ -658,6 +667,8 @@
     }
 
     function newPuzzle() {
+      if (rec && !won) rec.finish(false); /* lasciato a metà */
+      rec = null;
       won = false;
       hideHint();
       wrap.innerHTML = '';
@@ -675,13 +686,16 @@
         P.opt = opt;
         prefetch();
         P.theme = Z.nextTheme();
+        P.pid = Z.Stats.newPid();
         cur = G.init(P);
         undo = []; redo = [];
+        rec = Z.Stats.recorder(id, P, cur, src);
         begin();
       }, 40);
     }
 
     function win() {
+      if (rec) { rec.finish(true); rec = null; }
       won = true;
       hideHint();
       Z.store.del(key);
@@ -737,7 +751,9 @@
       if (!undo.length || won) return;
       hideHint();
       redo.push(JSON.stringify(cur));
+      const was = cur;
       cur = JSON.parse(undo.pop());
+      if (rec) rec.undo(was, cur);
       view.render(cur);
       after();
     });
@@ -745,7 +761,9 @@
       if (!redo.length || won) return;
       hideHint();
       undo.push(JSON.stringify(cur));
+      const was = cur;
       cur = JSON.parse(redo.pop());
+      if (rec) rec.redo(was, cur);
       view.render(cur);
       after();
     });
@@ -753,9 +771,9 @@
       if (won || !view) return;
       const r = G.hint(P, cur);
       if (!r) return;
-      hinting = true;
+      hinting = true; hintTag = r.tag || null;
       ctx.commit(r.state);
-      hinting = false;
+      hinting = false; hintTag = null;
       if (view.flash) view.flash(r.focus);
       if (r.why && !won) showHint(r.why);
     });
@@ -779,7 +797,9 @@
     if (saved && saved.P && saved.s) {
       P = saved.P;
       if (!P.theme) P.theme = Z.nextTheme();
+      if (!P.pid) P.pid = Z.Stats.newPid();
       cur = saved.s; undo = saved.u || []; redo = saved.r || [];
+      rec = Z.Stats.recorder(id, P, cur, src);
       begin();
     } else newPuzzle();
     /* aperto da un collegamento diretto senza passare dal menu */

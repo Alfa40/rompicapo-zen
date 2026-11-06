@@ -90,21 +90,21 @@
       if (v.length === 1 && v[0] === P.sol[i]) {
         setTo(i);
         const x = i % n, y = (i / n) | 0, corner = (x === 0 || x === n - 1) && (y === 0 || y === n - 1);
-        return { state: s, focus: [i], why: `Questo pezzo è ${corner ? 'in un angolo' : 'sul bordo'}: in qualsiasi altra rotazione un tubo punterebbe fuori dalla griglia e l'acqua uscirebbe. C'è un solo verso possibile.` };
+        return { state: s, focus: [i], tag: 'edge', why: `Questo pezzo è ${corner ? 'in un angolo' : 'sul bordo'}: in qualsiasi altra rotazione un tubo punterebbe fuori dalla griglia e l'acqua uscirebbe. C'è un solo verso possibile.` };
       }
     }
     for (const i of Z.shuffle(wrongs.slice())) {
       const v = valid(i, true);
       if (v.length === 1 && v[0] === P.sol[i]) {
         setTo(i);
-        return { state: s, focus: [i], why: "Guarda i bordi e i pezzi vicini già sistemati: dove un vicino ha un tubo rivolto verso questo pezzo, qui serve un tubo che lo incontri; dove non ce l'ha, qui non ci deve essere. Una sola rotazione rispetta tutto." };
+        return { state: s, focus: [i], tag: 'near', why: "Guarda i bordi e i pezzi vicini già sistemati: dove un vicino ha un tubo rivolto verso questo pezzo, qui serve un tubo che lo incontri; dove non ce l'ha, qui non ci deve essere. Una sola rotazione rispetta tutto." };
       }
     }
     const f = flow(P, s);
     const nearWet = wrongs.filter(i => { const x = i % n, y = (i / n) | 0; return D.some(([dx, dy]) => { const xx = x + dx, yy = y + dy; return xx >= 0 && yy >= 0 && xx < n && yy < n && f.wet[yy * n + xx]; }); });
     const i = Z.pick(nearWet.length ? nearWet : wrongs);
     setTo(i);
-    return { state: s, focus: [i], why: "Non c'è un pezzo obbligato dai soli vicini. Ricorda: la rete non può avere anelli chiusi e ogni bocciolo è la fine di un ramo. Questa rotazione porta l'acqua un passo più avanti senza chiudere anelli." };
+    return { state: s, focus: [i], tag: 'flow', why: "Non c'è un pezzo obbligato dai soli vicini. Ricorda: la rete non può avere anelli chiusi e ogni bocciolo è la fine di un ramo. Questa rotazione porta l'acqua un passo più avanti senza chiudere anelli." };
   }
 
   Z.register({
@@ -118,6 +118,7 @@
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="10" class="ic-s"/><path d="M8 26h18a6 6 0 0 1 6 6v24" class="ic-pipe"/><path d="M32 8v10" class="ic-pipe ic-pipe2"/><circle cx="32" cy="22" r="6" class="ic-a"/></svg>`,
     generate,
     init: P => ({ r: new Array(P.n * P.n).fill(0) }),
+    progress(P, s) { let ok = 0; s.r.forEach((r, i) => { if (rot(P.tiles[i], r) === P.sol[i]) ok++; }); return { ok, bad: s.r.length - ok }; },
     solved(P, s) {
       const f = flow(P, s);
       return f.open === 0 && f.wet.every(v => v);

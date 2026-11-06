@@ -154,7 +154,7 @@
       s.b[e] = P.sol[e];
       return {
         state: s, focus: [E[e][0], E[e][1]],
-        why: 'Il ponte tra queste due isole è di troppo: con lui il rompicapo non potrebbe più essere completato. ' + (P.sol[e] ? "L'ho ridotto." : "L'ho tolto.") +
+        tag: 'wrong', why: 'Il ponte tra queste due isole è di troppo: con lui il rompicapo non potrebbe più essere completato. ' + (P.sol[e] ? "L'ho ridotto." : "L'ho tolto.") +
           (over.length > 1 ? ` Ci sono altri ${over.length - 1} ponti da rivedere.` : ''),
       };
     }
@@ -183,15 +183,15 @@
       const c = cands[0], { i, e } = c;
       const o = E[e][0] === i ? E[e][1] : E[e][0];
       s.b[e] += c.forced;
-      let why;
+      let why, tag;
       if (c.open.length === 1) {
-        why = `L'isola con il <b>${n[i]}</b> ha ancora bisogno di ${c.need === 1 ? 'un ponte' : c.need + ' ponti'}, ma può collegarsi solo all'isola ${dirName(P, i, o)}: ` +
+        tag = 'only'; why = `L'isola con il <b>${n[i]}</b> ha ancora bisogno di ${c.need === 1 ? 'un ponte' : c.need + ' ponti'}, ma può collegarsi solo all'isola ${dirName(P, i, o)}: ` +
           `le altre direzioni sono bloccate (isole già complete, ponti che si incrocerebbero o nessuna isola). ${c.need === 1 ? 'Il ponte va' : 'I ponti vanno'} lì.`;
       } else {
-        why = `L'isola con il <b>${n[i]}</b> ha ancora bisogno di ${c.need} ponti e ha ${c.open.length} direzioni disponibili, che insieme ne possono accogliere al massimo ${c.cap}. ` +
+        tag = 'count'; why = `L'isola con il <b>${n[i]}</b> ha ancora bisogno di ${c.need} ponti e ha ${c.open.length} direzioni disponibili, che insieme ne possono accogliere al massimo ${c.cap}. ` +
           `Anche riempiendo al massimo le altre direzioni ne mancherebbe${c.forced === 1 ? '' : 'ro'} ${c.forced}: quindi verso l'isola ${dirName(P, i, o)} ${c.forced === 1 ? 'serve almeno un ponte' : 'servono due ponti'}.`;
       }
-      return { state: s, focus: [i, o], why };
+      return { state: s, focus: [i, o], why, tag };
     }
     const miss = s.b.map((v, i) => (v < P.sol[i] ? i : -1)).filter(i => i >= 0);
     if (!miss.length) return null;
@@ -200,7 +200,7 @@
     for (const j of X[e]) s.b[j] = 0;
     return {
       state: s, focus: [E[e][0], E[e][1]],
-      why: "Contando i ponti di ogni isola non c'è una mossa obbligata. Serve un ragionamento sulla <b>connessione</b>: alcune scelte chiuderebbero un gruppo di isole separato dal resto, che non potrebbe più collegarsi. Questo ponte fa parte della soluzione.",
+      tag: 'connect', why: "Contando i ponti di ogni isola non c'è una mossa obbligata. Serve un ragionamento sulla <b>connessione</b>: alcune scelte chiuderebbero un gruppo di isole separato dal resto, che non potrebbe più collegarsi. Questo ponte fa parte della soluzione.",
     };
   }
 

@@ -70,7 +70,7 @@
     if (k < path.length) {
       s.p = path.slice(0, k);
       const back = path.length - k;
-      return { state: s, focus: [sol[k - 1]], why: `Da qui la strada non arriva all'uscita: più avanti finisce in un vicolo cieco. Sono tornato indietro di ${back} ${back === 1 ? 'passo' : 'passi'}, fino all'ultimo punto giusto.` };
+      return { state: s, focus: [sol[k - 1]], tag: 'wrong', why: `Da qui la strada non arriva all'uscita: più avanti finisce in un vicolo cieco. Sono tornato indietro di ${back} ${back === 1 ? 'passo' : 'passi'}, fino all'ultimo punto giusto.` };
     }
     if (k >= sol.length) return null;
     /* si avanza fino al prossimo bivio (almeno qualche passo) */
@@ -84,7 +84,7 @@
     const why = forks || nbrs(P, sol[k - 1] ?? sol[0]).length > 2
       ? 'Al bivio la strada giusta è questa: le altre, seguendole fino in fondo, finiscono in vicoli ciechi. Un trucco: si può anche partire dall\'uscita e camminare al contrario, perché i vicoli ciechi si vedono meglio. '
       : 'Qui non ci sono scelte: il corridoio porta avanti da solo. ';
-    return { state: s, focus: s.p.slice(k), why: why + (left ? `Mancano ${left} caselle all'uscita.` : 'Sei arrivato all\'uscita!') };
+    return { state: s, focus: s.p.slice(k), tag: forks || nbrs(P, sol[k - 1] ?? sol[0]).length > 2 ? 'fork' : 'corridor', why: why + (left ? `Mancano ${left} caselle all'uscita.` : 'Sei arrivato all\'uscita!') };
   }
 
   Z.register({
@@ -106,6 +106,7 @@
       return edges === N - 1 && solve(P).length > 1 ? '' : 'labirinto non perfetto';
     },
     init: P => ({ p: [P.start] }),
+    progress(P, s) { const sol = solve(P); let k = 0; while (k < s.p.length && s.p[k] === sol[k]) k++; return { ok: k, bad: s.p.length - k }; },
     solved: (P, s) => s.p[s.p.length - 1] === P.end,
     hint,
     view(ctx) {
