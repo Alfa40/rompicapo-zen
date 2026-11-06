@@ -33,8 +33,9 @@ https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `mai
   `Z.Stats.quizDone` scrive profilo (`quiz:<id>`, `weak:<id>`, `path:<id>`) e mostra un resoconto.
 - Solitari: `js/games/cards.js` (carte francesi). Sono 5 giochi con id e dati separati (`klondike`, `freecell`,
   `pyramid`, `tripeaks`, `golf`) ma con `family: 'solitari'`: nel menu (categoria «Carte») c'è una sola scheda e il
-  gioco si sceglie nel pannello della difficoltà (`FAMILIES` in `app.js`). **Eccezione voluta**: le smazzate sono
-  casuali come nel vero solitario (`random: true`), alcune non si vincono. `hint` cerca una strada con una ricerca a
+  gioco si sceglie nel pannello della difficoltà (`FAMILIES` in `app.js`). Le smazzate sono casuali ma sempre
+  vincibili: `generate` ne prova finché la ricerca trova la strada (`P.sol`); con mosse sbagliate la partita può però
+  bloccarsi (`random: true`). `hint` cerca una strada con una ricerca a
   tempo (conosce le carte coperte ma non le nomina); se non c'è, restituisce null e `stuck(P, s)` spiega con
   gentilezza. `winnable(P)` serve al mini rompicapo del quiz.
 - `js/app.js`: menu, scelta della difficoltà (salvata per gioco), partita, annulla/ripristina, zoom sulla griglia,
@@ -46,6 +47,7 @@ https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `mai
 
 ## Regole del gioco (da rispettare se la richiesta non dice esplicitamente il contrario)
 - Tutto in italiano, testi brevi e gentili.
+- Ogni finestra (`openSheet` in `app.js`) ha la X in alto a destra per chiuderla.
 - Stile calmo: animazioni morbide, niente audio, niente timer, punteggi o progressione **durante la partita**: tempi e
   crescita si vedono solo nelle pagine del Percorso.
 - Aiuti solo Annulla/Ripristina e Suggerimento, entrambi illimitati. Il Suggerimento è a due passi: prima un consiglio

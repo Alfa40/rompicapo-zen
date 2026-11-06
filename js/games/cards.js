@@ -1,5 +1,6 @@
 /* Solitari di carte: Classico, FreeCell, Piramide, TriPeaks e Golf, con le carte francesi.
-   Le smazzate sono casuali come nel vero solitario: alcune non si possono vincere. Il Suggerimento cerca una strada
+   Le smazzate sono casuali ma si danno solo quelle che si possono vincere (generate trova prima la strada, P.sol).
+   Dopo qualche mossa sbagliata la partita può bloccarsi: il Suggerimento lo dice (stuck). Il Suggerimento cerca una strada
    fino alla vittoria (conosce anche le carte coperte, ma non le nomina) e, se non la vede tutta, consiglia la mossa
    che sembra più utile. Nel menu i cinque giochi stanno insieme («Solitari», family) e si scelgono con la difficoltà,
    ma ognuno ha i suoi dati e il suo Percorso. */
@@ -65,7 +66,10 @@
     return { path: [], win: false, lost: true };
   }
   /* prossima mossa consigliata: { m, sure } oppure null (nessuna strada) */
+  const seeded = new Set();
   function nextMove(E, P, s) {
+    /* la strada trovata quando la smazzata è stata preparata (P.sol) */
+    if (P.sol) { const k0 = mkey(E, P, P.start); if (!seeded.has(k0)) { seeded.add(k0); remember(E, P, Z.clone(P.start), P.sol, true); } }
     const k = mkey(E, P, s), had = memo.get(k);
     if (had) return had.m ? had : null;
     const r = search(E, P, s, 260, 60000);
@@ -120,9 +124,9 @@
   const REDEAL = '<svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-2-4.9"/><path d="M19 4v4h-4"/></svg>';
   const flashIn = (cards, slots) => list => (list || []).forEach(t => Z.flashEl(typeof t === 'number' ? cards[t] : slots[t]));
   const STUCK_LOST = () => Z.say(
-    'Non trovo più un modo per vincere questa smazzata: nel solitario succede, alcune partite non si possono vincere. Puoi annullare qualche mossa e provare un\'altra strada, oppure iniziare una nuova partita.',
-    'Da qui non vedo una strada fino alla fine. Non è colpa tua: certe smazzate si bloccano. Prova ad annullare qualche mossa, oppure gioca una nuova partita.');
-  const STUCK_NONE = () => 'Non ci sono più mosse possibili. Puoi annullare qualche mossa e provare un\'altra strada, oppure iniziare una nuova partita.';
+    'Da qui non trovo più una strada fino alla vittoria. Questa partita all’inizio si poteva vincere: annulla qualche mossa e prova un’altra strada (spesso basta tornare a prima di un mazzo girato o di una colonna svuotata).',
+    'Con le mosse fatte finora la partita si è bloccata, ma dall’inizio si poteva vincere. Prova ad annullare qualche mossa e a scegliere diversamente.');
+  const STUCK_NONE = () => 'Non ci sono più mosse possibili. Questa partita all’inizio si poteva vincere: annulla qualche mossa e prova un’altra strada.';
 
   /* ======================= Classico (Klondike) ======================= */
   const KL = {
@@ -676,7 +680,16 @@
       id: o.id, name: o.name, hue: o.hue, tagline: o.tagline, rules: o.rules, options: o.options,
       family: 'solitari', random: true, hintCap: 400,
       icon: o.icon || ICON(12, 26),
-      generate: opt => Object.assign(E.deal(opt), { kind: o.id }),
+      /* si danno solo smazzate che si possono vincere: si cerca la strada prima (di solito nel worker) */
+      generate(opt) {
+        let P = null;
+        for (let t = 0; t < 150; t++) {
+          P = Object.assign(E.deal(opt), { kind: o.id });
+          const r = search(E, P, Z.clone(P.start), o.ms || 1200, o.max || 120000);
+          if (r.win) { P.sol = r.path; return P; }
+        }
+        return P;
+      },
       init: P => Z.clone(P.start),
       solved: (P, s) => E.goal(s),
       progress: E.progress,
@@ -702,7 +715,7 @@
       _E: E,
     });
   }
-  const COMMON = '<p>Le carte sono francesi: <b>A</b> (Asso) vale 1, <b>J</b> (Fante) 11, <b>Q</b> (Donna) 12, <b>K</b> (Re) 13. Come nel vero solitario, le carte sono mescolate a caso e qualche partita non si può vincere: se ti blocchi, il Suggerimento te lo dice.</p>';
+  const COMMON = '<p>Le carte sono francesi: <b>A</b> (Asso) vale 1, <b>J</b> (Fante) 11, <b>Q</b> (Donna) 12, <b>K</b> (Re) 13. Le carte sono mescolate a caso, ma ogni partita <b>si può vincere</b>: se ti blocchi, annulla qualche mossa o chiedi un suggerimento.</p>';
   const TAP = '<p>Tocca una carta per prenderla (si colora) e poi tocca dove metterla. Toccala <b>due volte</b> per mandarla da sola dove può andare.</p>';
   reg({
     id: 'klondike', name: 'Solitario classico', hue: 130, E: KL, view: klView,
@@ -726,7 +739,7 @@
       <p>Puoi spostare un gruppo ordinato se hai abbastanza celle e colonne vuote per farlo una carta alla volta.</p>` + TAP + COMMON,
   });
   reg({
-    id: 'pyramid', name: 'Piramide', hue: 40, E: PY, view: pyView,
+    id: 'pyramid', name: 'Piramide', hue: 40, E: PY, view: pyView, ms: 250, max: 40000,
     tagline: 'Coppie che fanno 13, dalla cima in giù.',
     icon: `<svg viewBox="0 0 64 64"><rect x="24" y="8" width="16" height="22" rx="3" class="ic-a"/><rect x="14" y="22" width="16" height="22" rx="3" class="ic-s ic-st"/><rect x="34" y="22" width="16" height="22" rx="3" class="ic-s ic-st"/><rect x="4" y="36" width="16" height="22" rx="3" class="ic-s ic-st"/><rect x="24" y="36" width="16" height="22" rx="3" class="ic-a"/><rect x="44" y="36" width="16" height="22" rx="3" class="ic-s ic-st"/></svg>`,
     options: [{ id: 'passes', label: 'Giri del mazzo', def: 0, choices: [

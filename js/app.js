@@ -150,7 +150,9 @@
   function openSheet(content, cls, locked) {
     overlay.innerHTML = '';
     overlay.dataset.locked = locked ? '1' : '';
-    const card = h('div.sheet' + (cls ? '.' + cls : ''), { role: 'dialog', 'aria-modal': 'true' }, content);
+    /* la X in alto a destra chiude sempre la finestra (anche le regole della prima partita) */
+    const x = h('button.sheet-x', { type: 'button', 'aria-label': 'Chiudi', html: Z.ICONS.cross, on: { click: closeOverlay } });
+    const card = h('div.sheet' + (cls ? '.' + cls : ''), { role: 'dialog', 'aria-modal': 'true' }, x, content);
     overlay.append(card);
     overlay.classList.add('show');
     overlay.onclick = e => { if (e.target === overlay && !overlay.dataset.locked) closeOverlay(); };

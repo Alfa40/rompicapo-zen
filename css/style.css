@@ -217,6 +217,12 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spac
   padding: 22px; transform: translateY(20px); transition: transform 0.35s cubic-bezier(.2,.9,.3,1.2);
 }
 #overlay.show .sheet { transform: none; }
+.sheet { position: relative; }
+.sheet-x { position: absolute; top: 12px; right: 12px; z-index: 2; width: 36px; height: 36px; border-radius: 12px; border: none;
+  background: var(--surface-2); color: var(--ink-soft); display: grid; place-items: center; cursor: pointer; }
+.sheet-x:active { background: var(--accent-soft); }
+.sheet-x svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
+.sheet > .sheet-head, .sheet > .confirm { padding-right: 40px; }
 .sheet-head { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
 .sheet-head h2 { margin: 0; font-size: 24px; font-weight: 600; color: var(--accent-deep); }
 .rules { color: var(--ink-soft); line-height: 1.5; font-size: 15.5px; }
