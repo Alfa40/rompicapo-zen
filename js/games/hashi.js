@@ -153,15 +153,28 @@
       const e = Z.pick(over), [a, b] = E[e];
       const tot = i => E.reduce((t, [x, y], j) => t + (x === i || y === i ? s.b[j] : 0), 0);
       const full = [a, b].find(i => tot(i) > n[i]);
+      const cross = X[e].find(j => P.sol[j] > 0);
+      const cut = P.sol[e] === 0;
       s.b[e] = P.sol[e];
+      let tip, why;
+      if (full != null) {
+        tip = Z.say(`Guarda l'isola con il <b>${n[full]}</b> che si illumina: quanti ponti ha adesso?`, `Conta con calma i ponti dell'isola con il <b>${n[full]}</b>: sono quelli che il numero chiede?`) +
+          " Un'isola non può avere più ponti del suo numero: se sono troppi, uno va ridotto.";
+        why = `L'isola con il <b>${n[full]}</b> ha ${tot(full)} ponti, più del suo numero: il ponte tra queste due isole è di troppo. `;
+      } else if (cross != null) {
+        const [c, d] = E[cross];
+        tip = Z.say('Guarda i ponti vicino alle isole che si illuminano: ce ne sono due che si incrociano?', 'Segui con lo sguardo il ponte tra le isole che si illuminano: attraversa un altro ponte?') +
+          " I ponti non possono mai incrociarsi: uno dei due deve lasciare spazio all'altro.";
+        why = `Questo ponte attraversa il collegamento tra le isole con il <b>${n[c]}</b> e il <b>${n[d]}</b>, che serve per completare i loro numeri. Due ponti non possono incrociarsi, quindi qui non può passare. `;
+      } else {
+        tip = Z.say('Guarda le due isole che si illuminano: il ponte tra loro è davvero necessario?', 'Per le isole che si illuminano, prova a contare dove possono ancora andare i ponti che mancano.') +
+          ' Pensa a quanti ponti restano da mettere a ogni isola vicina e a quali isole possono ancora raggiungere.';
+        why = `Tra le isole con il <b>${n[a]}</b> e il <b>${n[b]}</b> ${cut ? 'non serve nessun ponte' : 'basta meno di così'}: con quello che c'è, le isole vicine non riuscirebbero più a completare i loro ponti, oppure un gruppo resterebbe staccato dal resto. `;
+      }
       return {
         state: s, focus: [a, b], area: [a, b],
-        tag: 'wrong',
-        tip: Z.say('C\'è un ponte da ricontrollare vicino alle isole che si illuminano.', 'Ricontrolla i ponti attorno alle isole che si illuminano.') +
-          ' Conta i ponti di ogni isola: nessuna deve averne più del suo numero, e tutte devono poter restare collegate alle altre.',
-        why: (full != null ? `L'isola con il <b>${n[full]}</b> ha ${tot(full)} ponti, uno di troppo: quello tra queste due isole è da rivedere. `
-          : 'Il ponte tra queste due isole sembrava possibile, ma con lui alcune isole non potrebbero più completare i loro ponti. ') +
-          (P.sol[e] ? "L'ho ridotto." : "L'ho tolto.") + (over.length > 1 ? ` Ci sono altri ${over.length - 1} ponti da ricontrollare.` : ''),
+        tag: 'wrong', tip,
+        why: why + (cut ? "L'ho tolto." : "L'ho ridotto.") + (over.length > 1 ? (over.length === 2 ? ' C\'è ancora un altro ponte da ricontrollare.' : ` Ci sono ancora altri ${over.length - 1} ponti da ricontrollare.`) : ''),
       };
     }
     const sum = new Array(P.pts.length).fill(0);
