@@ -246,6 +246,7 @@
           while (reps.length && !store.set('replay:' + id, reps)) reps.shift();
         }
         if (done) needOf(id, P);
+        if (R.src === 'percorso') stepPath(id, sum);
         return sum;
       },
     };
@@ -290,24 +291,124 @@
     }
     return need;
   }
-  let worker = null;
-  function needOf(id, P) {
-    const run = () => addWeak(id, null, tagsToSolve(id, P));
-    try {
-      if (!worker) {
-        worker = new Worker('js/worker.js');
-        worker.onmessage = e => { if (e.data && e.data.job === 'need') addWeak(e.data.id, null, e.data.need); };
-        worker.onerror = () => { worker = false; };
-      }
-      if (worker) { worker.postMessage({ job: 'need', id, P }); return; }
-    } catch (e) { worker = false; }
-    setTimeout(run, 400);
+  /* ---------- worker: ragionamenti che servono e rompicapo su misura, senza bloccare la pagina ---------- */
+  let worker = null, jobN = 0;
+  const waiting = {};
+  function work(msg) {
+    return new Promise(resolve => {
+      try {
+        if (worker === null) {
+          worker = new Worker('js/worker.js');
+          worker.onmessage = e => { const d = e.data; if (d && d.jobId && waiting[d.jobId]) { waiting[d.jobId](d); delete waiting[d.jobId]; } };
+          worker.onerror = () => { worker = false; for (const k in waiting) { waiting[k](job(waiting[k].msg)); delete waiting[k]; } };
+        }
+      } catch (e) { worker = false; }
+      if (!worker) { setTimeout(() => resolve(job(msg)), 30); return; } /* senza worker (es. aperto da file) */
+      const jobId = ++jobN;
+      waiting[jobId] = resolve;
+      waiting[jobId].msg = msg;
+      worker.postMessage(Object.assign({ jobId }, msg));
+    });
   }
-  /* lavori per il worker */
+  function needOf(id, P) { work({ job: 'need', id, P }).then(d => { if (d.need) addWeak(id, null, d.need); }); }
   function job(d) {
-    if (d.job === 'need') return { job: 'need', id: d.id, need: tagsToSolve(d.id, d.P) };
-    return { job: d.job, error: 'sconosciuto' };
+    if (d.job === 'need') return { jobId: d.jobId, job: 'need', id: d.id, need: tagsToSolve(d.id, d.P) };
+    if (d.job === 'make') return Object.assign({ jobId: d.jobId }, make(d));
+    return { jobId: d.jobId, job: d.job, error: 'sconosciuto' };
+  }
+  /* genera qualche rompicapo e tiene quello che fa usare di più i ragionamenti difficili per te */
+  function make(d) {
+    const G = Z.GAMES[d.id], t0 = Date.now();
+    let best = null;
+    for (let k = 0; k < d.n && (k === 0 || Date.now() - t0 < d.ms); k++) {
+      let P = null;
+      for (let t = 0; t < 5 && !P; t++) P = G.generate(d.opt);
+      if (!P) continue;
+      const need = tagsToSolve(d.id, P);
+      let tot = 0, sc = 0;
+      for (const t in need) { tot += need[t]; sc += need[t] * (d.w[t] || 0); }
+      sc = tot ? sc / tot : 0;
+      if (!best || sc > best.sc) best = { P, sc, need };
+    }
+    return { job: 'make', id: d.id, P: best && best.P, need: best && best.need };
   }
 
-  Z.Stats = { recorder, job, judge, diff, patch, games, finished, unlocked, isDoubt, UNLOCK, TAGS, newPid: () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7) };
+  /* ---------- Percorso: scala di difficoltà e livello del giocatore (per gioco) ---------- */
+  const RUNGS = 10;
+  const idxOf = (dd, v) => Math.max(0, dd.choices.findIndex(c => c.v === v));
+  /* posizione (0..RUNGS-1) di una scelta di opzioni sulla scala */
+  function rungOf(id, o) {
+    const ds = (Z.GAMES[id].options || []).filter(dd => dd.choices.length > 1);
+    if (!o || !ds.length) return 0;
+    const f = ds.reduce((a, dd) => a + idxOf(dd, o[dd.id]) / (dd.choices.length - 1), 0) / ds.length;
+    return f * (RUNGS - 1);
+  }
+  /* opzioni per un gradino: tutte salgono insieme; la griglia al massimo un passo più grande di quelle già giocate */
+  function optsAt(id, r) {
+    const G = Z.GAMES[id], o = Z.defaultOpts(G), f = Math.max(0, Math.min(1, r / (RUNGS - 1)));
+    const played = finished(id).map(g => g.opt).filter(Boolean);
+    for (const dd of G.options || []) {
+      let i = Math.round(f * (dd.choices.length - 1));
+      if (dd.id === 'size') {
+        const top = played.length ? Math.max(...played.map(x => idxOf(dd, x.size))) : idxOf(dd, dd.def);
+        i = Math.min(i, top + 1);
+      }
+      o[dd.id] = dd.choices[i].v;
+    }
+    for (const dd of G.options || []) {
+      let i = idxOf(dd, o[dd.id]);
+      while (i > 0 && dd.choices[i].need && !dd.choices[i].need(o)) i--;
+      o[dd.id] = dd.choices[i].v;
+    }
+    return o;
+  }
+  /* com'è andata una partita: 1 = senza nessun dubbio, 0 = solo dubbi */
+  const quality = g => Math.max(0, Math.min(1, 1 - (g.err + g.away + g.undo + g.re + g.hint * 1.5) / Math.max(1, g.n + g.hint)));
+  function pathOf(id) {
+    let p = store.get('path:' + id, null);
+    if (!p) {
+      /* primo passo: dalla difficoltà delle ultime partite e da come sono andate */
+      const last = finished(id).slice(-5);
+      const r = median(last.map(g => rungOf(id, g.opt)));
+      const q = median(last.map(quality));
+      p = { r: Math.max(0, Math.min(RUNGS - 1, r + (q > 0.85 ? 1 : q < 0.5 ? -1 : 0))), n: 0 };
+    }
+    return p;
+  }
+  function stepPath(id, g) {
+    const p = pathOf(id), q = quality(g);
+    p.r += !g.done ? -0.5 : q > 0.85 ? 1 : q > 0.7 ? 0.5 : q < 0.45 ? -0.5 : 0;
+    p.r = Math.max(0, Math.min(RUNGS - 1, p.r));
+    p.n++;
+    p.q = (p.q || []).concat(Math.round(q * 100)).slice(-20);
+    store.set('path:' + id, p);
+  }
+  /* il ragionamento su cui conviene insistere (se ce n'è uno chiaramente più difficile degli altri) */
+  function weakWeights(id) {
+    const W = store.get('weak:' + id, null), w = {};
+    if (!W) return { w, focus: null };
+    let best = null, sum = 0, n = 0;
+    for (const t in W.need) {
+      if (W.need[t] < 2) continue;
+      w[t] = (W.doubt[t] || 0) / W.need[t];
+      sum += w[t]; n++;
+      if (!best || w[t] > w[best]) best = t;
+    }
+    const focus = best && n > 1 && (W.doubt[best] || 0) >= 2 && w[best] > Math.max(0.15, (sum / n) * 1.2) ? best : null;
+    return { w, focus };
+  }
+  /* prossimo passo: { opt, P, focus, harder } */
+  async function nextStep(id) {
+    const p = pathOf(id);
+    const harder = p.n > 0 && Math.random() < 0.25 && p.r < RUNGS - 1;
+    const opt = optsAt(id, Math.round(p.r) + (harder ? 1 : 0));
+    const { w, focus } = weakWeights(id);
+    const d = await work({ job: 'make', id, opt, w, n: Object.keys(w).length ? 6 : 1, ms: 2500 });
+    let P = d.P;
+    if (!P) { const G = Z.GAMES[id]; for (let t = 0; t < 5 && !P; t++) P = G.generate(opt); }
+    if (P) P.opt = opt;
+    return { opt, P, focus, harder, r: p.r };
+  }
+
+  Z.Stats = { recorder, job, judge, diff, patch, games, finished, unlocked, isDoubt, nextStep, pathOf, quality, UNLOCK, TAGS, RUNGS, newPid: () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7) };
 })();

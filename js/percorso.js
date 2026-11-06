@@ -48,6 +48,8 @@
 
   function page(title, sub, back) {
     Z.ui.closeOverlay();
+    Z.ui.leave();
+    Z.ui.applyTheme(Z.themeById(Z.store.get('homeTheme', 'giardino')));
     const screen = Z.ui.screen;
     screen.innerHTML = '';
     screen.className = 'home percorso';
@@ -190,7 +192,38 @@
             h('small', { text: [g.opt ? Z.optsSummary(G, g.opt) : '', sec(g.dur), d ? pct(g.ok / d) + ' giuste' : '', g.done ? '' : 'lasciata a metà', g.src === 'percorso' ? 'Percorso' : ''].filter(Boolean).join(' · ') })),
           k >= 0 ? h('button.btn', { type: 'button', text: 'Rivedi', on: { click: () => replay(id, k) } }) : null);
       }));
-    screen.append(box, more, games);
+    const go = h('section.pc-go', { style: { '--h': G.hue } },
+      h('button.btn.primary', { type: 'button', on: { click: () => next(id) } }, h('span', { html: PATH }), 'Prossimo passo'),
+      h('p', { text: 'Un rompicapo scelto per te: la difficoltà segue come giochi e insiste sui ragionamenti in cui fai più fatica.' }));
+    screen.append(go, box, more, games);
+  }
+
+  /* ---------- prossimo passo: rompicapo preparato su misura (js/stats.js, nel worker) ---------- */
+  function next(id) {
+    const G = Z.GAMES[id], T = S.TAGS[id] || {};
+    const body = h('div.pc-next', null, h('div.spinner'), h('p', { text: 'Preparo un rompicapo su misura…' }));
+    const card = Z.ui.openSheet([
+      h('div.sheet-head', null, h('div.card-ic', { html: G.icon }), h('h2', { text: 'Prossimo passo' })),
+      body,
+    ], 'pc-sheet', true);
+    card.style.setProperty('--h', G.hue);
+    const busy = Z.store.get('save:' + id, null);
+    S.nextStep(id).then(r => {
+      if (!card.isConnected) return;
+      const ov = document.getElementById('overlay');
+      if (ov) ov.dataset.locked = '';
+      body.innerHTML = '';
+      if (!r.P) { body.append(h('p', { text: 'Non sono riuscito a preparare il rompicapo. Riprova tra poco.' })); return; }
+      body.append(...[
+        h('p.pc-lv', { text: Z.optsSummary(G, r.opt) }),
+        h('p', { text: r.harder ? 'Questa volta un passo un po\' più in là: prenditi tutto il tempo che serve.' : 'Un rompicapo adatto a come giochi adesso.' }),
+        r.focus && T[r.focus] ? h('p.pc-focus', null, h('b', { text: 'Allena soprattutto ' + T[r.focus][0] + '. ' }), T[r.focus][1]) : null,
+        busy && !busy.P.src ? h('p.opt-note', { text: 'La partita di ' + G.name + ' in corso verrà sostituita.' }) : null,
+        h('div.sheet-actions', null,
+          h('button.btn', { type: 'button', text: 'Torna al Percorso', on: { click: () => report(id) } }),
+          h('button.btn.primary', { type: 'button', text: 'Gioca', on: { click: () => { Z.ui.closeOverlay(); Z.ui.startGame(id, true, 'percorso', r.P); } } })),
+      ].filter(Boolean));
+    });
   }
 
   /* ---------- rivedi la partita ---------- */
@@ -215,6 +248,7 @@
     const states = [rep.s0];
     for (const st of rep.steps) states.push(st.d ? S.patch(states[states.length - 1], st.d) : states[states.length - 1]);
     Z.ui.closeOverlay();
+    Z.ui.leave();
     Z.ui.applyTheme(Z.themeById(P.theme));
     const screen = Z.ui.screen;
     screen.innerHTML = '';
@@ -289,5 +323,5 @@
     go(0);
   }
 
-  Z.Percorso = { homeButton, list, report, replay };
+  Z.Percorso = { homeButton, list, report, replay, next };
 })();

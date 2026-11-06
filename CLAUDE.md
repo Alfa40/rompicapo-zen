@@ -24,6 +24,9 @@ https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `mai
   in `stats.js` o nel gioco), Annulla, ripensamenti, suggerimenti, pause lunghe; una mossa corretta entro 3 s è un tocco
   sbagliato e non conta. Ogni risultato di `hint` ha un `tag` (il ragionamento usato, nomi e consigli in `Z.Stats.TAGS`).
   `js/percorso.js`: pagine del Percorso (si sblocca per gioco dopo 5 partite finite), resoconto e «Rivedi la partita».
+  «Prossimo passo»: livello per gioco (`path:<id>`, scala di 10 gradini dalle opzioni del gioco) che sale o scende
+  secondo come è andata; nel worker si generano alcuni rompicapo e si tiene quello che usa di più i ragionamenti
+  difficili per il giocatore (`Z.Stats.nextStep`).
 - `js/app.js`: menu, scelta della difficoltà (salvata per gioco), partita, annulla/ripristina, zoom sulla griglia,
   salvataggio della partita in corso, rompicapo preparati in anticipo in `js/worker.js` (tutti tranne il Sudoku).
 - `js/proposte.js`: proposte degli amici (tasto «Migliora il gioco» nel menu, solo col codice degli amici).

@@ -318,7 +318,7 @@
     ]);
   }
 
-  Z.ui = { openSheet, closeOverlay, home: () => home(), applyTheme, startGame: (id, fresh, from) => startGame(id, fresh, from), setupSheet: id => setupSheet(id), screen };
+  Z.ui = { openSheet, closeOverlay, home: () => home(), leave: () => { game = null; currentId = null; }, applyTheme, startGame: (id, fresh, from, preset) => startGame(id, fresh, from, preset), setupSheet: id => setupSheet(id), screen };
 
   function confirmSheet(text, yes, onYes) {
     openSheet([
@@ -330,9 +330,9 @@
   }
 
   /* ---------- Partita ---------- */
-  function startGame(id, fresh, from) {
+  function startGame(id, fresh, from, preset) {
     const G = Z.GAMES[id];
-    const src = from || 'menu'; /* 'percorso' se la partita viene dal Percorso */
+    let src = from || 'menu'; /* 'percorso' se la partita viene dal Percorso (preset = rompicapo già preparato) */
     currentId = id;
     const key = `save:${id}`;
     const saved = !fresh && Z.store.get(key, null);
@@ -666,24 +666,27 @@
       after();
     }
 
-    function newPuzzle() {
+    function newPuzzle(pre) {
       if (rec && !won) rec.finish(false); /* lasciato a metà */
       rec = null;
+      /* nel Percorso il rompicapo dopo è il prossimo passo, preparato su misura */
+      if (!pre && src === 'percorso' && Z.Percorso) { Z.store.del(key); Z.Percorso.next(id); return; }
       won = false;
       hideHint();
       wrap.innerHTML = '';
       controls.innerHTML = '';
-      const o = Z.getOpts(id), ready = queueTake(id, o);
+      const o = pre ? pre.opt : Z.getOpts(id), ready = pre || queueTake(id, o);
       const slow = !ready && ((id === 'futoshiki' && o.size >= 10) || (id === 'calcudoku' && o.size >= 11) || (id === 'hashi' && o.size >= 18));
       wrap.append(h('div.loading', null, h('div.spinner'), h('p', { text: 'Preparo un nuovo rompicapo…' }),
         slow ? h('p.loading-note', { text: 'Le griglie così grandi richiedono qualche secondo.' }) : null));
       updateTools();
       setTimeout(() => {
         let p = ready;
-        const opt = Z.getOpts(id);
+        const opt = pre ? pre.opt : Z.getOpts(id);
         for (let t = 0; t < 5 && !p; t++) p = G.generate(opt);
         P = p;
         P.opt = opt;
+        P.src = src;
         prefetch();
         P.theme = Z.nextTheme();
         P.pid = Z.Stats.newPid();
@@ -712,7 +715,7 @@
           h('p.count', { text: `${G.name} · ${Z.store.get(`done:${id}`, 0)} risolti` }),
           h('div.sheet-actions', null,
             h('button.btn', { type: 'button', text: 'Menu', on: { click: home } }),
-            h('button.btn.primary', { type: 'button', text: 'Prossimo rompicapo', on: { click: () => { closeOverlay(); newPuzzle(); } } })),
+            h('button.btn.primary', { type: 'button', text: src === 'percorso' ? 'Prossimo passo' : 'Prossimo rompicapo', on: { click: () => { closeOverlay(); newPuzzle(); } } })),
         ], 'win');
         overlay.onclick = null;
         card.focus && card.focus();
@@ -726,7 +729,7 @@
         optionsPanel(id),
         h('div.sheet-actions', null,
           h('button.btn', { type: 'button', text: 'Chiudi', on: { click: closeOverlay } }),
-          h('button.btn.primary', { type: 'button', text: 'Nuovo rompicapo', on: { click: () => { closeOverlay(); newPuzzle(); } } })),
+          h('button.btn.primary', { type: 'button', text: 'Nuovo rompicapo', on: { click: () => { closeOverlay(); src = 'menu'; newPuzzle(); } } })),
         won ? null : h('p.opt-note', { text: 'Le scelte restano salvate. Con «Nuovo rompicapo» quello in corso andrà perso.' }),
       ]);
       card.style.setProperty('--h', G.hue);
@@ -796,12 +799,13 @@
 
     if (saved && saved.P && saved.s) {
       P = saved.P;
+      if (P.src) src = P.src;
       if (!P.theme) P.theme = Z.nextTheme();
       if (!P.pid) P.pid = Z.Stats.newPid();
       cur = saved.s; undo = saved.u || []; redo = saved.r || [];
       rec = Z.Stats.recorder(id, P, cur, src);
       begin();
-    } else newPuzzle();
+    } else newPuzzle(preset || null);
     /* aperto da un collegamento diretto senza passare dal menu */
     if (needsTutorial(id)) tutorial(G);
   }
