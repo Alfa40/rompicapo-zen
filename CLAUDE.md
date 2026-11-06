@@ -18,6 +18,15 @@ https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `mai
   di solito con `Z.gridCursor(ctx, {...})` (riquadro mosso dalle frecce e tasti del gioco) o `Z.arrowPad({compact})`
   per i giochi che hanno già una casella scelta; `ctx.mark(el, quiet)` evidenzia e fa seguire la vista sulla griglia
   ingrandita. Il tasto «Sposta» (mano, accanto a + e −) fa spostare la griglia ingrandita con un dito.
+- Percorso: `js/stats.js` registra in silenzio ogni partita, **separata per gioco** (`stat:<id>` riepiloghi,
+  `replay:<id>` ultime partite da rivedere, `weak:<id>` ragionamenti difficili, `rec:<id>` partita in corso): tempo attivo
+  di ogni mossa, mossa giusta/sbagliata/che si allontana confrontata con la soluzione (`progress(P, s)` → `{ok, bad}`,
+  in `stats.js` o nel gioco), Annulla, ripensamenti, suggerimenti, pause lunghe; una mossa corretta entro 3 s è un tocco
+  sbagliato e non conta. Ogni risultato di `hint` ha un `tag` (il ragionamento usato, nomi e consigli in `Z.Stats.TAGS`).
+  `js/percorso.js`: pagine del Percorso (si sblocca per gioco dopo 5 partite finite), resoconto e «Rivedi la partita».
+  «Prossimo passo»: livello per gioco (`path:<id>`, scala di 10 gradini dalle opzioni del gioco) che sale o scende
+  secondo come è andata; nel worker si generano alcuni rompicapo e si tiene quello che usa di più i ragionamenti
+  difficili per il giocatore (`Z.Stats.nextStep`).
 - `js/app.js`: menu, scelta della difficoltà (salvata per gioco), partita, annulla/ripristina, zoom sulla griglia,
   salvataggio della partita in corso, rompicapo preparati in anticipo in `js/worker.js` (tutti tranne il Sudoku).
 - `js/proposte.js`: proposte degli amici (tasto «Migliora il gioco» nel menu, solo col codice degli amici).
@@ -26,8 +35,13 @@ https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `mai
 
 ## Regole del gioco (da rispettare se la richiesta non dice esplicitamente il contrario)
 - Tutto in italiano, testi brevi e gentili.
-- Stile calmo: animazioni morbide, niente audio, niente timer, punteggi o progressione.
-- Aiuti solo Annulla/Ripristina e Suggerimento, entrambi illimitati.
+- Stile calmo: animazioni morbide, niente audio, niente timer, punteggi o progressione **durante la partita**: tempi e
+  crescita si vedono solo nelle pagine del Percorso.
+- Aiuti solo Annulla/Ripristina e Suggerimento, entrambi illimitati. Il Suggerimento è a due passi: prima un consiglio
+  (`tip`, con `area` da far lampeggiare: dove guardare e che ragionamento usare, senza fare la mossa), poi la mossa con
+  `why` che spiega bene perché. Tono gentile e mai critico (anche sugli errori), frasi variate con `Z.say`.
+  Chi ha il codice degli amici o del proprietario può valutare ogni suggerimento (scelte veloci → server `/rz/hint`);
+  una volta a settimana il server ne fa una proposta «Valutazioni dei suggerimenti» per Claude.
 - Il tema visivo cambia a ogni partita; la partita in corso resta salvata.
 - Deve funzionare bene sul telefono (iPhone, anche aggiunto alla schermata Home) e col tema scuro.
 

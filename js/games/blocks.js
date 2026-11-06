@@ -214,7 +214,8 @@
       const i = free[0], ex = exitPath(P, i, s.pos, s.removed);
       s.removed[i] = true;
       return {
-        state: s, focus: [i],
+        state: s, focus: [i], area: [], tag: 'free',
+        tip: Z.say('C\'è un blocco che ha già la strada libera fino alla porta del suo colore: riesci a trovarlo?', 'Prima di spostare qualcosa, guarda ogni blocco: ce n\'è uno che può già uscire dalla sua porta?') + ' Ogni blocco che esce fa spazio agli altri.',
         why: `Il blocco <b>${colName(P.blocks[i].color)}</b> ha la strada libera fino alla porta ${colName(ex.door.color)} ${SIDE_NAME[ex.door.side]}` +
           (ex.d ? ` (bastano ${ex.d} ${ex.d === 1 ? 'passo' : 'passi'})` : '') + ': l\'ho fatto uscire. Cerca sempre prima i blocchi già liberi: ogni uscita fa spazio agli altri.',
       };
@@ -232,7 +233,8 @@
         if (other != null) {
           s.pos = pos2;
           return {
-            state: s, focus: [a, other],
+            state: s, focus: [a, other], area: [other], tag: 'move',
+            tip: `Nessun blocco può uscire subito. Guarda il blocco <b>${colName(P.blocks[other].color)}</b>: chi gli chiude la strada verso la sua porta, e dove potrebbe spostarsi?`,
             why: `Nessun blocco può uscire subito. Sposta il blocco <b>${colName(b.color)}</b> come ho fatto io: così si libera il passaggio per il blocco <b>${colName(P.blocks[other].color)}</b>, che ora può raggiungere la sua porta.`,
           };
         }
@@ -242,7 +244,8 @@
     s.pos = P.start.map(p => p.slice());
     return {
       state: s, focus: left,
-      why: 'Così i blocchi si bloccano a vicenda. Li ho rimessi dove erano all\'inizio: da quella disposizione esiste sempre un ordine in cui escono tutti. Prova a partire dal blocco che ha la strada più corta verso la sua porta.',
+      area: [], tip: 'Così i blocchi si chiudono la strada a vicenda. Guarda dove si fermerebbe ogni blocco prima di muoverlo: a volte conviene tornare indietro di qualche mossa.',
+      tag: 'reset', why: 'Così i blocchi si bloccano a vicenda. Li ho rimessi dove erano all\'inizio: da quella disposizione esiste sempre un ordine in cui escono tutti. Prova a partire dal blocco che ha la strada più corta verso la sua porta.',
     };
   }
 

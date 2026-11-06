@@ -145,13 +145,22 @@
     const n = o.n, N = n * n, s = Z.clone(st);
     const wrong = [];
     for (let i = 0; i < N; i++) if (s.v[i] && s.v[i] !== P.sol[i]) wrong.push(i);
+    const zone = U => U.where.replace(/^Nel(la)? /, m => (m === 'Nella ' ? 'la ' : 'il '));
+    const where = (o.units.length > 2 * n) ? 'riga, colonna o riquadro' : 'riga o colonna';
     if (wrong.length) {
       const i = Z.pick(wrong), d = s.v[i];
+      const U = o.units.find(u => u.cells.includes(i));
+      const twin = o.peers(i).find(p => st.v[p] === d);
       s.v[i] = 0; s.m[i] = 0;
       return {
-        state: s, focus: [i],
-        why: `Il <b>${d}</b> in ${Z.cellName(i, n)} non è corretto: seguendo le regole porterebbe, prima o poi, a una contraddizione. L'ho tolto, così riparti da una base sicura.` +
-          (wrong.length > 1 ? ` Attenzione: ci sono altri ${wrong.length - 1} numeri da rivedere.` : ''),
+        state: s, focus: [i], area: U.cells,
+        tag: 'wrong',
+        tip: Z.say(`C'è qualcosa da ricontrollare ${U.where.toLowerCase()}.`, `Vale la pena ricontrollare ${zone(U)}.`) +
+          ` Per ogni numero che hai scritto chiediti: è già presente nella sua ${where}? E lascia ancora un posto a tutti gli altri numeri?`,
+        why: (twin != null
+          ? `Il <b>${d}</b> in ${Z.cellName(i, n)} si ripete: c'è già un ${d} in ${Z.cellName(twin, n)}, ${((twin / n) | 0) === ((i / n) | 0) ? 'nella stessa riga' : twin % n === i % n ? 'nella stessa colonna' : 'nello stesso riquadro'}.`
+          : `Il <b>${d}</b> in ${Z.cellName(i, n)} sembrava possibile, ma non è quello giusto: lasciandolo lì, più avanti qualche casella resterebbe senza numeri possibili.`) +
+          ` L'ho tolto, così riparti da una base sicura.` + (wrong.length > 1 ? ` Ci sono altri ${wrong.length - 1} numeri da ricontrollare.` : ''),
       };
     }
     const place = (i, d) => { s.v[i] = d; s.m[i] = 0; for (const p of o.peers(i)) s.m[p] &= ~(1 << d); };
@@ -164,9 +173,15 @@
       }
       if (nk.length) {
         const i = Z.pick(nk), d = P.sol[i];
-        const why = o.naked(i, d, lv, info);
+        const why = o.naked(i, d, lv, info), tag = 'naked';
+        const U = o.units.find(u => u.cells.includes(i));
         place(i, d);
-        return { state: s, focus: [i], why };
+        return {
+          state: s, focus: [i], area: U.cells, why, tag,
+          tip: Z.say(`Guarda ${zone(U)}: in una delle sue caselle libere può andare un solo numero.`, `${U.where} c'è una casella con un solo numero possibile. Riesci a trovarla?`) +
+            ` Per ogni casella libera elimina i numeri che vede già nella sua ${where}: quelli che restano sono i candidati.` +
+            (lv ? ' ' + (o.extraTip || 'Qui servono anche le note: annota i candidati e cerca dove le altre caselle li escludono.') : ''),
+        };
       }
       const hs = [];
       for (const U of o.units) for (let d = 1; d <= n; d++) {
@@ -176,9 +191,13 @@
       }
       if (hs.length) {
         const [U, d, i] = Z.pick(hs);
-        const why = o.hidden(U, d, i, lv, info);
+        const why = o.hidden(U, d, i, lv, info), tag = 'hidden';
         place(i, d);
-        return { state: s, focus: [i], why };
+        return {
+          state: s, focus: [i], area: U.cells, why, tag,
+          tip: Z.say(`${U.where} manca ancora il <b>${d}</b>: dove può andare?`, `Prova con il <b>${d}</b> ${zone(U).replace(/^(la|il) /, m => (m === 'la ' ? 'nella ' : 'nel '))}: quante caselle libere possono ospitarlo?`) +
+            ` Escludi le caselle che hanno già un ${d} nella loro ${where}: se ne resta una sola, è quella.` + (lv && o.extraTip ? ' ' + o.extraTip : ''),
+        };
       }
     }
     /* Nessuna deduzione semplice: casella con meno candidati */
@@ -193,8 +212,9 @@
     const list = Z.bits(info.cand[best] | (1 << d), n);
     place(best, d);
     return {
-      state: s, focus: [best],
-      why: `Qui non c'è una mossa immediata. In ${Z.cellName(best, n)} restano i candidati ${Z.fmtList(list.map(x => '<b>' + x + '</b>'))}: ` +
+      state: s, focus: [best], area: [best],
+      tip: `Qui non c'è una mossa immediata: è il momento delle note. Scrivi i candidati di ${Z.cellName(best, n)}, sono pochi: prova a immaginarne uno alla volta e guarda quale porta a un problema.`,
+      tag: 'guess', why: `Qui non c'è una mossa immediata. In ${Z.cellName(best, n)} restano i candidati ${Z.fmtList(list.map(x => '<b>' + x + '</b>'))}: ` +
         `per scartare quelli sbagliati bisogna seguire una catena di conseguenze finché non si arriva a una contraddizione. Il valore giusto è <b>${d}</b>.`,
     };
   };

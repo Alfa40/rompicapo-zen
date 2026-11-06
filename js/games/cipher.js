@@ -111,7 +111,11 @@ CHI VUOL ESSER LIETO SIA`.split('\n').map(s => s.trim()).filter(Boolean);
     if (wrong.length) {
       const n = wrong[0];
       s.m[n] = dec[n];
-      return { state: s, focus: [+n], why: `Il numero <b>${n}</b> non è la ${st.m[n]}: è la <b>${dec[n]}</b>. Controlla le parole dove compare.` };
+      return {
+        state: s, focus: [+n], area: [+n], tag: 'wrong',
+        tip: `C'è una lettera da ricontrollare: rileggi le parole dove compare il numero <b>${n}</b>. Formano parole italiane?`,
+        why: `Con la ${st.m[n]} al posto del numero <b>${n}</b> alcune parole non avrebbero senso: è la <b>${dec[n]}</b>. L'ho cambiata, così le parole tornano a leggersi.`,
+      };
     }
     const missing = Object.keys(dec).filter(n => st.m[n] !== dec[n]);
     if (!missing.length) return null;
@@ -126,9 +130,10 @@ CHI VUOL ESSER LIETO SIA`.split('\n').map(s => s.trim()).filter(Boolean);
       const sc = known / w.length;
       if (!best || sc > best.sc) best = { w, L: miss[0], sc, one: miss.length === 1 };
     }
-    let L, why;
+    let L, why, tag;
     if (best) {
       L = best.L;
+      tag = best.one ? 'word' : 'guessword';
       why = best.one
         ? `Con le lettere già scoperte la parola «${shape(best.w)}» può essere solo <b>${best.w}</b>: quindi il numero <b>${P.code[L]}</b> è la <b>${L}</b>.`
         : `La parola «${shape(best.w)}» è quella con più lettere già scoperte, e fa pensare a <b>${best.w}</b>: il numero <b>${P.code[L]}</b> è la <b>${L}</b>.`;
@@ -137,10 +142,14 @@ CHI VUOL ESSER LIETO SIA`.split('\n').map(s => s.trim()).filter(Boolean);
       const all = lettersOf(P.text).split('');
       const cnt = c => all.filter(x => x === c).length;
       L = missing.map(n => dec[n]).sort((a, b) => cnt(b) - cnt(a))[0];
+      tag = 'freq';
       why = `Il numero <b>${P.code[L]}</b> è il più frequente nella frase (${cnt(L)} volte). In italiano le lettere più comuni sono le vocali, soprattutto E, A, I, O: qui è la <b>${L}</b>.`;
     }
+    const tip = tag === 'word' ? Z.say(`Guarda la parola «${shape(best.w)}»: le manca una sola lettera.`, `Nella parola «${shape(best.w)}» manca solo una lettera: quale parola italiana può essere?`)
+      : tag === 'guessword' ? `La parola «${shape(best.w)}» ha già molte lettere scoperte: prova a leggerla ad alta voce, che parola potrebbe essere?`
+      : 'Conta quante volte compare ogni numero: quello più frequente è quasi sempre una vocale, di solito E, A, I oppure O.';
     s.m[P.code[L]] = L;
-    return { state: s, focus: [P.code[L]], why };
+    return { state: s, focus: [P.code[L]], area: tag === 'freq' ? [] : [P.code[L]], why, tag, tip };
   }
 
   Z.register({
@@ -165,6 +174,7 @@ CHI VUOL ESSER LIETO SIA`.split('\n').map(s => s.trim()).filter(Boolean);
       return { m };
     },
     solved: (P, s) => Object.entries(decode(P)).every(([n, L]) => s.m[n] === L),
+    progress(P, s) { const d = decode(P); let ok = 0, bad = 0; for (const n in d) { if (s.m[n] === d[n]) ok++; else if (s.m[n]) bad++; } return { ok, bad }; },
     hint,
     view(ctx) {
       const P = ctx.puzzle, dec = decode(P), giv = new Set(P.given.map(String));

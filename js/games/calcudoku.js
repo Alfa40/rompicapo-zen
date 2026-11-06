@@ -162,6 +162,7 @@
     const n = P.n, peers = peersOf(n);
     return Z.latinHint(P, st, {
       n, peers, units: Z.lineUnits(n),
+      extraTip: 'Qui servono le gabbie: per ogni gabbia chiediti quali combinazioni di numeri danno il risultato, tenendo conto di quelli già presenti in riga e colonna.',
       levels: [v => ({ cand: Z.basicCand(v, n, peers) }), v => cageCand(P, v)],
       naked(i, d, lv, info) {
         if (lv === 0) {

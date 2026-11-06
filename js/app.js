@@ -221,7 +221,9 @@
       grid.append(sec);
     }
     const prop = Z.Proposte ? Z.Proposte.homeButton() : null;
-    screen.append(top, prop || '', grid, h('p.foot', { text: 'Ogni rompicapo è generato al momento: non ne vedrai mai due uguali.' }));
+    const path = Z.Percorso ? Z.Percorso.homeButton() : null;
+    screen.append(top, path || '', prop || '', grid, h('p.foot', { text: 'Ogni rompicapo è generato al momento: non ne vedrai mai due uguali.' }));
+
   }
 
   /* Pannello della difficoltà: ogni scelta viene salvata subito per quel gioco */
@@ -350,7 +352,7 @@
     ]);
   }
 
-  Z.ui = { openSheet, closeOverlay, home: () => home() };
+  Z.ui = { openSheet, closeOverlay, home: () => home(), leave: () => { game = null; currentId = null; }, applyTheme, startGame: (id, fresh, from, preset) => startGame(id, fresh, from, preset), setupSheet: id => setupSheet(id), screen };
 
   function confirmSheet(text, yes, onYes) {
     openSheet([
@@ -362,8 +364,9 @@
   }
 
   /* ---------- Partita ---------- */
-  function startGame(id, fresh) {
+  function startGame(id, fresh, from, preset) {
     const G = Z.GAMES[id];
+    let src = from || 'menu'; /* 'percorso' se la partita viene dal Percorso (preset = rompicapo già preparato) */
     currentId = id;
     const key = `save:${id}`;
     const saved = !fresh && Z.store.get(key, null);
@@ -391,9 +394,20 @@
       h('button.hint-x', { type: 'button', 'aria-label': 'Chiudi spiegazione', html: Z.ICONS.cross, on: { click: () => hideHint() } }));
     screen.append(bar, wrap, hintBox, padZone, controls, toolbar);
     let hinting = false;
-    function showHint(html) {
+    /* RATE: scelte veloci per valutare un suggerimento (solo chi ha il codice degli amici o del proprietario) */
+    const RATE = ['Chiaro', 'Poco chiaro', 'Non spiega il perché', 'Troppo lungo', 'Sbagliato'];
+    function showHint(html, actions, meta) {
       /* "il 1" -> "l'1", "il 8" -> "l'8", "il 11" -> "l'11" */
       hintText.innerHTML = html.replace(/\b([Ii])l (<b>)?(1|8|11)(?!\d)/g, (m, I, b, d) => (I === 'I' ? 'L' : 'l') + "'" + (b || '') + d);
+      if (actions && actions.length) hintText.append(h('div.hint-act', null, ...actions));
+      if (meta && Z.Proposte && Z.Proposte.canRate()) {
+        const row = h('div.hint-rate', null, h('small', { text: 'Com\'è questo ' + (meta.phase === 'tip' ? 'consiglio' : 'suggerimento') + '?' }));
+        for (const r of RATE) row.append(h('button.hint-chip', { type: 'button', text: r, on: { click: () => {
+          Z.Proposte.rateHint({ game: id, tag: meta.r.tag || '', phase: meta.phase, rating: r, text: hintText.firstChild ? hintText.innerText.split('\n')[0] : '', opt: P && P.opt });
+          row.replaceChildren(h('small', { text: 'Grazie! Claude userà la tua valutazione per migliorare i suggerimenti.' }));
+        } } }));
+        hintText.append(row);
+      }
       hintBox.classList.remove('show');
       void hintBox.offsetWidth;
       hintBox.classList.add('show');
@@ -406,6 +420,8 @@
     }
 
     let P, cur, undo = [], redo = [], view = null, won = false, gestureStart = null;
+    /* Percorso: registra in silenzio ogni mossa e il suo tempo (js/stats.js); niente si vede durante la partita */
+    let rec = null, hintTag = null;
 
     /* Cronologia illimitata; se lo spazio del browser non basta si salvano solo le mosse più recenti */
     const save = () => {
@@ -434,12 +450,15 @@
       get state() { return cur; },
       commit(ns) {
         if (won) return;
+        if (rec) { if (hinting) rec.hint(cur, ns, hintTag); else rec.move(cur, ns); }
         undo.push(JSON.stringify(cur));
         redo = [];
         if (!hinting) hideHint();
         set(ns);
       },
       preview(ns) { if (won) return; cur = ns; view.render(cur); },
+      /* tentativo che non cambia niente ma è sbagliato (es. una selezione che non è una parola) */
+      miss() { if (!won && rec) rec.miss(); },
       begin() { gestureStart = JSON.stringify(cur); },
       /* casella scelta con le frecce: si evidenzia (se non quiet) e, sulla griglia ingrandita, la vista la segue */
       mark(t, quiet) {
@@ -452,6 +471,7 @@
       },
       end() {
         if (gestureStart !== null && gestureStart !== JSON.stringify(cur)) {
+          if (rec) rec.move(JSON.parse(gestureStart), cur);
           undo.push(gestureStart);
           redo = [];
           hideHint();
@@ -691,31 +711,39 @@
       after();
     }
 
-    function newPuzzle() {
+    function newPuzzle(pre) {
+      if (rec && !won) rec.finish(false); /* lasciato a metà */
+      rec = null;
+      /* nel Percorso il rompicapo dopo è il prossimo passo, preparato su misura */
+      if (!pre && src === 'percorso' && Z.Percorso) { Z.store.del(key); Z.Percorso.next(id); return; }
       won = false;
       hideHint();
       wrap.innerHTML = '';
       controls.innerHTML = '';
-      const o = Z.getOpts(id), ready = queueTake(id, o);
+      const o = pre ? pre.opt : Z.getOpts(id), ready = pre || queueTake(id, o);
       const slow = !ready && ((id === 'futoshiki' && o.size >= 10) || (id === 'calcudoku' && o.size >= 11) || (id === 'hashi' && o.size >= 18));
       wrap.append(h('div.loading', null, h('div.spinner'), h('p', { text: 'Preparo un nuovo rompicapo…' }),
         slow ? h('p.loading-note', { text: 'Le griglie così grandi richiedono qualche secondo.' }) : null));
       updateTools();
       setTimeout(() => {
         let p = ready;
-        const opt = Z.getOpts(id);
+        const opt = pre ? pre.opt : Z.getOpts(id);
         for (let t = 0; t < 5 && !p; t++) p = G.generate(opt);
         P = p;
         P.opt = opt;
+        P.src = src;
         prefetch();
         P.theme = Z.nextTheme();
+        P.pid = Z.Stats.newPid();
         cur = G.init(P);
         undo = []; redo = [];
+        rec = Z.Stats.recorder(id, P, cur, src);
         begin();
       }, 40);
     }
 
     function win() {
+      if (rec) { rec.finish(true); rec = null; }
       won = true;
       hideHint();
       Z.store.del(key);
@@ -732,7 +760,7 @@
           h('p.count', { text: `${G.name} · ${Z.store.get(`done:${id}`, 0)} risolti` }),
           h('div.sheet-actions', null,
             h('button.btn', { type: 'button', text: 'Menu', on: { click: home } }),
-            h('button.btn.primary', { type: 'button', text: 'Prossimo rompicapo', on: { click: () => { closeOverlay(); newPuzzle(); } } })),
+            h('button.btn.primary', { type: 'button', text: src === 'percorso' ? 'Prossimo passo' : 'Prossimo rompicapo', on: { click: () => { closeOverlay(); newPuzzle(); } } })),
         ], 'win');
         overlay.onclick = null;
         card.focus && card.focus();
@@ -746,7 +774,7 @@
         optionsPanel(id),
         h('div.sheet-actions', null,
           h('button.btn', { type: 'button', text: 'Chiudi', on: { click: closeOverlay } }),
-          h('button.btn.primary', { type: 'button', text: 'Nuovo rompicapo', on: { click: () => { closeOverlay(); newPuzzle(); } } })),
+          h('button.btn.primary', { type: 'button', text: 'Nuovo rompicapo', on: { click: () => { closeOverlay(); src = 'menu'; newPuzzle(); } } })),
         won ? null : h('p.opt-note', { text: 'Le scelte restano salvate. Con «Nuovo rompicapo» quello in corso andrà perso.' }),
       ]);
       card.style.setProperty('--h', G.hue);
@@ -771,7 +799,9 @@
       if (!undo.length || won) return;
       hideHint();
       redo.push(JSON.stringify(cur));
+      const was = cur;
       cur = JSON.parse(undo.pop());
+      if (rec) rec.undo(was, cur);
       view.render(cur);
       after();
     });
@@ -779,19 +809,38 @@
       if (!redo.length || won) return;
       hideHint();
       undo.push(JSON.stringify(cur));
+      const was = cur;
       cur = JSON.parse(redo.pop());
+      if (rec) rec.redo(was, cur);
       view.render(cur);
       after();
     });
+    /* Suggerimento a due passi: prima un consiglio su dove guardare e che ragionamento usare (nessuna mossa),
+       poi, con «Mostra la mossa» (o premendo di nuovo Suggerimento), la mossa con la spiegazione del perché. */
+    let pend = null;
+    function reveal() {
+      if (!pend || won) return;
+      const r = pend.r;
+      pend = null;
+      hinting = true; hintTag = r.tag || null;
+      ctx.commit(r.state);
+      hinting = false; hintTag = null;
+      if (view.flash) view.flash(r.focus);
+      if (r.why && !won) showHint(r.why, null, { phase: 'move', r });
+    }
     bHint.addEventListener('click', () => {
       if (won || !view) return;
+      const k = JSON.stringify(cur);
+      if (pend && pend.key === k) { reveal(); return; }
       const r = G.hint(P, cur);
       if (!r) return;
-      hinting = true;
-      ctx.commit(r.state);
-      hinting = false;
-      if (view.flash) view.flash(r.focus);
-      if (r.why && !won) showHint(r.why);
+      const T = Z.Stats.TAGS[id] && Z.Stats.TAGS[id][r.tag];
+      const tip = r.tip || (T ? 'Un consiglio: ' + T[1] : '');
+      if (!tip) { pend = { r, key: k }; reveal(); return; }
+      pend = { r, key: k };
+      if (rec) rec.nudge(r.tag);
+      if (view.flash && r.area && r.area.length) view.flash(r.area);
+      showHint(tip, [h('button.btn.hint-more', { type: 'button', text: 'Mostra la mossa', on: { click: reveal } })], { phase: 'tip', r });
     });
     bNew.addEventListener('click', () => {
       if (won) { newPuzzle(); return; }
@@ -812,10 +861,13 @@
 
     if (saved && saved.P && saved.s) {
       P = saved.P;
+      if (P.src) src = P.src;
       if (!P.theme) P.theme = Z.nextTheme();
+      if (!P.pid) P.pid = Z.Stats.newPid();
       cur = saved.s; undo = saved.u || []; redo = saved.r || [];
+      rec = Z.Stats.recorder(id, P, cur, src);
       begin();
-    } else newPuzzle();
+    } else newPuzzle(preset || null);
     /* aperto da un collegamento diretto senza passare dal menu */
     if (needsTutorial(id)) tutorial(G);
   }
