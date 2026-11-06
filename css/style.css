@@ -159,6 +159,18 @@ svg { display: block; }
 @keyframes breathe { 50% { transform: scale(1.06) rotate(-3deg); } }
 h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spacing: -0.01em; color: var(--accent-deep); }
 .sub { margin: 2px 0 0; color: var(--ink-soft); }
+.cats { display: grid; gap: 14px; }
+.cat-head {
+  width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; padding: 14px 18px;
+  border-radius: 20px; border: 2px solid var(--line); background: var(--tint); color: var(--accent-deep);
+  box-shadow: 0 3px 0 var(--edge); font-size: 20px; font-weight: 600;
+}
+.cat-name { flex: 1; }
+.cat-n { font-size: 14px; font-weight: 400; color: var(--ink-soft); }
+.cat-arrow { transition: transform 0.25s; font-size: 18px; }
+.cat.open .cat-arrow { transform: rotate(180deg); }
+.cat .cards { margin-top: 16px; }
+.cat .cards[hidden] { display: none; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px; }
 .card {
   position: relative; display: flex; align-items: center; gap: 16px; text-align: left;
