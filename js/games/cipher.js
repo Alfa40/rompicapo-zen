@@ -158,9 +158,19 @@ CHI VUOL ESSER LIETO SIA`.split('\n').map(s => s.trim()).filter(Boolean);
     name: 'Frase cifrata',
     hue: 250,
     tagline: 'Ogni numero nasconde una lettera.',
-    rules: `<p>Un proverbio è stato scritto in codice: ogni lettera è diventata un <b>numero</b>, sempre lo stesso. Lettere uguali hanno numeri uguali, lettere diverse numeri diversi.</p>
-      <p>Tocca una casella e scrivi la lettera che pensi: comparirà in tutte le caselle con lo stesso numero. Qualche lettera è già scoperta per cominciare.</p>
-      <p>Aiutano le parole corte (A, IL, LA, CHE, NON...) e le lettere più frequenti, che di solito sono vocali.</p>`,
+    rules: Z.rules({
+      goal: `Scopri il <b>proverbio</b> nascosto.`,
+      rules: [
+        `Ogni lettera del proverbio è stata cambiata con un <b>numero</b>, scritto sotto la sua casella.`,
+        `Lettere uguali hanno sempre lo stesso numero; lettere diverse hanno numeri diversi.`,
+        `Qualche lettera è già scoperta per cominciare. Gli spazi e gli apostrofi restano dove sono.`,
+      ],
+      play: [
+        `Tocca una casella e scrivi la lettera con la tastiera: compare in tutte le caselle con lo stesso numero.`,
+        `Per cambiarla, riscrivila sopra o cancellala.`,
+      ],
+      start: `Parti dalle parole corte: una lettera sola di solito è E, A, O o I; due lettere possono essere IL, LA, DI, CHI, NON… In italiano quasi tutte le parole finiscono con una vocale, e la lettera più frequente è spesso la E o la A.`,
+    }),
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="14" width="14" height="18" rx="3" class="ic-a"/><rect x="25" y="14" width="14" height="18" rx="3" class="ic-s ic-st"/><rect x="42" y="14" width="14" height="18" rx="3" class="ic-s ic-st"/><text x="15" y="27" class="ic-t ic-w">A</text><text x="15" y="47" class="ic-t ic-sm">7</text><text x="32" y="47" class="ic-t ic-sm">12</text><text x="49" y="47" class="ic-t ic-sm">3</text></svg>`,
     generate,
     _check(P) {

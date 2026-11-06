@@ -189,9 +189,21 @@
     name: 'Calcudoku',
     hue: 270,
     tagline: 'Somme, prodotti e un pizzico di intuito.',
-    rules: `<p>Inserisci in ogni riga e in ogni colonna i numeri da 1 a N, senza ripetizioni.</p>
-      <p>Ogni <b>gabbia</b> (bordo spesso) mostra un risultato e un'operazione: i numeri al suo interno, combinati con quell'operazione, devono dare quel risultato. Per <b>−</b> e <b>÷</b> si parte dal numero più grande.</p>
-      <p>Dentro una gabbia i numeri si possono ripetere, se non stanno sulla stessa riga o colonna.</p>`,
+    rules: Z.rules({
+      goal: `Riempi la griglia con i numeri da <b>1</b> fino alla <b>misura della griglia</b>: in una griglia 6×6 si usano i numeri da 1 a 6.`,
+      rules: [
+        `In ogni <b>riga</b> e in ogni <b>colonna</b> ogni numero c'è <b>una volta sola</b>.`,
+        `La griglia è divisa in <b>gabbie</b>, gruppi di caselle con il bordo spesso. Nell'angolo di ogni gabbia c'è un <b>risultato</b> con un'operazione: i numeri della gabbia, messi insieme con quell'operazione, devono dare quel risultato.`,
+        `<b>+</b> somma, <b>×</b> moltiplicazione. Per <b>−</b> e <b>÷</b> la gabbia ha due caselle: si parte dal numero più grande (5 e 2 fanno «3−»; 6 e 2 fanno «3÷»), in qualsiasi ordine li scrivi.`,
+        `Una gabbia di una sola casella mostra solo un numero: è proprio la risposta.`,
+        `In una gabbia un numero si può ripetere, ma solo se le due caselle non sono nella stessa riga o colonna.`,
+      ],
+      play: [
+        `Tocca una casella vuota, poi un numero sulla tastiera.`,
+        `Con la <b>matita</b> scrivi numeri piccoli, come promemoria dei numeri possibili. La <b>gomma</b> cancella.`,
+      ],
+      start: `Scrivi subito le gabbie di una casella. Poi cerca le gabbie con poche possibilità: in una griglia 6×6, «11+» su due caselle può essere solo 5 e 6; «2÷» può essere 1 e 2, 2 e 4 oppure 3 e 6.`,
+    }),
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="10" class="ic-s"/><path d="M8 32h24v24M32 8v24h24" class="ic-l2"/><text x="20" y="25" class="ic-t ic-sm">6×</text><text x="44" y="49" class="ic-t ic-sm ic-a-t">7+</text></svg>`,
     generate,
     _check(P) { return count(P.n, P.cages, 2, Infinity) === 1 ? '' : 'NON unico'; },

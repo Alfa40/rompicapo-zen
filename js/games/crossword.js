@@ -853,9 +853,20 @@ CINTURA|Tiene su i pantaloni`;
     name: 'Cruciverba',
     hue: 300,
     tagline: 'Parole incrociate, con le definizioni.',
-    rules: `<p>Scrivi nelle caselle le parole che rispondono alle <b>definizioni</b>: quelle <b>orizzontali</b> si leggono da sinistra a destra, quelle <b>verticali</b> dall'alto in basso.</p>
-      <p>Tocca una casella per sceglierla, toccala di nuovo per passare dall'orizzontale al verticale. Sopra la tastiera vedi la definizione della parola scelta; con le frecce passi alla successiva, e toccando la definizione vedi l'elenco completo.</p>
-      <p>Le parole si incrociano: ogni lettera trovata aiuta anche l'altra parola.</p>`,
+    rules: Z.rules({
+      goal: `Scrivi nello schema tutte le <b>parole</b> che rispondono alle <b>definizioni</b>.`,
+      rules: [
+        `Ogni fila di caselle bianche è una parola. Le parole <b>orizzontali</b> si leggono da sinistra a destra, le <b>verticali</b> dall'alto in basso.`,
+        `Le caselle scure separano le parole.`,
+        `Le parole si incrociano: una casella può far parte di una parola orizzontale e di una verticale, e la lettera è la stessa per tutte e due.`,
+        `Si scrive solo con lettere senza accenti (PERCHÉ diventa PERCHE).`,
+      ],
+      play: [
+        `Tocca una casella e scrivi con la tastiera. Tocca di nuovo la stessa casella per passare dall'orizzontale al verticale.`,
+        `Sopra la tastiera vedi la definizione della parola scelta; con le frecce passi alla parola successiva. Tocca la definizione per vedere l'elenco completo.`,
+      ],
+      start: `Scorri l'elenco e comincia dalle definizioni che sai subito, anche se sono poche. Ogni lettera scritta aiuta le parole che la incrociano.`,
+    }),
     icon: `<svg viewBox="0 0 64 64"><rect x="10" y="22" width="14" height="14" rx="3" class="ic-s ic-st"/><rect x="24" y="22" width="14" height="14" rx="3" class="ic-a"/><rect x="38" y="22" width="14" height="14" rx="3" class="ic-s ic-st"/><rect x="24" y="8" width="14" height="14" rx="3" class="ic-s ic-st"/><rect x="24" y="36" width="14" height="14" rx="3" class="ic-s ic-st"/><text x="31" y="33" class="ic-t ic-w">A</text></svg>`,
     generate,
     _check: check,
@@ -871,9 +882,20 @@ CINTURA|Tiene su i pantaloni`;
     name: 'Incastro',
     hue: 165,
     tagline: 'Ogni parola al suo posto nello schema.',
-    rules: `<p>Hai l'elenco delle parole, divise per lunghezza: devi <b>incastrarle tutte</b> nello schema, una per ogni fila di caselle, in orizzontale o in verticale.</p>
-      <p>Tocca una casella e scrivi con la tastiera; sopra la tastiera vedi le parole ancora libere della lunghezza giusta, e toccandole vedi l'elenco completo. Qualche parola è già scritta per cominciare.</p>
-      <p>Comincia dalle lunghezze con poche parole: lì c'è meno da scegliere, e ogni parola messa dà lettere alle altre.</p>`,
+    rules: Z.rules({
+      goal: `<b>Incastra</b> nello schema tutte le parole dell'elenco. Non ci sono definizioni: le parole le conosci già.`,
+      rules: [
+        `Ogni fila di caselle bianche (in orizzontale o in verticale) ospita <b>una parola</b> dell'elenco, della stessa lunghezza.`,
+        `Ogni parola si usa <b>una volta sola</b>.`,
+        `Dove due parole si incrociano, la lettera deve andare bene per tutte e due.`,
+      ],
+      play: [
+        `Tocca una casella e scrivi con la tastiera. Tocca di nuovo la stessa casella per passare dall'orizzontale al verticale.`,
+        `Sopra la tastiera vedi le parole ancora libere della lunghezza giusta; toccale per vedere l'elenco completo.`,
+        `Qualche parola è già scritta per cominciare.`,
+      ],
+      start: `Comincia dalle lunghezze con <b>una sola parola</b>: c'è un solo posto dove metterla. Poi guarda le lettere già scritte: dicono quale parola va in una fila.`,
+    }),
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="10" width="14" height="14" rx="3" class="ic-a"/><rect x="22" y="10" width="14" height="14" rx="3" class="ic-a"/><rect x="36" y="10" width="14" height="14" rx="3" class="ic-a"/><rect x="36" y="24" width="14" height="14" rx="3" class="ic-s ic-st"/><rect x="36" y="38" width="14" height="14" rx="3" class="ic-s ic-st"/><path d="M14 40h12M20 34v12" class="ic-l2"/></svg>`,
     generate: generateFit,
     _check(P) { return check(P) || (countFills(P, P.given) === 1 ? '' : 'NON unico'); },

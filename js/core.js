@@ -50,6 +50,10 @@
   Z.pick = a => a[Math.floor(Math.random() * a.length)];
   /* una frase a caso tra quelle date (i suggerimenti non ripetono sempre le stesse parole) */
   Z.say = (...a) => Z.pick(a);
+  /* Regole di un gioco in quattro parti (scopo, regole, comandi, primo passo): la prima partita le mostra una alla volta */
+  Z.rules = r => [['Lo scopo', r.goal], ['Le regole', r.rules], ['Come si gioca', r.play], ['Per cominciare', r.start]]
+    .filter(x => x[1]).map(([t, v]) => `<section class="rl"><h4>${t}</h4>` +
+      (Array.isArray(v) ? `<ul>${v.map(x => `<li>${x}</li>`).join('')}</ul>` : `<p>${v}</p>`) + '</section>').join('');
   Z.shuffle = a => {
     for (let i = a.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));

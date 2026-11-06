@@ -100,9 +100,20 @@
     name: 'Labirinto',
     hue: 120,
     tagline: 'Trova la strada per uscire.',
-    rules: `<p>Parti dall'<b>entrata</b> in alto a sinistra e arriva all'<b>uscita</b> in basso a destra, senza attraversare i muri.</p>
-      <p><b>Trascina il dito</b> lungo i corridoi per disegnare la strada, oppure usa le <b>freccette</b> (anche quelle della tastiera). Sotto la griglia puoi scegliere «Scorrere col dito»: scorri in un punto qualsiasi dello schermo (tranne sui tasti) verso l'alto, il basso, sinistra o destra e il pallino va in quella direzione; tornando indietro sulla strada la cancelli. Tocca un punto della strada per ripartire da lì.</p>
-      <p>Dall'entrata all'uscita c'è <b>una sola strada</b>: tutte le altre finiscono in vicoli ciechi.</p>`,
+    rules: Z.rules({
+      goal: `Vai dall'<b>entrata</b>, in alto a sinistra, all'<b>uscita</b>, in basso a destra.`,
+      rules: [
+        `Ti muovi lungo i corridoi, una casella alla volta, senza attraversare i <b>muri</b>.`,
+        `La strada giusta è <b>una sola</b>: tutte le altre finiscono in vicoli ciechi.`,
+      ],
+      play: [
+        `<b>Trascina il dito</b> lungo i corridoi per disegnare la strada.`,
+        `Oppure usa le <b>freccette</b> sotto la griglia (o quelle della tastiera).`,
+        `Con «Scorrere col dito» scorri in un punto qualsiasi dello schermo verso l'alto, il basso, a destra o a sinistra: il pallino va in quella direzione.`,
+        `Torna indietro sulla strada per cancellarla, o tocca un punto della strada per ripartire da lì.`,
+      ],
+      start: `Se ti trovi in un vicolo cieco, torna indietro fino all'ultimo bivio e prova l'altra via. Può aiutare anche guardare la strada partendo dall'uscita.`,
+    }),
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="10" class="ic-s"/><path d="M16 16h32v32H24M16 16v24M24 24h16v16H32v-8" class="ic-l2"/></svg>`,
     generate,
     _check(P) {

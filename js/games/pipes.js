@@ -113,8 +113,20 @@
     name: 'Tubi',
     hue: 185,
     tagline: 'Porta l\'acqua della fontana a ogni fiore.',
-    rules: `<p>Tocca i pezzi per <b>ruotarli</b> (tasto destro per ruotare all'indietro).</p>
-      <p>Collega tutti i tubi alla <b>fontana</b> centrale in un'unica rete, in modo che l'acqua raggiunga ogni bocciolo e <b>nessun tubo resti aperto</b>.</p>`,
+    rules: Z.rules({
+      goal: `Porta l'acqua della <b>fontana</b>, al centro, a tutti i <b>fiori</b> ruotando i pezzi di tubo.`,
+      rules: [
+        `I pezzi restano al loro posto: si possono solo <b>ruotare</b>.`,
+        `Due tubi sono collegati quando le loro aperture si toccano. Alla fine tutti i pezzi devono formare <b>un'unica rete</b> collegata alla fontana.`,
+        `<b>Nessun tubo resta aperto</b>: ogni apertura deve toccare un altro tubo, non il vuoto né il bordo.`,
+        `I fiori sono i pezzi con una sola apertura: sono le punte della rete. La rete non forma mai anelli chiusi.`,
+        `I pezzi dove arriva l'acqua si colorano e i fiori sbocciano.`,
+      ],
+      play: [
+        `Tocca un pezzo per girarlo di un quarto di giro. Con il mouse, il tasto destro lo gira all'indietro.`,
+      ],
+      start: `Comincia dai bordi e dagli angoli: un tubo non può mai puntare fuori dalla griglia. Un tubo dritto sul bordo può stare solo parallelo al bordo; una curva nell'angolo ha una sola posizione possibile.`,
+    }),
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="10" class="ic-s"/><path d="M8 26h18a6 6 0 0 1 6 6v24" class="ic-pipe"/><path d="M32 8v10" class="ic-pipe ic-pipe2"/><circle cx="32" cy="22" r="6" class="ic-a"/></svg>`,
     generate,
     init: P => ({ r: new Array(P.n * P.n).fill(0) }),

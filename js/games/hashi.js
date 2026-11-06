@@ -234,9 +234,21 @@
     name: 'Ponti',
     hue: 200,
     tagline: 'Unisci le isole con ponti di legno.',
-    rules: `<p>Collega tutte le isole con dei ponti. Il numero su ogni isola dice <b>quanti ponti</b> partono da lì.</p>
-      <p>I ponti sono dritti, orizzontali o verticali, <b>non si incrociano</b> e tra due isole ce ne possono essere al massimo <b>due</b>. Alla fine tutte le isole devono essere collegate in un'unica rete.</p>
-      <p>Tocca un'isola e poi una vicina, oppure trascina da un'isola verso un'altra. Ripeti per fare un ponte doppio, una terza volta per toglierlo.</p>`,
+    rules: Z.rules({
+      goal: `Unisci tutte le <b>isole</b> (i cerchi con il numero) con dei <b>ponti</b>.`,
+      rules: [
+        `Il numero di un'isola dice <b>quanti ponti</b> partono da lì, contando tutti i lati.`,
+        `I ponti sono <b>dritti</b>, in orizzontale o in verticale, e vanno da un'isola alla prima isola che incontrano.`,
+        `Tra due isole ci possono essere <b>uno o due ponti</b>, non di più.`,
+        `I ponti <b>non si incrociano</b> e non passano sopra le isole.`,
+        `Alla fine deve essere tutto <b>un'unica rete</b>: da ogni isola si arriva a tutte le altre camminando sui ponti.`,
+      ],
+      play: [
+        `Tocca un'isola e poi un'isola vicina, oppure trascina il dito da un'isola verso un'altra: fai un ponte.`,
+        `Rifallo per avere un <b>ponte doppio</b>; una terza volta il ponte sparisce. Puoi anche toccare direttamente un ponte.`,
+      ],
+      start: `Comincia dalle isole con meno vicini. Un'isola «4» con due soli vicini ha due ponti doppi; un'isola «6» con tre vicini ha tre ponti doppi. Un'isola «1» vicina solo a un'altra «1» non va unita a lei, altrimenti quelle due resterebbero isolate dal resto.`,
+    }),
     icon: `<svg viewBox="0 0 64 64"><path d="M18 20h28M18 24h28M18 22v26" class="ic-l2"/><circle cx="16" cy="22" r="9" class="ic-s ic-st"/><circle cx="48" cy="22" r="9" class="ic-s ic-st"/><circle cx="16" cy="48" r="9" class="ic-a"/><text x="16" y="26" class="ic-t">3</text><text x="48" y="26" class="ic-t">2</text></svg>`,
     generate,
     _count: count,

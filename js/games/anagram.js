@@ -63,9 +63,18 @@
     name: 'Anagrammi',
     hue: 330,
     tagline: 'Lettere in disordine, parole da ritrovare.',
-    rules: `<p>Ogni riga è una parola con le lettere <b>mescolate</b>; sopra c'è la sua <b>definizione</b>.</p>
-      <p>Tocca una lettera e poi un'altra della stessa parola per <b>scambiarle di posto</b>. Quando la parola è giusta si colora.</p>
-      <p>Ogni gruppo di lettere forma una sola parola del dizionario del gioco.</p>`,
+    rules: Z.rules({
+      goal: `Rimetti in ordine le lettere di ogni parola.`,
+      rules: [
+        `Ogni riga è una parola con le lettere <b>mescolate</b>. Sopra c'è la sua <b>definizione</b>.`,
+        `Si usano tutte le lettere della riga, nessuna di più e nessuna di meno.`,
+      ],
+      play: [
+        `Tocca una lettera e poi un'altra della stessa riga: le due lettere <b>si scambiano di posto</b>.`,
+        `Quando la parola è giusta, la riga si colora e non si muove più.`,
+      ],
+      start: `Leggi la definizione e pensa a parole di quella lunghezza. Se non ti viene, metti in fondo una vocale (molte parole italiane finiscono così) e prova a formare le prime due lettere.`,
+    }),
     icon: `<svg viewBox="0 0 64 64"><rect x="6" y="22" width="16" height="20" rx="4" class="ic-s ic-st"/><rect x="24" y="22" width="16" height="20" rx="4" class="ic-a"/><rect x="42" y="22" width="16" height="20" rx="4" class="ic-s ic-st"/><text x="14" y="36" class="ic-t">O</text><text x="32" y="36" class="ic-t ic-w">R</text><text x="50" y="36" class="ic-t">A</text><path d="M14 16c6-6 30-6 36 0M50 48c-6 6-30 6-36 0" class="ic-l2"/></svg>`,
     generate,
     _check(P) {

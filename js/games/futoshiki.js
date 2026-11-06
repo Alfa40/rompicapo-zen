@@ -253,9 +253,19 @@
     name: 'Futoshiki',
     hue: 40,
     tagline: 'Maggiore, minore: l\'ordine delle cose.',
-    rules: `<p>Inserisci in ogni riga e in ogni colonna i numeri da 1 a N, senza ripetizioni.</p>
-      <p>I simboli <b>&lt;</b> e <b>&gt;</b> tra due caselle indicano quale numero è più piccolo e quale più grande (la punta indica il minore).</p>
-      <p>Usa la <b>matita</b> per annotare i candidati. La soluzione è sempre una sola.</p>`,
+    rules: Z.rules({
+      goal: `Riempi la griglia con i numeri da <b>1</b> fino alla <b>misura della griglia</b>: in una griglia 7×7 si usano i numeri da 1 a 7.`,
+      rules: [
+        `In ogni <b>riga</b> e in ogni <b>colonna</b> ogni numero c'è <b>una volta sola</b>.`,
+        `Tra alcune caselle c'è un segno <b>&lt;</b> o <b>&gt;</b> (anche in verticale). La <b>punta</b> indica sempre il numero <b>più piccolo</b>, la parte aperta il più grande: 2 &lt; 5, 6 &gt; 3.`,
+        `I numeri scritti all'inizio sono giusti e non si cambiano.`,
+      ],
+      play: [
+        `Tocca una casella vuota, poi un numero sulla tastiera.`,
+        `Con la <b>matita</b> scrivi numeri piccoli, come promemoria dei numeri possibili. La <b>gomma</b> cancella.`,
+      ],
+      start: `Guarda le caselle con i segni. Una casella più piccola di una vicina non può avere il numero più alto; una più grande non può avere l'1. Le catene di segni (a &lt; b &lt; c) tolgono ancora più possibilità: nella prima casella di una catena di tre ci sono solo numeri bassi.`,
+    }),
     icon: `<svg viewBox="0 0 64 64"><rect x="6" y="20" width="22" height="22" rx="6" class="ic-s ic-st"/><rect x="36" y="20" width="22" height="22" rx="6" class="ic-a"/><path d="M35 26l-5 5 5 5" class="ic-l2" transform="translate(-3 0)"/><text x="17" y="36" class="ic-t">2</text><text x="47" y="36" class="ic-t ic-w">4</text></svg>`,
     generate,
     _check(P) { return (P.n >= 8 ? solverProp : solver)(P.n, P.givens, P.ineq, 2, Infinity).count === 1 ? '' : 'NON unico'; },

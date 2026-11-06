@@ -215,9 +215,19 @@
     name: 'Collega i colori',
     hue: 15,
     tagline: 'Fili colorati che non si incrociano mai.',
-    rules: `<p>Collega ogni coppia di pallini dello <b>stesso colore</b> con un percorso fatto di caselle adiacenti (niente diagonali).</p>
-      <p>I percorsi <b>non si incrociano</b> e, alla fine, devono <b>riempire tutta la griglia</b>.</p>
-      <p>Trascina da un pallino per disegnare. Riparti da un punto di un percorso per correggerlo.</p>`,
+    rules: Z.rules({
+      goal: `Collega ogni coppia di pallini dello <b>stesso colore</b> con un filo.`,
+      rules: [
+        `Il filo passa da una casella a quella <b>accanto</b>: sopra, sotto, a destra o a sinistra, mai in diagonale.`,
+        `In ogni casella passa <b>un solo filo</b>: i fili non si incrociano.`,
+        `Alla fine i fili devono <b>riempire tutta la griglia</b>: nessuna casella resta vuota.`,
+      ],
+      play: [
+        `Trascina il dito da un pallino per disegnare il filo; arriva all'altro pallino dello stesso colore.`,
+        `Tocca un punto di un filo già fatto per ripartire da lì. Se passi sopra un altro filo, quello si accorcia.`,
+      ],
+      start: `Comincia dai pallini sui bordi e negli angoli: hanno poche strade possibili. Se due pallini dello stesso colore sono vicini, uniscili subito. I fili lunghi spesso corrono lungo il bordo.`,
+    }),
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="10" class="ic-s"/><path d="M18 18h28v14H18v14h28" class="ic-path"/><circle cx="18" cy="18" r="6" class="ic-a"/><circle cx="46" cy="46" r="6" class="ic-a"/></svg>`,
     generate,
     init: P => ({ p: P.ends.map(() => []) }),

@@ -255,9 +255,20 @@
     name: 'Porte colorate',
     hue: 352,
     tagline: 'Ogni blocco ha la sua porta.',
-    rules: `<p>Trascina i blocchi per farli uscire dal campo. Ogni blocco esce <b>solo dalla porta del suo colore</b>, e solo se ci passa <b>per intero</b>: la porta deve essere larga almeno quanto il blocco.</p>
-      <p>I blocchi scorrono finché non toccano un muro o un altro blocco. Quelli con le <b>frecce</b> si muovono solo nella direzione indicata.</p>
-      <p>Svuota il campo per completare il rompicapo. Esiste sempre un ordine giusto.</p>`,
+    rules: Z.rules({
+      goal: `Fai <b>uscire tutti i blocchi</b> dal campo.`,
+      rules: [
+        `Sul bordo del campo ci sono delle <b>porte colorate</b>. Ogni blocco esce <b>solo dalla porta del suo colore</b>.`,
+        `Il blocco ci deve passare <b>per intero</b>: la porta deve essere larga almeno quanto il lato del blocco che la attraversa.`,
+        `I blocchi non si sovrappongono e non passano attraverso gli altri blocchi.`,
+        `I blocchi con le <b>frecce</b> si muovono solo nella direzione delle frecce (avanti e indietro), e quindi escono solo da porte su quei lati.`,
+      ],
+      play: [
+        `Trascina un blocco con il dito: si sposta dove c'è spazio.`,
+        `Per farlo uscire, spingilo contro la porta del suo colore.`,
+      ],
+      start: `Cerca prima un blocco che ha la strada libera fino alla sua porta. Se nessuno può uscire, guarda chi blocca la strada a un altro e spostalo di lato. Un ordine giusto c'è sempre, e puoi annullare tutte le mosse che vuoi.`,
+    }),
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="10" class="ic-s"/><path d="M8 24v16" stroke="hsl(212 72% 58%)" stroke-width="6" stroke-linecap="round"/><path d="M40 8h12" stroke="hsl(355 72% 62%)" stroke-width="6" stroke-linecap="round"/><rect x="16" y="20" width="14" height="22" rx="4" fill="hsl(212 72% 58%)"/><rect x="34" y="16" width="16" height="14" rx="4" fill="hsl(355 72% 62%)"/><rect x="32" y="34" width="16" height="14" rx="4" class="ic-a"/></svg>`,
     generate,
     _check(P) { return rate(P).stuck ? 'bloccato' : ''; },

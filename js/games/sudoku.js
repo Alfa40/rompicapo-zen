@@ -235,9 +235,21 @@
     name: 'Sudoku',
     hue: 150,
     tagline: 'Nove numeri, nove riquadri, una sola armonia.',
-    rules: `<p>Riempi la griglia in modo che <b>ogni riga</b>, <b>ogni colonna</b> e <b>ogni riquadro 3×3</b> contengano i numeri da 1 a 9, senza ripetizioni.</p>
-      <p>Tocca una casella e scegli un numero. Con la <b>matita</b> puoi annotare i candidati.</p>
-      <p>Ogni rompicapo ha una sola soluzione e si risolve con la sola logica.</p>`,
+    rules: Z.rules({
+      goal: `Riempi tutte le caselle vuote della griglia 9×9 con i numeri da <b>1 a 9</b>.`,
+      rules: [
+        `In ogni <b>riga</b> (in orizzontale) ogni numero da 1 a 9 c'è <b>una volta sola</b>.`,
+        `Lo stesso vale per ogni <b>colonna</b> (in verticale)…`,
+        `…e per ogni <b>riquadro 3×3</b>, i nove quadrati dal bordo spesso.`,
+        `I numeri scritti all'inizio sono giusti e non si cambiano.`,
+      ],
+      play: [
+        `Tocca una casella vuota, poi un numero sulla tastiera sotto la griglia.`,
+        `Con la <b>matita</b> scrivi numeri piccoli, come promemoria dei numeri che potrebbero andare lì. Toccala di nuovo per tornare a scrivere normale.`,
+        `La <b>gomma</b> cancella la casella scelta.`,
+      ],
+      start: `Scegli un numero, per esempio l'1, e guarda un riquadro dove manca: le righe e le colonne che hanno già un 1 lo escludono da molte caselle. Se resta un solo posto libero, l'1 va lì. Non serve tirare a indovinare: la soluzione è una sola e ci si arriva ragionando.`,
+    }),
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="10" class="ic-s"/><path d="M24 8v48M40 8v48M8 24h48M8 40h48" class="ic-l"/><text x="16" y="21" class="ic-t">5</text><text x="48" y="37" class="ic-t">3</text><text x="32" y="53" class="ic-t ic-a-t">9</text></svg>`,
     generate,
     _test: { logic, search },

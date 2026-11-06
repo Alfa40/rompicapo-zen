@@ -107,8 +107,18 @@
     name: 'Luci',
     hue: 45,
     tagline: 'Spegni le lanterne, una alla volta.',
-    rules: `<p>Tocca una lanterna per <b>accenderla o spegnerla</b>: insieme a lei cambiano anche le <b>quattro vicine</b> (sopra, sotto, a destra e a sinistra).</p>
-      <p>L'obiettivo è <b>spegnere tutte le lanterne</b>. Toccare due volte la stessa lanterna annulla l'effetto: conta solo quali tocchi, non l'ordine.</p>`,
+    rules: Z.rules({
+      goal: `<b>Spegni tutte le lanterne</b> della griglia.`,
+      rules: [
+        `Quando tocchi una lanterna, lei <b>cambia</b>: se è accesa si spegne, se è spenta si accende.`,
+        `Insieme a lei cambiano anche le <b>quattro vicine</b>: sopra, sotto, a destra e a sinistra (non in diagonale). Sui bordi le vicine sono meno.`,
+      ],
+      play: [
+        `Tocca una lanterna, accesa o spenta.`,
+        `Toccare due volte la stessa lanterna è come non toccarla. L'<b>ordine</b> dei tocchi non conta: conta solo quali lanterne tocchi.`,
+      ],
+      start: `Prova il metodo «riga per riga»: per ogni lanterna accesa nella prima riga, tocca quella subito sotto. La prima riga si spegne. Fai lo stesso per la seconda riga, poi per la terza, fino in fondo. Se alla fine resta accesa qualche lanterna nell'ultima riga, chiedi un Suggerimento: ti dirà da dove ripartire.`,
+    }),
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="10" class="ic-s"/><path d="M32 14v6" class="ic-l2"/><rect x="22" y="20" width="20" height="26" rx="9" class="ic-a"/><path d="M26 46h12v4H26z" class="ic-l2f"/></svg>`,
     generate,
     _test: { solve, press },

@@ -302,9 +302,18 @@
     name: 'Stelle',
     hue: 230,
     tagline: 'Stelle che non si sfiorano mai.',
-    rules: `<p>Posiziona le stelle in modo che ogni <b>riga</b>, ogni <b>colonna</b> e ogni <b>regione colorata</b> ne contenga esattamente <b>una</b> (<b>due</b> nel livello Difficile).</p>
-      <p>Due stelle <b>non possono toccarsi</b>, nemmeno in diagonale.</p>
-      <p>Tocca una volta per una stella, due volte per un puntino (casella vuota), tre volte per cancellare. Trascina per mettere tanti puntini.</p>`,
+    rules: Z.rules({
+      goal: `Metti le <b>stelle</b> nella griglia, che è divisa in <b>regioni</b> colorate.`,
+      rules: [
+        `Ogni <b>riga</b>, ogni <b>colonna</b> e ogni <b>regione</b> ha <b>una stella</b>. Se hai scelto «2 per riga» nella difficoltà, ne ha <b>due</b>.`,
+        `Due stelle <b>non si toccano</b>, nemmeno in diagonale: le otto caselle intorno a una stella restano vuote.`,
+      ],
+      play: [
+        `Tocca una casella <b>una volta</b> per mettere una stella, <b>due volte</b> per un puntino (il tuo promemoria: «qui non c'è una stella»), <b>tre volte</b> per svuotarla.`,
+        `Trascina il dito sulle caselle per mettere tanti puntini insieme.`,
+      ],
+      start: `Cerca le regioni piccole o tutte su una riga: la loro stella non ha molte scelte. Quando sai dove va una stella, metti i puntini nelle caselle intorno e nel resto della sua riga, della sua colonna e della sua regione.`,
+    }),
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="10" class="ic-s"/><path d="M32 8v24H8M32 32h24" class="ic-l2"/><path d="M20 13l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z" class="ic-a"/><path d="M44 37l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z" class="ic-a"/></svg>`,
     generate,
     _check(P) { const s = solve(P.n, P.k, P.reg, 2, rowSets(P.n, P.k)); return s && s.length === 1 ? '' : 'NON unico'; },

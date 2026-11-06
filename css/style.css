@@ -228,6 +228,12 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spac
 .rules { color: var(--ink-soft); line-height: 1.5; font-size: 15.5px; }
 .rules p { margin: 8px 0; }
 .rules b { color: var(--ink); font-weight: 500; }
+.rules h4 { margin: 14px 0 2px; font-size: 15px; font-weight: 600; color: var(--accent-deep); }
+.rules .rl:first-child h4, .tut-step h4 { margin-top: 4px; }
+.rules ul { margin: 4px 0; padding-left: 1.15em; }
+.rules li { margin: 5px 0; }
+.rules li::marker { color: var(--accent); }
+.tut-step ul, .tut-step p { font-size: 16px; }
 .opt-title { margin: 16px 0 4px; font-size: 17px; font-weight: 600; color: var(--accent-deep); }
 .opts { display: grid; gap: 14px; margin-top: 6px; }
 .opt-value { color: var(--ink); font-weight: 700; }

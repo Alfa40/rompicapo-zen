@@ -138,9 +138,19 @@
     name: 'Parole nascoste',
     hue: 100,
     tagline: 'Cerca le parole tra le lettere.',
-    rules: `<p>Nella griglia sono nascoste tutte le parole dell'elenco, in fila dritta: in orizzontale, in verticale e, secondo la difficoltà, in diagonale o al contrario.</p>
-      <p><b>Trascina il dito</b> dalla prima all'ultima lettera di una parola per segnarla. Le parole possono incrociarsi e condividere lettere.</p>
-      <p>Quando le hai trovate tutte, le <b>lettere rimaste</b>, lette in ordine da sinistra a destra e dall'alto in basso, formano la <b>chiave</b>.</p>`,
+    rules: Z.rules({
+      goal: `Trova nella griglia di lettere tutte le <b>parole dell'elenco</b>.`,
+      rules: [
+        `Ogni parola è scritta <b>in fila dritta</b>, con le lettere attaccate, senza curve.`,
+        `Le direzioni dipendono dalla difficoltà: «Facile» da sinistra a destra e dall'alto in basso; «Normale» anche in diagonale; «Difficile» in tutte le direzioni, anche al contrario.`,
+        `Le parole possono incrociarsi e usare la stessa lettera.`,
+        `Alla fine, le <b>lettere rimaste</b>, lette da sinistra a destra e dall'alto in basso, formano una parola nascosta: la <b>chiave</b>.`,
+      ],
+      play: [
+        `<b>Trascina il dito</b> dalla prima all'ultima lettera di una parola. Se è giusta resta segnata e nell'elenco si spunta.`,
+      ],
+      start: `Cerca nella griglia la prima lettera di una parola, poi guarda le caselle intorno per trovare la seconda. Le lettere rare (Z, Q, H) e le parole lunghe si trovano più in fretta.`,
+    }),
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="10" class="ic-s"/><text x="20" y="27" class="ic-t">A</text><text x="32" y="27" class="ic-t">M</text><text x="44" y="27" class="ic-t">O</text><text x="20" y="47" class="ic-t">R</text><text x="32" y="47" class="ic-t">E</text><text x="44" y="47" class="ic-t">L</text><rect x="12" y="13" width="40" height="19" rx="9.5" class="ic-st" fill="none"/></svg>`,
     generate,
     _check(P) {

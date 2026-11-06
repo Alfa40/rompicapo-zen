@@ -723,9 +723,23 @@
     options: [{ id: 'draw', label: 'Dal mazzo si girano', def: 1, choices: [
       { v: 1, label: 'Una carta', help: 'Si gira una carta alla volta: più tranquillo.' },
       { v: 3, label: 'Tre carte', help: 'Si girano tre carte alla volta e si usa solo quella in cima: più impegnativo.' }] }],
-    rules: `<p>Porta tutte le carte sulle <b>quattro pile dei semi</b>, in alto a destra: ogni pila parte dall'<b>Asso</b> e sale fino al <b>Re</b>, sempre dello stesso seme.</p>
-      <p>Nelle sette colonne le carte scendono di un valore alla volta, <b>alternando i colori</b> (rosso su nero, nero su rosso). Puoi spostare anche un gruppo ordinato. Quando liberi una carta coperta, si gira. In una colonna vuota può andare solo un <b>Re</b>.</p>
-      <p>Tocca il mazzo in alto a sinistra per girare una carta; quando finisce, toccalo di nuovo per rigirare gli scarti.</p>` + TAP + COMMON,
+    rules: Z.rules({
+      goal: `Porta tutte le 52 carte sulle <b>quattro pile dei semi</b>, in alto a destra.`,
+      rules: [
+        `Ogni pila dei semi parte dall'<b>Asso</b> e sale in ordine fino al <b>Re</b> (A, 2, 3 … 10, J, Q, K), sempre dello <b>stesso seme</b>.`,
+        `Nelle <b>sette colonne</b> una carta va sopra una carta di <b>un valore più alto</b> e di <b>colore diverso</b>: un 6 nero su un 7 rosso, un 6 rosso su un 7 nero.`,
+        `Puoi spostare anche un <b>gruppo</b> di carte già in ordine, prendendolo dalla carta più in alto che vuoi spostare.`,
+        `Quando una carta coperta resta in fondo alla colonna, si <b>gira</b> da sola.`,
+        `In una colonna vuota può andare solo un <b>Re</b> (anche con il suo gruppo).`,
+        `Il <b>mazzo</b> in alto a sinistra dà carte nuove: ne gira una o tre, secondo la difficoltà, e puoi usare solo quella in cima. Quando finisce, si rigira tutto e si ricomincia, senza limiti.`,
+      ],
+      play: [
+        `Tocca una carta per sceglierla, poi tocca dove vuoi metterla.`,
+        `Tocca <b>due volte</b> la stessa carta: va da sola nel posto migliore (prima sulle pile dei semi).`,
+        `Tocca il mazzo per girare le carte.`,
+      ],
+      start: `Prima di girare il mazzo, guarda le colonne: c'è un Asso da mettere sulle pile? Una carta da spostare che fa girare una carta coperta? Liberare le carte coperte, soprattutto nelle colonne lunghe, è la cosa più importante. Ogni partita si può vincere.`,
+    }) + TAP + COMMON,
   });
   reg({
     id: 'freecell', name: 'FreeCell', hue: 205, E: FC, view: fcView,
@@ -734,9 +748,21 @@
       { v: 4, label: '4 celle', help: 'Quattro celle: quasi ogni partita si può vincere.' },
       { v: 3, label: '3 celle', help: 'Tre celle: serve più attenzione.' },
       { v: 2, label: '2 celle', help: 'Due celle: per chi ama pensare a lungo.' }] }],
-    rules: `<p>Tutte le carte sono <b>scoperte</b>. Portale sulle <b>quattro pile dei semi</b>, in alto a destra, dall'<b>Asso</b> al <b>Re</b>.</p>
-      <p>Nelle colonne una carta va su un'altra di <b>colore diverso</b> e di un valore in più. Le <b>celle</b> in alto a sinistra tengono una carta ciascuna, per metterla da parte. In una colonna vuota può andare qualsiasi carta.</p>
-      <p>Puoi spostare un gruppo ordinato se hai abbastanza celle e colonne vuote per farlo una carta alla volta.</p>` + TAP + COMMON,
+    rules: Z.rules({
+      goal: `Porta tutte le 52 carte sulle <b>quattro pile dei semi</b>, in alto a destra. Qui tutte le carte sono <b>scoperte</b> fin dall'inizio.`,
+      rules: [
+        `Ogni pila dei semi parte dall'<b>Asso</b> e sale fino al <b>Re</b>, sempre dello <b>stesso seme</b>.`,
+        `Nelle <b>otto colonne</b> una carta va sopra una carta di <b>un valore più alto</b> e di <b>colore diverso</b>: un 6 nero su un 7 rosso.`,
+        `Le <b>celle libere</b> in alto a sinistra tengono <b>una carta ciascuna</b>, per metterla da parte un momento.`,
+        `In una colonna vuota può andare <b>qualsiasi carta</b>.`,
+        `Si sposta una carta alla volta. Puoi spostare un gruppo ordinato solo se ci sono abbastanza celle libere e colonne vuote per farlo carta per carta.`,
+      ],
+      play: [
+        `Tocca una carta (o la prima carta di un gruppo) per sceglierla, poi tocca dove vuoi metterla: una colonna, una cella o una pila dei semi.`,
+        `Tocca <b>due volte</b> la stessa carta: va da sola nel posto migliore.`,
+      ],
+      start: `Cerca gli Assi e i 2: sono spesso sepolti, liberali per primi. Usa le celle con calma: se le riempi tutte resti senza spazio. Svuotare una colonna è il premio più prezioso. Ogni partita si può vincere.`,
+    }) + TAP + COMMON,
   });
   reg({
     id: 'pyramid', name: 'Piramide', hue: 40, E: PY, view: pyView, ms: 250, max: 40000,
@@ -746,9 +772,22 @@
       { v: 0, label: 'Senza limiti', help: 'Puoi rigirare il mazzo tutte le volte che vuoi.' },
       { v: 3, label: 'Tre', help: 'Puoi passare il mazzo tre volte.' },
       { v: 1, label: 'Uno', help: 'Il mazzo si passa una volta sola.' }] }],
-    rules: `<p>Togli tutte le carte della <b>piramide</b> facendo <b>coppie che sommano 13</b>: Asso e Donna, 2 e Fante, 3 e 10, 4 e 9, 5 e 8, 6 e 7. Il <b>Re</b> vale 13 e si toglie da solo.</p>
-      <p>Si possono usare solo le carte <b>libere</b>, cioè non coperte da altre carte sotto di loro, e la carta in cima agli <b>scarti</b>. Tocca il mazzo per girare una carta nuova.</p>
-      <p>Tocca una carta e poi la sua compagna: se fanno 13, spariscono.</p>` + COMMON,
+    rules: Z.rules({
+      goal: `Togli tutte le carte della <b>piramide</b>.`,
+      rules: [
+        `Le carte si tolgono a <b>coppie che sommano 13</b>. I valori: Asso 1, numeri come scritti, Fante (J) 11, Donna (Q) 12.`,
+        `Le coppie sono: Asso e Donna, 2 e Fante, 3 e 10, 4 e 9, 5 e 8, 6 e 7.`,
+        `Il <b>Re</b> vale 13 e si toglie <b>da solo</b>.`,
+        `Si possono usare solo le carte <b>libere</b>, cioè senza altre carte appoggiate sopra nella fila sotto. All'inizio sono libere solo le carte dell'ultima fila.`,
+        `Sotto la piramide c'è il <b>mazzo</b>: gira una carta alla volta sugli <b>scarti</b>. La carta in cima agli scarti si può usare per una coppia.`,
+        `Quando il mazzo finisce puoi rigirarlo: senza limiti, oppure un numero di volte che dipende dalla difficoltà.`,
+      ],
+      play: [
+        `Tocca una carta libera e poi la sua compagna: se fanno 13, spariscono.`,
+        `Tocca un Re libero per toglierlo. Tocca il mazzo per girare una carta.`,
+      ],
+      start: `Prima di girare il mazzo, cerca le coppie tra le carte libere della piramide. Quando puoi scegliere, togli le carte che ne liberano altre. Ogni partita si può vincere.`,
+    }) + COMMON,
   });
   reg({
     id: 'tripeaks', name: 'TriPeaks', hue: 285, E: TP, view: chainView(false),
@@ -757,9 +796,21 @@
     options: [{ id: 'wrap', label: 'Re e Asso vicini', def: 1, choices: [
       { v: 1, label: 'Re e Asso sì', help: 'Sull\'Asso puoi prendere il Re e sul Re l\'Asso: più facile.' },
       { v: 0, label: 'Re e Asso no', help: 'L\'Asso e il Re non si toccano: più impegnativo.' }] }],
-    rules: `<p>Libera le <b>tre cime</b> di carte. Puoi prendere una carta scoperta se vale <b>uno in più o uno in meno</b> della carta girata in basso: diventa lei la nuova carta da cui ripartire. Il colore e il seme non contano.</p>
-      <p>Le carte coperte si girano quando le carte sotto di loro sono state prese. Quando non puoi prendere niente, tocca il <b>mazzo</b> per girare una carta nuova.</p>
-      <p>Il segreto è fare catene lunghe: prima di prendere una carta, guarda che cosa ti lascia dopo.</p>` + COMMON,
+    rules: Z.rules({
+      goal: `Prendi tutte le carte delle <b>tre cime</b>.`,
+      rules: [
+        `In basso c'è una carta scoperta: la carta di partenza.`,
+        `Puoi prendere una carta delle cime se è <b>scoperta</b> e vale <b>uno in più o uno in meno</b> della carta di partenza: su un 7 vanno un 6 o un 8. Il colore e il seme non contano.`,
+        `La carta presa diventa la nuova carta di partenza: così fai <b>catene</b>, anche su e giù (7, 8, 7, 6…).`,
+        `Se nella difficoltà hai scelto «Re e Asso sì», dopo il Re viene l'Asso e prima dell'Asso il Re.`,
+        `Le carte coperte si girano quando le due carte che le coprono sono state prese.`,
+        `Quando non puoi prendere niente, tocca il <b>mazzo</b>: la nuova carta diventa la carta di partenza. Il mazzo si usa una volta sola.`,
+      ],
+      play: [
+        `Tocca una carta scoperta per prenderla. Tocca il mazzo per girare una carta nuova.`,
+      ],
+      start: `Prima di prendere una carta, guarda cosa ti lascia dopo: la catena più lunga è quasi sempre la scelta migliore, e quando puoi scegli le carte che ne girano altre. Ogni partita si può vincere.`,
+    }) + COMMON,
   });
   reg({
     id: 'golf', name: 'Golf', hue: 95, E: GF, view: chainView(true),
@@ -768,9 +819,20 @@
     options: [{ id: 'wrap', label: 'Re e Asso vicini', def: 0, choices: [
       { v: 1, label: 'Re e Asso sì', help: 'Sull\'Asso puoi prendere il Re e sul Re l\'Asso: più facile.' },
       { v: 0, label: 'Re e Asso no', help: 'Come nel Golf classico: sul Re non si prende niente.' }] }],
-    rules: `<p>Svuota le <b>sette colonne</b>. Puoi prendere l'ultima carta di una colonna se vale <b>uno in più o uno in meno</b> della carta girata in basso: diventa lei la nuova carta da cui ripartire. Il colore e il seme non contano.</p>
-      <p>Quando non puoi prendere niente, tocca il <b>mazzo</b> per girare una carta nuova. Il mazzo si passa una volta sola.</p>
-      <p>Il segreto è fare catene lunghe: prima di prendere una carta, guarda che cosa ti lascia dopo.</p>` + COMMON,
+    rules: Z.rules({
+      goal: `Svuota le <b>sette colonne</b> di carte.`,
+      rules: [
+        `In basso c'è una carta scoperta: la carta di partenza.`,
+        `Puoi prendere l'<b>ultima carta</b> di una colonna (quella più in basso) se vale <b>uno in più o uno in meno</b> della carta di partenza: su un 7 vanno un 6 o un 8. Il colore e il seme non contano.`,
+        `La carta presa diventa la nuova carta di partenza: così fai <b>catene</b>, anche su e giù.`,
+        `Se nella difficoltà hai scelto «Re e Asso sì», dopo il Re viene l'Asso e prima dell'Asso il Re.`,
+        `Quando non puoi prendere niente, tocca il <b>mazzo</b>: la nuova carta diventa la carta di partenza. Il mazzo si usa una volta sola.`,
+      ],
+      play: [
+        `Tocca l'ultima carta di una colonna per prenderla. Tocca il mazzo per girare una carta nuova.`,
+      ],
+      start: `Prima di prendere una carta, guarda cosa c'è sotto: scegli la carta che ti permette di continuare la catena più a lungo, e cerca di non lasciare colonne lunghe. Ogni partita si può vincere.`,
+    }) + COMMON,
   });
   Z.CARDS = { search, nextMove, KL, FC, PY, TP, GF };
 })();
