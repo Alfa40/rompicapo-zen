@@ -110,7 +110,7 @@
         const q = Z.store.get('hintq', []);
         if (!q.length) break;
         try { await post('/rz/hint', Object.assign({ player: player(), name: Z.store.get('nome', '') }, q[0])); }
-        catch (e) { if (!e.soft || e.status === 404) throw e; } /* rifiutata dal server: si scarta (404 = server non ancora aggiornato: si riprova) */
+        catch (e) { if (!e.soft || e.status === 404 || /sconosciut/.test(e.message)) throw e; } /* rifiutata dal server: si scarta (server non ancora aggiornato: si riprova) */
         Z.store.set('hintq', Z.store.get('hintq', []).slice(1));
       }
     } catch (e) { /* riproverà alla prossima valutazione */ }

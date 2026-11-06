@@ -395,7 +395,7 @@
     screen.append(bar, wrap, hintBox, padZone, controls, toolbar);
     let hinting = false;
     /* RATE: scelte veloci per valutare un suggerimento (solo chi ha il codice degli amici o del proprietario) */
-    const RATE = ['Chiaro', 'Poco chiaro', 'Non spiega il perché', 'Troppo lungo', 'Sbagliato'];
+    const RATE = ['Chiaro', 'Poco chiaro', 'Non spiega il perché', 'Non spiega il ragionamento o lo scopo del ragionamento', 'Troppo lungo', 'Sbagliato'];
     function showHint(html, actions, meta) {
       /* "il 1" -> "l'1", "il 8" -> "l'8", "il 11" -> "l'11" */
       hintText.innerHTML = html.replace(/\b([Ii])l (<b>)?(1|8|11)(?!\d)/g, (m, I, b, d) => (I === 'I' ? 'L' : 'l') + "'" + (b || '') + d);
