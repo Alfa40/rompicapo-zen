@@ -360,9 +360,20 @@
       h('button.hint-x', { type: 'button', 'aria-label': 'Chiudi spiegazione', html: Z.ICONS.cross, on: { click: () => hideHint() } }));
     screen.append(bar, wrap, hintBox, padZone, controls, toolbar);
     let hinting = false;
-    function showHint(html) {
+    /* RATE: scelte veloci per valutare un suggerimento (solo chi ha il codice degli amici o del proprietario) */
+    const RATE = ['Chiaro', 'Poco chiaro', 'Non spiega il perché', 'Troppo lungo', 'Sbagliato'];
+    function showHint(html, actions, meta) {
       /* "il 1" -> "l'1", "il 8" -> "l'8", "il 11" -> "l'11" */
       hintText.innerHTML = html.replace(/\b([Ii])l (<b>)?(1|8|11)(?!\d)/g, (m, I, b, d) => (I === 'I' ? 'L' : 'l') + "'" + (b || '') + d);
+      if (actions && actions.length) hintText.append(h('div.hint-act', null, ...actions));
+      if (meta && Z.Proposte && Z.Proposte.canRate()) {
+        const row = h('div.hint-rate', null, h('small', { text: 'Com\'è questo ' + (meta.phase === 'tip' ? 'consiglio' : 'suggerimento') + '?' }));
+        for (const r of RATE) row.append(h('button.hint-chip', { type: 'button', text: r, on: { click: () => {
+          Z.Proposte.rateHint({ game: id, tag: meta.r.tag || '', phase: meta.phase, rating: r, text: hintText.firstChild ? hintText.innerText.split('\n')[0] : '', opt: P && P.opt });
+          row.replaceChildren(h('small', { text: 'Grazie! Claude userà la tua valutazione per migliorare i suggerimenti.' }));
+        } } }));
+        hintText.append(row);
+      }
       hintBox.classList.remove('show');
       void hintBox.offsetWidth;
       hintBox.classList.add('show');
@@ -770,15 +781,32 @@
       view.render(cur);
       after();
     });
-    bHint.addEventListener('click', () => {
-      if (won || !view) return;
-      const r = G.hint(P, cur);
-      if (!r) return;
+    /* Suggerimento a due passi: prima un consiglio su dove guardare e che ragionamento usare (nessuna mossa),
+       poi, con «Mostra la mossa» (o premendo di nuovo Suggerimento), la mossa con la spiegazione del perché. */
+    let pend = null;
+    function reveal() {
+      if (!pend || won) return;
+      const r = pend.r;
+      pend = null;
       hinting = true; hintTag = r.tag || null;
       ctx.commit(r.state);
       hinting = false; hintTag = null;
       if (view.flash) view.flash(r.focus);
-      if (r.why && !won) showHint(r.why);
+      if (r.why && !won) showHint(r.why, null, { phase: 'move', r });
+    }
+    bHint.addEventListener('click', () => {
+      if (won || !view) return;
+      const k = JSON.stringify(cur);
+      if (pend && pend.key === k) { reveal(); return; }
+      const r = G.hint(P, cur);
+      if (!r) return;
+      const T = Z.Stats.TAGS[id] && Z.Stats.TAGS[id][r.tag];
+      const tip = r.tip || (T ? 'Un consiglio: ' + T[1] : '');
+      if (!tip) { pend = { r, key: k }; reveal(); return; }
+      pend = { r, key: k };
+      if (rec) rec.nudge(r.tag);
+      if (view.flash && r.area && r.area.length) view.flash(r.area);
+      showHint(tip, [h('button.btn.hint-more', { type: 'button', text: 'Mostra la mossa', on: { click: reveal } })], { phase: 'tip', r });
     });
     bNew.addEventListener('click', () => {
       if (won) { newPuzzle(); return; }

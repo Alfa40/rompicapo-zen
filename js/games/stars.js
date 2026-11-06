@@ -185,18 +185,32 @@
   const HUES = [8, 40, 75, 140, 175, 205, 240, 275, 310, 340];
 
   /* ---------- Suggerimento spiegato ---------- */
+  const star1 = k => (k === 1 ? 'una stella' : k + ' stelle');
   function hint(P, st) {
     const n = P.n, k = P.k, N = n * n, s = Z.clone(st), sol = new Set(P.sol);
     const wrong = [];
     s.c.forEach((v, i) => { if ((v === 1 && !sol.has(i)) || (v === 2 && sol.has(i))) wrong.push(i); });
     if (wrong.length) {
-      const i = Z.pick(wrong), was = s.c[i];
-      s.c[i] = 0;
+      const i = Z.pick(wrong), was = s.c[i], r0 = (i / n) | 0, c0 = i % n;
       const what = was === 1 ? 'La stella' : 'Il puntino', g = was === 1 ? 'a' : 'o';
+      let because = '';
+      if (was === 1) {
+        const near = Z.range(N).find(j => j !== i && s.c[j] === 1 && Math.abs(((j / n) | 0) - r0) <= 1 && Math.abs(j % n - c0) <= 1);
+        const rowS = Z.range(n).filter(x => s.c[r0 * n + x] === 1).length, colS = Z.range(n).filter(y => s.c[y * n + c0] === 1).length;
+        const regS = Z.range(N).filter(j => P.reg[j] === P.reg[i] && s.c[j] === 1).length;
+        if (near != null) because = `tocca la stella in ${Z.cellName(near, n)}, e le stelle non possono toccarsi nemmeno in diagonale.`;
+        else if (rowS > k) because = `la riga ${r0 + 1} avrebbe più di ${star1(k)}.`;
+        else if (colS > k) because = `la colonna ${c0 + 1} avrebbe più di ${star1(k)}.`;
+        else if (regS > k) because = `la sua regione avrebbe più di ${star1(k)}.`;
+      }
+      s.c[i] = 0;
       return {
-        state: s, focus: [i],
-        tag: 'wrong', why: `${what} in ${Z.cellName(i, n)} non è corrett${g}: porterebbe a una contraddizione. L'ho tolt${g}.` +
-          (wrong.length > 1 ? ` Ci sono altre ${wrong.length - 1} caselle da rivedere.` : ''),
+        state: s, focus: [i], area: Z.range(n).map(x => r0 * n + x),
+        tag: 'wrong',
+        tip: Z.say('C\'è qualcosa da ricontrollare nella riga che si illumina.', 'Ricontrolla con calma la riga che si illumina.') +
+          ` Conta le stelle di ogni riga, colonna e regione (${k === 1 ? 'ne serve una' : 'ne servono ' + k} per ciascuna) e verifica che nessuna stella ne tocchi un'altra.`,
+        why: `${what} in ${Z.cellName(i, n)} ` + (because || `sembrava possibile, ma porta a un problema più avanti: alla fine una riga, una colonna o una regione resterebbe senza spazio per ${k === 1 ? 'la sua stella' : 'le sue stelle'}.`) +
+          ` L'ho tolt${g}, così riparti da una base sicura.` + (wrong.length > 1 ? ` Ci sono altre ${wrong.length - 1} caselle da ricontrollare.` : ''),
       };
     }
     const units = [];
@@ -209,7 +223,9 @@
       if (have < k && free.length && free.length === k - have) {
         free.forEach(i => { s.c[i] = 1; });
         return {
-          state: s, focus: free,
+          state: s, focus: free, area: U.cells,
+          tip: Z.say(`Guarda ${U.name}: quante stelle le mancano, e quanti posti liberi le restano?`, `Conta i posti liberi in ${U.name}: sono proprio quanti ne servono?`) +
+            ' Quando i posti liberi sono esattamente quante le stelle che mancano, la scelta è obbligata.',
           tag: 'place', why: `In ${U.name} servono ${star} e restano solo ${free.length === 1 ? 'un posto libero' : free.length + ' posti liberi'} (le altre caselle sono già escluse): ${free.length === 1 ? 'la stella va lì' : 'le stelle vanno lì'}.`,
         };
       }
@@ -222,7 +238,8 @@
       }
       if (around.length) {
         around.forEach(j => { s.c[j] = 2; });
-        return { state: s, focus: around, tag: 'touch', why: 'Le stelle non possono toccarsi, nemmeno in diagonale: tutte le caselle attorno a questa stella sono vuote. Le ho segnate con un puntino.' };
+        return { state: s, focus: around, area: [i], tag: 'touch',
+          tip: `Guarda la stella in ${Z.cellName(i, n)}: cosa puoi dire delle caselle che la circondano? Segnarle aiuta a vedere dove restano posti liberi.`, why: 'Le stelle non possono toccarsi, nemmeno in diagonale: tutte le caselle attorno a questa stella sono vuote. Le ho segnate con un puntino.' };
       }
     }
     for (const U of Z.shuffle(units.slice())) {
@@ -230,7 +247,8 @@
       if (have === k && free.length) {
         free.forEach(i => { s.c[i] = 2; });
         const name = U.name[0].toUpperCase() + U.name.slice(1);
-        return { state: s, focus: free, tag: 'full', why: `${name} ha già ${k === 1 ? 'la sua stella' : 'le sue ' + k + ' stelle'}: le altre caselle sono vuote. Le ho segnate con un puntino.` };
+        return { state: s, focus: free, area: U.cells, tag: 'full',
+          tip: `${name} ha già ${k === 1 ? 'la sua stella' : 'tutte le sue stelle'}: cosa vuol dire per le altre caselle? Segnarle con un puntino rende la griglia più chiara.`, why: `${name} ha già ${k === 1 ? 'la sua stella' : 'le sue ' + k + ' stelle'}: le altre caselle sono vuote. Le ho segnate con un puntino.` };
       }
     }
     /* 4) una stella qui toglierebbe spazio a una riga, colonna o regione */
@@ -260,7 +278,8 @@
         if (have + fit < k) {
           s.c[i] = 2;
           return {
-            state: s, focus: [i],
+            state: s, focus: [i], area: [i],
+            tip: `Prova a immaginare una stella in ${Z.cellName(i, n)}: le caselle attorno diventerebbero vuote. Cosa succederebbe a ${U.name}?`,
             tag: 'imagine', why: `Prova a immaginare una stella in ${Z.cellName(i, n)}: le caselle attorno diventerebbero vuote e ${U.name} non avrebbe più spazio per ${k === 1 ? 'la sua stella' : 'le sue ' + k + ' stelle'}. Quindi qui non può esserci una stella: ho messo un puntino.`,
           };
         }
@@ -271,7 +290,8 @@
     const i = Z.pick(miss);
     s.c[i] = 1;
     return {
-      state: s, focus: [i],
+      state: s, focus: [i], area: [],
+      tip: 'Non ci sono mosse dirette. Un trucco: cerca gruppi di regioni che stanno tutte dentro lo stesso numero di righe (o di colonne). Quelle righe sono riservate a loro, e nelle altre caselle di quelle righe non possono esserci stelle.',
       tag: 'advanced', why: `Non ci sono mosse dirette. Un trucco avanzato: se alcune regioni stanno tutte dentro lo stesso numero di righe (o colonne), quelle righe sono "riservate" a loro e nelle altre caselle di quelle righe non possono esserci stelle. Ecco una stella della soluzione, in ${Z.cellName(i, n)}.`,
     };
   }

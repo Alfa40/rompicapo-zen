@@ -51,7 +51,7 @@
         try {
           const r = await fetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: key(), owner: owner() || undefined, ...body }) });
           const d = await r.json().catch(() => ({}));
-          if (!r.ok) throw Object.assign(new Error(d.error || 'errore ' + r.status), { soft: r.status < 500 });
+          if (!r.ok) throw Object.assign(new Error(d.error || 'errore ' + r.status), { soft: r.status < 500, status: r.status });
           return d;
         } catch (e) {
           last = e;
@@ -90,6 +90,32 @@
   const ready = () => (list || []).filter(p => p.status === 'pronta' || p.status === 'pubblicare');
   /* quante aspettano qualcuno che le provi */
   const toTry = () => (list || []).filter(p => p.status === 'pronta').length;
+
+  /* ---------- valutazione dei suggerimenti (solo con il codice) ----------
+     Le valutazioni vanno al server; ogni settimana diventano da sole una proposta per Claude («Suggerimenti
+     migliorati»), che come le altre si pubblica solo col codice del proprietario. Senza rete restano in attesa. */
+  const canRate = () => !PREVIEW && !!key();
+  function rateHint(v) {
+    const q = Z.store.get('hintq', []);
+    q.push(Object.assign({ t: Date.now() }, v, { text: String(v.text || '').slice(0, 1200) }));
+    Z.store.set('hintq', q.slice(-50));
+    flushRates();
+  }
+  let flushing = false;
+  async function flushRates() {
+    if (flushing) return;
+    flushing = true;
+    try {
+      for (;;) {
+        const q = Z.store.get('hintq', []);
+        if (!q.length) break;
+        try { await post('/rz/hint', Object.assign({ player: player(), name: Z.store.get('nome', '') }, q[0])); }
+        catch (e) { if (!e.soft || e.status === 404) throw e; } /* rifiutata dal server: si scarta (404 = server non ancora aggiornato: si riprova) */
+        Z.store.set('hintq', Z.store.get('hintq', []).slice(1));
+      }
+    } catch (e) { /* riproverà alla prossima valutazione */ }
+    flushing = false;
+  }
 
   /* ---------- tasto nel menu ---------- */
   function homeButton() {
@@ -306,5 +332,5 @@
     return ok;
   })();
 
-  Z.Proposte = { homeButton, logoTap, open, ready: ready$ };
+  Z.Proposte = { homeButton, logoTap, open, ready: ready$, canRate, rateHint };
 })();

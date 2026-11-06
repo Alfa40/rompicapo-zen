@@ -232,7 +232,7 @@
   };
   function label(id, st) {
     if (st.s) return 'Tocco corretto subito: non conta';
-    let t = st.k === 'h' ? 'Suggerimento' : st.k === 'u' ? 'Annulla' : st.k === 'r' ? 'Ripristina' : st.k === 'x' ? 'Tentativo non riuscito' : STEP[st.e] || 'Mossa';
+    let t = st.k === 'h' ? 'Mossa del suggerimento' : st.k === 'n' ? 'Consiglio chiesto' : st.k === 'u' ? 'Annulla' : st.k === 'r' ? 'Ripristina' : st.k === 'x' ? 'Tentativo non riuscito' : STEP[st.e] || 'Mossa';
     const extra = [];
     if (st.p) extra.push('dopo una pausa di ' + sec(st.t * 100));
     if (st.r) extra.push('torni a una situazione già vista');

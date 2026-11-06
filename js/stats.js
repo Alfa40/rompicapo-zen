@@ -213,7 +213,7 @@
         }
       }
       if (MOVE_TAG[id] && kind === 'm' && a && b) st.g = MOVE_TAG[id](P, a, b) || undefined;
-      if (kind === 'h' && hintTag && hintTag !== 'wrong') st.g = hintTag;
+      if ((kind === 'h' || kind === 'n') && hintTag && hintTag !== 'wrong') st.g = hintTag;
       R.steps.push(st);
       prev = { st, a };
       if (!MOVE_TAG[id] && !st.g && isDoubt(st) && a) {
@@ -231,6 +231,7 @@
       undo: (a, b) => step('u', a, b),
       redo: (a, b) => step('r', a, b),
       miss: () => step('x', null, null),
+      nudge: tag => step('n', null, null, tag),
       get count() { return R.steps.length; },
       finish(done) {
         store.del(key);
@@ -251,7 +252,7 @@
       },
     };
   }
-  const isDoubt = st => !st.s && (st.k === 'h' || st.k === 'u' || st.k === 'x' || st.r || st.e === 'err' || st.e === 'away' || (st.p && st.e !== 'ok'));
+  const isDoubt = st => !st.s && (st.k === 'h' || st.k === 'n' || st.k === 'u' || st.k === 'x' || st.r || st.e === 'err' || st.e === 'away' || (st.p && st.e !== 'ok'));
 
   function summarize(id, R, done, opt) {
     const S = R.steps.filter(st => !st.s);
@@ -266,7 +267,7 @@
       dur: R.dur, first: R.first, n: mv.length, med,
       ok: c(st => st.k === 'm' && st.e === 'ok'), err: c(st => st.k === 'm' && st.e === 'err') + c(st => st.k === 'x'),
       away: c(st => st.k === 'm' && st.e === 'away'), fix: c(st => st.k === 'm' && st.e === 'fix'),
-      undo: c(st => st.k === 'u'), redo: c(st => st.k === 'r'), hint: c(st => st.k === 'h'), re: c(st => st.r),
+      undo: c(st => st.k === 'u'), redo: c(st => st.k === 'r'), hint: c(st => st.k === 'h'), nudge: c(st => st.k === 'n'), re: c(st => st.r),
       pz: c(st => st.p), pzOk: c(st => st.p && st.k === 'm' && st.e === 'ok'), slip: R.steps.length - S.length, tags,
     };
   }
@@ -363,7 +364,7 @@
     return o;
   }
   /* com'è andata una partita: 1 = senza nessun dubbio, 0 = solo dubbi */
-  const quality = g => Math.max(0, Math.min(1, 1 - (g.err + g.away + g.undo + g.re + g.hint * 1.5) / Math.max(1, g.n + g.hint)));
+  const quality = g => Math.max(0, Math.min(1, 1 - (g.err + g.away + g.undo + g.re + g.hint * 1.5 + (g.nudge || 0) * 0.5) / Math.max(1, g.n + g.hint)));
   function pathOf(id) {
     let p = store.get('path:' + id, null);
     if (!p) {

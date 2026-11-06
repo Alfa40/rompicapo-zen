@@ -229,6 +229,7 @@
     const n = P.n, peers = peersOf(n);
     return Z.latinHint(P, st, {
       n, peers, units: Z.lineUnits(n),
+      extraTip: 'Qui servono anche i segni &lt; &gt;: un numero più piccolo di un vicino non può essere il massimo, uno più grande non può essere 1, e i vincoli si passano da una casella all’altra.',
       levels: [v => ({ cand: Z.basicCand(v, n, peers) }), v => propagate(P, v)],
       naked(i, d, lv) {
         const present = [...new Set(peers(i).map(p => st.v[p]).filter(x => x))].sort();

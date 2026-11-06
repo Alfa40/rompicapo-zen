@@ -70,7 +70,11 @@
     if (k < path.length) {
       s.p = path.slice(0, k);
       const back = path.length - k;
-      return { state: s, focus: [sol[k - 1]], tag: 'wrong', why: `Da qui la strada non arriva all'uscita: più avanti finisce in un vicolo cieco. Sono tornato indietro di ${back} ${back === 1 ? 'passo' : 'passi'}, fino all'ultimo punto giusto.` };
+      return {
+        state: s, focus: [sol[k - 1]], area: [], tag: 'wrong',
+        tip: Z.say('Prova a seguire con gli occhi la strada che stai facendo: arriva davvero all\'uscita?', 'Fermati un momento e guarda avanti: questa strada porta all\'uscita o finisce contro un muro?'),
+        why: `Questa strada più avanti finisce in un vicolo cieco, quindi non porta all'uscita. Sono tornato indietro di ${back} ${back === 1 ? 'passo' : 'passi'}, fino all'ultimo bivio giusto: da lì prova un'altra direzione.`,
+      };
     }
     if (k >= sol.length) return null;
     /* si avanza fino al prossimo bivio (almeno qualche passo) */
@@ -84,7 +88,10 @@
     const why = forks || nbrs(P, sol[k - 1] ?? sol[0]).length > 2
       ? 'Al bivio la strada giusta è questa: le altre, seguendole fino in fondo, finiscono in vicoli ciechi. Un trucco: si può anche partire dall\'uscita e camminare al contrario, perché i vicoli ciechi si vedono meglio. '
       : 'Qui non ci sono scelte: il corridoio porta avanti da solo. ';
-    return { state: s, focus: s.p.slice(k), tag: forks || nbrs(P, sol[k - 1] ?? sol[0]).length > 2 ? 'fork' : 'corridor', why: why + (left ? `Mancano ${left} caselle all'uscita.` : 'Sei arrivato all\'uscita!') };
+    const tip = forks || nbrs(P, sol[k - 1] ?? sol[0]).length > 2
+      ? Z.say('Al prossimo bivio, prima di scegliere, segui ogni strada con gli occhi fino in fondo: quelle che finiscono contro un muro si scartano.', 'Un trucco per i bivi: guarda il labirinto partendo dall\'uscita e cammina al contrario, i vicoli ciechi si riconoscono meglio.')
+      : 'Qui il corridoio non ha scelte: puoi andare avanti tranquillo fino al prossimo bivio.';
+    return { state: s, focus: s.p.slice(k), area: [], tip, tag: forks || nbrs(P, sol[k - 1] ?? sol[0]).length > 2 ? 'fork' : 'corridor', why: why + (left ? `Mancano ${left} caselle all'uscita.` : 'Sei arrivato all\'uscita!') };
   }
 
   Z.register({

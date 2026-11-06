@@ -37,7 +37,11 @@ https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `mai
 - Tutto in italiano, testi brevi e gentili.
 - Stile calmo: animazioni morbide, niente audio, niente timer, punteggi o progressione **durante la partita**: tempi e
   crescita si vedono solo nelle pagine del Percorso.
-- Aiuti solo Annulla/Ripristina e Suggerimento, entrambi illimitati.
+- Aiuti solo Annulla/Ripristina e Suggerimento, entrambi illimitati. Il Suggerimento è a due passi: prima un consiglio
+  (`tip`, con `area` da far lampeggiare: dove guardare e che ragionamento usare, senza fare la mossa), poi la mossa con
+  `why` che spiega bene perché. Tono gentile e mai critico (anche sugli errori), frasi variate con `Z.say`.
+  Chi ha il codice degli amici o del proprietario può valutare ogni suggerimento (scelte veloci → server `/rz/hint`);
+  una volta a settimana il server ne fa una proposta «Valutazioni dei suggerimenti» per Claude.
 - Il tema visivo cambia a ogni partita; la partita in corso resta salvata.
 - Deve funzionare bene sul telefono (iPhone, anche aggiunto alla schermata Home) e col tema scuro.
 

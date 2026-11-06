@@ -111,7 +111,11 @@ CHI VUOL ESSER LIETO SIA`.split('\n').map(s => s.trim()).filter(Boolean);
     if (wrong.length) {
       const n = wrong[0];
       s.m[n] = dec[n];
-      return { state: s, focus: [+n], tag: 'wrong', why: `Il numero <b>${n}</b> non è la ${st.m[n]}: è la <b>${dec[n]}</b>. Controlla le parole dove compare.` };
+      return {
+        state: s, focus: [+n], area: [+n], tag: 'wrong',
+        tip: `C'è una lettera da ricontrollare: rileggi le parole dove compare il numero <b>${n}</b>. Formano parole italiane?`,
+        why: `Con la ${st.m[n]} al posto del numero <b>${n}</b> alcune parole non avrebbero senso: è la <b>${dec[n]}</b>. L'ho cambiata, così le parole tornano a leggersi.`,
+      };
     }
     const missing = Object.keys(dec).filter(n => st.m[n] !== dec[n]);
     if (!missing.length) return null;
@@ -141,8 +145,11 @@ CHI VUOL ESSER LIETO SIA`.split('\n').map(s => s.trim()).filter(Boolean);
       tag = 'freq';
       why = `Il numero <b>${P.code[L]}</b> è il più frequente nella frase (${cnt(L)} volte). In italiano le lettere più comuni sono le vocali, soprattutto E, A, I, O: qui è la <b>${L}</b>.`;
     }
+    const tip = tag === 'word' ? Z.say(`Guarda la parola «${shape(best.w)}»: le manca una sola lettera.`, `Nella parola «${shape(best.w)}» manca solo una lettera: quale parola italiana può essere?`)
+      : tag === 'guessword' ? `La parola «${shape(best.w)}» ha già molte lettere scoperte: prova a leggerla ad alta voce, che parola potrebbe essere?`
+      : 'Conta quante volte compare ogni numero: quello più frequente è quasi sempre una vocale, di solito E, A, I oppure O.';
     s.m[P.code[L]] = L;
-    return { state: s, focus: [P.code[L]], why, tag };
+    return { state: s, focus: [P.code[L]], area: tag === 'freq' ? [] : [P.code[L]], why, tag, tip };
   }
 
   Z.register({

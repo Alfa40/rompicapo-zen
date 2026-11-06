@@ -203,7 +203,10 @@
     else why += 'Ricorda che ogni casella va riempita: un percorso che isola una casella o un piccolo angolo è sempre sbagliato. ';
     if (wasThere) why += "Il tuo percorso per questo colore era diverso: l'ho sostituito. ";
     if (cut) why += 'Ho accorciato i percorsi che passavano di qui.';
-    return { state: s, focus: [c], why, tag };
+    const tip = tag === 'forced' ? Z.say(`Guarda i pallini del <b>${NAMES[c]}</b>: uno dei due ha una sola casella libera accanto.`, `Il <b>${NAMES[c]}</b> ha poca scelta: segui il pallino che ha una sola strada libera.`) + ' Quando un percorso ha una sola strada, puoi seguirlo passo passo.'
+      : tag === 'border' ? `Prova con il <b>${NAMES[c]}</b>: può correre lungo il bordo. I percorsi sul bordo lasciano spazio agli altri colori nel centro.`
+      : `Pensa al <b>${NAMES[c]}</b>: ricorda che ogni casella va riempita. Quale strada non lascia caselle o angoli isolati?`;
+    return { state: s, focus: [c], area: [c], why, tag, tip };
   }
 
   Z.register({

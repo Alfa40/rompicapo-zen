@@ -48,6 +48,8 @@
   /* Casualità */
   Z.ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
   Z.pick = a => a[Math.floor(Math.random() * a.length)];
+  /* una frase a caso tra quelle date (i suggerimenti non ripetono sempre le stesse parole) */
+  Z.say = (...a) => Z.pick(a);
   Z.shuffle = a => {
     for (let i = a.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));

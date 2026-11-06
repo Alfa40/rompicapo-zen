@@ -150,12 +150,18 @@
     const s = Z.clone(st), X = crossings(P), { E, n } = P;
     const over = s.b.map((v, i) => (v > P.sol[i] ? i : -1)).filter(i => i >= 0);
     if (over.length) {
-      const e = Z.pick(over);
+      const e = Z.pick(over), [a, b] = E[e];
+      const tot = i => E.reduce((t, [x, y], j) => t + (x === i || y === i ? s.b[j] : 0), 0);
+      const full = [a, b].find(i => tot(i) > n[i]);
       s.b[e] = P.sol[e];
       return {
-        state: s, focus: [E[e][0], E[e][1]],
-        tag: 'wrong', why: 'Il ponte tra queste due isole è di troppo: con lui il rompicapo non potrebbe più essere completato. ' + (P.sol[e] ? "L'ho ridotto." : "L'ho tolto.") +
-          (over.length > 1 ? ` Ci sono altri ${over.length - 1} ponti da rivedere.` : ''),
+        state: s, focus: [a, b], area: [a, b],
+        tag: 'wrong',
+        tip: Z.say('C\'è un ponte da ricontrollare vicino alle isole che si illuminano.', 'Ricontrolla i ponti attorno alle isole che si illuminano.') +
+          ' Conta i ponti di ogni isola: nessuna deve averne più del suo numero, e tutte devono poter restare collegate alle altre.',
+        why: (full != null ? `L'isola con il <b>${n[full]}</b> ha ${tot(full)} ponti, uno di troppo: quello tra queste due isole è da rivedere. `
+          : 'Il ponte tra queste due isole sembrava possibile, ma con lui alcune isole non potrebbero più completare i loro ponti. ') +
+          (P.sol[e] ? "L'ho ridotto." : "L'ho tolto.") + (over.length > 1 ? ` Ci sono altri ${over.length - 1} ponti da ricontrollare.` : ''),
       };
     }
     const sum = new Array(P.pts.length).fill(0);
@@ -191,7 +197,11 @@
         tag = 'count'; why = `L'isola con il <b>${n[i]}</b> ha ancora bisogno di ${c.need} ponti e ha ${c.open.length} direzioni disponibili, che insieme ne possono accogliere al massimo ${c.cap}. ` +
           `Anche riempiendo al massimo le altre direzioni ne mancherebbe${c.forced === 1 ? '' : 'ro'} ${c.forced}: quindi verso l'isola ${dirName(P, i, o)} ${c.forced === 1 ? 'serve almeno un ponte' : 'servono due ponti'}.`;
       }
-      return { state: s, focus: [i, o], why, tag };
+      const tip = c.open.length === 1
+        ? Z.say(`Guarda l'isola con il <b>${n[i]}</b>: in quante direzioni può ancora mandare ponti?`, `L'isola con il <b>${n[i]}</b> ha ancora bisogno di ponti. Verso quali isole può davvero andare?`) +
+          ' Un\'isola già completa, un ponte che si incrocerebbe o il bordo chiudono una direzione.'
+        : `Guarda l'isola con il <b>${n[i]}</b>: le servono ancora ${c.need} ponti. Quanti ne possono accogliere, al massimo, le direzioni ancora libere? Se anche riempiendole tutte ne mancano, qualche ponte è obbligato.`;
+      return { state: s, focus: [i, o], area: [i], why, tag, tip };
     }
     const miss = s.b.map((v, i) => (v < P.sol[i] ? i : -1)).filter(i => i >= 0);
     if (!miss.length) return null;
@@ -199,7 +209,8 @@
     s.b[e] = P.sol[e];
     for (const j of X[e]) s.b[j] = 0;
     return {
-      state: s, focus: [E[e][0], E[e][1]],
+      state: s, focus: [E[e][0], E[e][1]], area: [],
+      tip: 'Contando i ponti di ogni isola non c\'è niente di obbligato. Pensa alla rete: alla fine tutte le isole devono essere collegate. Quali ponti chiuderebbero un gruppo di isole separato dal resto?',
       tag: 'connect', why: "Contando i ponti di ogni isola non c'è una mossa obbligata. Serve un ragionamento sulla <b>connessione</b>: alcune scelte chiuderebbero un gruppo di isole separato dal resto, che non potrebbe più collegarsi. Questo ponte fa parte della soluzione.",
     };
   }

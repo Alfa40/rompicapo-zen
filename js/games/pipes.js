@@ -90,21 +90,21 @@
       if (v.length === 1 && v[0] === P.sol[i]) {
         setTo(i);
         const x = i % n, y = (i / n) | 0, corner = (x === 0 || x === n - 1) && (y === 0 || y === n - 1);
-        return { state: s, focus: [i], tag: 'edge', why: `Questo pezzo è ${corner ? 'in un angolo' : 'sul bordo'}: in qualsiasi altra rotazione un tubo punterebbe fuori dalla griglia e l'acqua uscirebbe. C'è un solo verso possibile.` };
+        return { state: s, focus: [i], area: [i], tag: 'edge', tip: `Guarda il pezzo che si illumina: è ${corner ? 'in un angolo' : 'sul bordo'}. In quali rotazioni un suo tubo punterebbe fuori dalla griglia?`, why: `Questo pezzo è ${corner ? 'in un angolo' : 'sul bordo'}: in qualsiasi altra rotazione un tubo punterebbe fuori dalla griglia e l'acqua uscirebbe. C'è un solo verso possibile.` };
       }
     }
     for (const i of Z.shuffle(wrongs.slice())) {
       const v = valid(i, true);
       if (v.length === 1 && v[0] === P.sol[i]) {
         setTo(i);
-        return { state: s, focus: [i], tag: 'near', why: "Guarda i bordi e i pezzi vicini già sistemati: dove un vicino ha un tubo rivolto verso questo pezzo, qui serve un tubo che lo incontri; dove non ce l'ha, qui non ci deve essere. Una sola rotazione rispetta tutto." };
+        return { state: s, focus: [i], area: [i], tag: 'near', tip: Z.say('Guarda il pezzo che si illumina e i suoi vicini già sistemati: da quali lati deve avere un tubo, e da quali no?', 'Il pezzo che si illumina è vincolato dai vicini: dove un vicino gli punta contro un tubo, qui ne serve uno che lo incontri.'), why: "Guarda i bordi e i pezzi vicini già sistemati: dove un vicino ha un tubo rivolto verso questo pezzo, qui serve un tubo che lo incontri; dove non ce l'ha, qui non ci deve essere. Una sola rotazione rispetta tutto." };
       }
     }
     const f = flow(P, s);
     const nearWet = wrongs.filter(i => { const x = i % n, y = (i / n) | 0; return D.some(([dx, dy]) => { const xx = x + dx, yy = y + dy; return xx >= 0 && yy >= 0 && xx < n && yy < n && f.wet[yy * n + xx]; }); });
     const i = Z.pick(nearWet.length ? nearWet : wrongs);
     setTo(i);
-    return { state: s, focus: [i], tag: 'flow', why: "Non c'è un pezzo obbligato dai soli vicini. Ricorda: la rete non può avere anelli chiusi e ogni bocciolo è la fine di un ramo. Questa rotazione porta l'acqua un passo più avanti senza chiudere anelli." };
+    return { state: s, focus: [i], area: [], tag: 'flow', tip: 'Nessun pezzo è obbligato dai soli vicini. Segui l\'acqua dalla fontana e ricorda: la rete non ha anelli chiusi e ogni bocciolo è la fine di un ramo.', why: "Non c'è un pezzo obbligato dai soli vicini. Ricorda: la rete non può avere anelli chiusi e ogni bocciolo è la fine di un ramo. Questa rotazione porta l'acqua un passo più avanti senza chiudere anelli." };
   }
 
   Z.register({
