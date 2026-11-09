@@ -8,7 +8,13 @@ https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `mai
 - JavaScript semplice, senza build né dipendenze: `index.html` carica gli script classici in ordine.
 - `js/core.js`: oggetto globale `window.Zen` (Z): registro dei giochi (`Z.register`), opzioni di difficoltà
   (`Z.defaultOpts`, `Z.getOpts`, `Z.setOpts`, `Z.optsSummary`), temi, `Z.store` (localStorage con prefisso), `Z.h` (DOM).
-- `js/numgrid.js`: griglie con numeri (Sudoku, Futoshiki, Calcudoku).
+- `js/numgrid.js`: griglie con numeri (Sudoku, Futoshiki, Calcudoku) e `Z.latinSolver`, il risolutore «umano» condiviso.
+- **Rompicapo logici, mai a tentativi**: Sudoku, Futoshiki, Calcudoku, Stelle, Ponti e Tubi hanno un risolutore che usa
+  solo ragionamenti da persona, a livelli (opzione «Ragionamenti» o «Tecniche»). Il generatore tiene solo rompicapo
+  che questo risolutore completa al livello scelto (così sono anche unici) e il Suggerimento spiega il passo che lui
+  trova. Nei Tubi grandi, dove il ragionamento si ferma, il generatore fissa qualche pezzo (`P.fixed`, non si gira).
+  Se aggiungi una regola o un gioco logico, segui lo stesso schema e controlla che il Suggerimento non debba mai
+  «svelare» una mossa.
 - Giochi di parole: `js/games/crossword.js` (Cruciverba e Incastro) contiene il dizionario con le definizioni
   (`Z.DICT`, usato anche da `anagram.js`); `wordsearch.js` ha i suoi temi e chiavi, `cipher.js` i proverbi.
   Solo lettere A–Z senza accenti. Tastiera di lettere comune: `Z.letterPad` in `core.js`.

@@ -457,6 +457,7 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spac
 .wet .pp-pipe { stroke: var(--water); stroke-opacity: 1; }
 .wet .pp-joint { fill: var(--water); fill-opacity: 1; }
 .wet .pp-bg { fill: hsl(196 70% 60% / 0.12); }
+.pp-fixed .pp-bg, .wet.pp-fixed .pp-bg { fill: var(--surface-2); stroke: var(--accent); stroke-width: 0.06; stroke-opacity: 0.55; }
 .pp-src { fill: var(--water); stroke: var(--surface); stroke-width: 0.05; }
 .pp-src-in { fill: var(--surface); opacity: 0.8; animation: breathe 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 .pp-bud { transform: scale(0.75); transition: transform 0.4s cubic-bezier(.2,.9,.3,1.5); pointer-events: none; }

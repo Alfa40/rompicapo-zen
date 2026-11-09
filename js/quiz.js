@@ -9,7 +9,7 @@
   const MIN = 8;
   const SLOW = 90000;
   /* ragionamenti che non si possono preparare come esercizio */
-  const SKIP = { blocks: ['reset'], maze: ['corridor'], crossword: ['only'], incastro: ['clue'],
+  const SKIP = { sudoku: ['guess'], futoshiki: ['guess'], calcudoku: ['guess'], blocks: ['reset'], maze: ['corridor'], crossword: ['only'], incastro: ['clue'],
     klondike: ['draw', 'shift'], freecell: ['cell', 'empty'], pyramid: ['draw'], tripeaks: ['draw'], golf: ['draw'] };
   const NEAR = { play: 'Prendi una carta vicina a quella girata.', plan: 'Prendi una carta vicina a quella girata: ce n’è più di una.' };
   const CARD_TASK = {
@@ -24,7 +24,7 @@
     blocks: 'Fai uscire un blocco.', lights: 'Tocca una lanterna che fa parte della soluzione.', pipes: 'Gira un pezzo nel verso giusto.',
     hashi: 'Metti un ponte sicuro.', stars: 'Fai una mossa sicura: una stella o un puntino.', cipher: 'Scopri una lettera sicura.',
   };
-  const task = (id, t) => (CARD_TASK[id] ? CARD_TASK[id][t] || 'Fai una mossa utile.' : id === 'stars' ? (t === 'place' || t === 'advanced' ? 'Metti una stella sicura.' : 'Metti un puntino sicuro: una casella dove la stella non può stare.')
+  const task = (id, t) => (CARD_TASK[id] ? CARD_TASK[id][t] || 'Fai una mossa utile.' : id === 'stars' ? (t === 'place' ? 'Metti una stella sicura.' : 'Metti un puntino sicuro: una casella dove la stella non può stare.')
     : TASK[id] || 'Trova una mossa sicura: un numero che sei certo vada lì.');
   const SKIP_IC = '<svg viewBox="0 0 24 24"><path d="M6 6l7 6-7 6M16 6v12"/></svg>';
 

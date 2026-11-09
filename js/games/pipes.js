@@ -9,8 +9,95 @@
   const D = [[0, -1, 1, 4], [1, 0, 2, 8], [0, 1, 4, 1], [-1, 0, 8, 2]];
   const rot = (m, r) => { r = ((r % 4) + 4) % 4; for (let k = 0; k < r; k++) m = ((m << 1) | (m >> 3)) & 15; return m; };
 
+  /* ---------- Risolutore «umano» ----------
+     Per ogni pezzo tiene i versi ancora possibili. Livello 1: bordi (un tubo non punta mai fuori) e vicini
+     (se un vicino ha di sicuro un tubo verso questo pezzo, qui ne serve uno che lo incontri; se di sicuro non ce l'ha,
+     qui non ci deve essere). Livello 2: la rete (un verso che chiuderebbe un anello, o un pezzo di rete staccato
+     da tutto il resto, è sbagliato). Se ogni pezzo resta con un solo verso, la soluzione è anche unica.
+     Restituisce per ogni pezzo il verso giusto, l'ordine in cui si capisce e il ragionamento usato.
+     Con fix = true (generatore), dove il ragionamento si ferma fissa un pezzo nel verso giusto (P.fixed) e riparte. */
+  function logic(P, fix) {
+    const n = P.n, N = n * n, fixed = new Set(P.fixed || []);
+    const dom = Z.range(N).map(i => (fixed.has(i) ? [P.sol[i]] : [...new Set([0, 1, 2, 3].map(r => rot(P.tiles[i], r)))]));
+    const nb = Z.range(N).map(i => D.map(([dx, dy]) => { const x = i % n + dx, y = ((i / n) | 0) + dy; return x >= 0 && y >= 0 && x < n && y < n ? y * n + x : -1; }));
+    const when = new Int32Array(N).fill(-1), how = new Array(N).fill(null);
+    let tick = 0, hard = 1;
+    const must = (j, o) => dom[j].every(m => m & o), never = (j, o) => dom[j].every(m => !(m & o));
+    const cut = (i, keep, tag, extra) => {
+      const nd = dom[i].filter(keep);
+      if (nd.length === dom[i].length || !nd.length) return false;
+      dom[i] = nd;
+      if (nd.length === 1 && when[i] < 0) { when[i] = tick++; how[i] = Object.assign({ tag }, extra); }
+      return true;
+    };
+    function basic() {
+      let ch = false;
+      for (let i = 0; i < N; i++) for (let d = 0; d < 4; d++) {
+        const b = D[d][2], o = D[d][3], j = nb[i][d];
+        if (j < 0) { if (cut(i, m => !(m & b), 'edge')) ch = true; continue; }
+        if (must(j, o) && cut(i, m => m & b, 'near')) ch = true;
+        else if (never(j, o) && cut(i, m => !(m & b), 'near')) ch = true;
+      }
+      return ch;
+    }
+    /* collegamenti sicuri (tubo da tutte e due le parti) raggruppati in pezzi di rete */
+    function network() {
+      const par = Z.range(N), f = a => (par[a] === a ? a : (par[a] = f(par[a])));
+      for (let i = 0; i < N; i++) for (const d of [1, 2]) {
+        const j = nb[i][d];
+        if (j >= 0 && must(i, D[d][2]) && must(j, D[d][3])) par[f(i)] = f(j);
+      }
+      const size = new Int32Array(N), loose = new Int32Array(N);
+      for (let i = 0; i < N; i++) { size[f(i)]++; if (dom[i].length > 1) loose[f(i)]++; }
+      for (let i = 0; i < N; i++) {
+        if (dom[i].length < 2) continue;
+        for (const m of dom[i]) {
+          const roots = [], ri = f(i);
+          let open = false, cyc = false;
+          for (let d = 0; d < 4; d++) {
+            if (!(m & D[d][2])) continue;
+            const j = nb[i][d];
+            if (j < 0) continue;
+            if (!must(j, D[d][3])) { open = true; continue; }
+            if (must(i, D[d][2])) continue; /* già collegati */
+            const r = f(j);
+            if (r === ri || roots.includes(r)) cyc = true;
+            roots.push(r);
+          }
+          let closed = false;
+          if (!cyc && !open) {
+            const all = [...new Set([ri, ...roots])];
+            const tot = all.reduce((t, r) => t + size[r], 0), lz = all.reduce((t, r) => t + loose[r], 0) - 1;
+            closed = lz === 0 && tot < N;
+          }
+          if ((cyc || closed) && cut(i, x => x !== m, 'flow', { cyc })) { hard = 2; return true; }
+        }
+      }
+      return false;
+    }
+    for (let k = 0; k < 8 * N; k++) {
+      if (basic()) continue;
+      if (network()) continue;
+      if (!fix) break;
+      /* fermo: si fissa un pezzo ancora incerto, preferendo quelli in mezzo ad altri incerti */
+      const open = Z.range(N).filter(i => dom[i].length > 1);
+      if (!open.length) break;
+      const score = i => nb[i].filter(j => j >= 0 && dom[j].length > 1).length + Math.random();
+      const i = open.reduce((a, b) => (score(b) > score(a) ? b : a));
+      dom[i] = [P.sol[i]];
+      fixed.add(i);
+    }
+    const ok = dom.every(x => x.length === 1);
+    return { ok, hard, when, how, mask: dom.map(x => x[0]), fixed: [...fixed].sort((a, b) => a - b) };
+  }
+  const logics = new WeakMap();
+  const logicOf = P => { let r = logics.get(P); if (!r) { r = logic(P); logics.set(P, r); } return r; };
+
+  /* Si tengono solo reti che si risolvono ragionando (bordi, vicini, niente anelli né pezzi di rete staccati):
+     così la soluzione è unica e il Suggerimento ha sempre un perché. */
   function generate(opt) {
-    const n = opt.size, N = n * n;
+    const n = opt.size, N = n * n, t0 = Z.now();
+    let last = null;
     for (;;) {
       const m = new Uint8Array(N), inT = new Uint8Array(N);
       const src = ((n / 2) | 0) * n + ((n / 2) | 0);
@@ -38,7 +125,13 @@
       const tiles = Array.from(m).map(v => rot(v, Z.ri(0, 3)));
       const off = tiles.filter((t, i) => t !== m[i]).length;
       if (off < N * 0.6) continue;
-      return { n, src, tiles, sol: Array.from(m) };
+      const P = { n, src, tiles, sol: Array.from(m) };
+      const L = logic(P, true);
+      if (!L.ok) continue;
+      /* pochi pezzi fissati: si prova qualche rete e si tiene quella che ne chiede meno */
+      if (L.fixed.length) { P.fixed = L.fixed; L.fixed.forEach(i => { P.tiles[i] = P.sol[i]; }); }
+      if (!last || L.fixed.length < last.fixed.length) last = Object.assign(P, { fixed: L.fixed });
+      if (!last.fixed.length || Z.now() - t0 > 300) return last;
     }
   }
 
@@ -85,26 +178,26 @@
     const setTo = i => { for (let k = 1; k <= 4; k++) if (rot(P.tiles[i], s.r[i] + k) === P.sol[i]) { s.r[i] += k; break; } };
     const wrongs = Z.range(N).filter(i => !ok(i));
     if (!wrongs.length) return null;
-    for (const i of Z.shuffle(wrongs.slice())) {
-      const v = valid(i, false);
-      if (v.length === 1 && v[0] === P.sol[i]) {
-        setTo(i);
-        const x = i % n, y = (i / n) | 0, corner = (x === 0 || x === n - 1) && (y === 0 || y === n - 1);
-        return { state: s, focus: [i], area: [i], tag: 'edge', tip: `Guarda il pezzo che si illumina: è ${corner ? 'in un angolo' : 'sul bordo'}. In quali rotazioni un suo tubo punterebbe fuori dalla griglia?`, why: `Questo pezzo è ${corner ? 'in un angolo' : 'sul bordo'}: in qualsiasi altra rotazione un tubo punterebbe fuori dalla griglia e l'acqua uscirebbe. C'è un solo verso possibile.` };
-      }
+    /* il pezzo sbagliato che il ragionamento sistema per primo */
+    const L = logicOf(P);
+    const first = L.ok ? wrongs.filter(i => L.when[i] >= 0).sort((a, b) => L.when[a] - L.when[b])[0] : undefined;
+    if (first != null) {
+      const i = first, h = L.how[i];
+      setTo(i);
+      const x = i % n, y = (i / n) | 0, corner = (x === 0 || x === n - 1) && (y === 0 || y === n - 1);
+      if (h.tag === 'edge') return { state: s, focus: [i], area: [i], tag: 'edge', tip: `Guarda il pezzo che si illumina: è ${corner ? 'in un angolo' : 'sul bordo'}. In quali rotazioni un suo tubo punterebbe fuori dalla griglia?`, why: `Questo pezzo è ${corner ? 'in un angolo' : 'sul bordo'}: in qualsiasi altra rotazione un tubo punterebbe fuori dalla griglia e l'acqua uscirebbe. C'è un solo verso possibile.` };
+      const around = Z.range(N).filter(j => Math.abs(j % n - x) + Math.abs(((j / n) | 0) - y) === 1);
+      if (h.tag === 'near') return { state: s, focus: [i], area: [i, ...around], tag: 'near', tip: Z.say('Guarda il pezzo che si illumina e i suoi vicini: da quali lati deve avere un tubo, e da quali no?', 'Il pezzo che si illumina è vincolato dai vicini: dove un vicino gli punta contro di sicuro un tubo, qui ne serve uno che lo incontri.'), why: 'Guarda i pezzi vicini che hanno già un solo verso possibile (e il bordo): dove un vicino ha di sicuro un tubo rivolto verso questo pezzo, qui serve un tubo che lo incontri; dove di sicuro non ce l’ha, qui non ci deve essere. Una sola rotazione rispetta tutto.' };
+      return { state: s, focus: [i], area: [i, ...around], tag: 'flow', tip: 'Ricorda la rete: non ha anelli chiusi e tutti i pezzi sono collegati alla fontana. In quali versi questo pezzo chiuderebbe un anello, o un pezzo di rete senza uscita?', why: h.cyc
+        ? 'Nell’altro verso questo pezzo si collegherebbe due volte allo stesso tratto di rete già sicuro, chiudendo un anello: la rete non ha anelli. Resta un solo verso.'
+        : 'Nell’altro verso questo pezzo chiuderebbe un pezzo di rete senza più uscite, staccato dal resto e dalla fontana. Resta un solo verso.' };
     }
-    for (const i of Z.shuffle(wrongs.slice())) {
-      const v = valid(i, true);
-      if (v.length === 1 && v[0] === P.sol[i]) {
-        setTo(i);
-        return { state: s, focus: [i], area: [i], tag: 'near', tip: Z.say('Guarda il pezzo che si illumina e i suoi vicini già sistemati: da quali lati deve avere un tubo, e da quali no?', 'Il pezzo che si illumina è vincolato dai vicini: dove un vicino gli punta contro un tubo, qui ne serve uno che lo incontri.'), why: "Guarda i bordi e i pezzi vicini già sistemati: dove un vicino ha un tubo rivolto verso questo pezzo, qui serve un tubo che lo incontri; dove non ce l'ha, qui non ci deve essere. Una sola rotazione rispetta tutto." };
-      }
-    }
+    /* reti di prima (salvate con le versioni vecchie) che la logica non risolve */
     const f = flow(P, s);
     const nearWet = wrongs.filter(i => { const x = i % n, y = (i / n) | 0; return D.some(([dx, dy]) => { const xx = x + dx, yy = y + dy; return xx >= 0 && yy >= 0 && xx < n && yy < n && f.wet[yy * n + xx]; }); });
     const i = Z.pick(nearWet.length ? nearWet : wrongs);
     setTo(i);
-    return { state: s, focus: [i], area: [], tag: 'flow', tip: 'Nessun pezzo è obbligato dai soli vicini. Segui l\'acqua dalla fontana e ricorda: la rete non ha anelli chiusi e ogni bocciolo è la fine di un ramo.', why: "Non c'è un pezzo obbligato dai soli vicini. Ricorda: la rete non può avere anelli chiusi e ogni bocciolo è la fine di un ramo. Questa rotazione porta l'acqua un passo più avanti senza chiudere anelli." };
+    return { state: s, focus: [i], area: [], tag: 'flow', tip: 'Nessun pezzo è obbligato dai soli vicini. Segui l’acqua dalla fontana e ricorda: la rete non ha anelli chiusi e ogni bocciolo è la fine di un ramo.', why: "Non c'è un pezzo obbligato dai soli vicini. Ricorda: la rete non può avere anelli chiusi e ogni bocciolo è la fine di un ramo. Questa rotazione porta l'acqua un passo più avanti senza chiudere anelli." };
   }
 
   Z.register({
@@ -121,6 +214,8 @@
         `<b>Nessun tubo resta aperto</b>: ogni apertura deve toccare un altro tubo, non il vuoto né il bordo.`,
         `I fiori sono i pezzi con una sola apertura: sono le punte della rete. La rete non forma mai anelli chiusi.`,
         `I pezzi dove arriva l'acqua si colorano e i fiori sbocciano.`,
+        `Nelle griglie grandi alcuni pezzi hanno il <b>bordo colorato</b>: sono già nel verso giusto e non si girano.`,
+        `C'è sempre una sola soluzione, e ci si arriva ragionando.`,
       ],
       play: [
         `Tocca un pezzo per girarlo di un quarto di giro. Con il mouse, il tasto destro lo gira all'indietro.`,
@@ -129,6 +224,7 @@
     }),
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="10" class="ic-s"/><path d="M8 26h18a6 6 0 0 1 6 6v24" class="ic-pipe"/><path d="M32 8v10" class="ic-pipe ic-pipe2"/><circle cx="32" cy="22" r="6" class="ic-a"/></svg>`,
     generate,
+    _logic: logic,
     init: P => ({ r: new Array(P.n * P.n).fill(0) }),
     progress(P, s) { let ok = 0; s.r.forEach((r, i) => { if (rot(P.tiles[i], r) === P.sol[i]) ok++; }); return { ok, bad: s.r.length - ok }; },
     solved(P, s) {
@@ -140,10 +236,11 @@
       const P = ctx.puzzle, n = P.n;
       let cur = null;
       const svg = Z.s('svg', { class: 'pipes', viewBox: `0 0 ${n} ${n}` });
-      const tiles = [];
+      const tiles = [], fixed = new Set(P.fixed || []);
       for (let i = 0; i < n * n; i++) {
         const x = i % n, y = (i / n) | 0, m = P.tiles[i];
-        const outer = Z.s('g', { transform: `translate(${x + 0.5} ${y + 0.5})`, class: 'pp-tile', 'data-i': i }, svg);
+        /* pezzi fissati dal generatore: già nel verso giusto, non si girano */
+        const outer = Z.s('g', { transform: `translate(${x + 0.5} ${y + 0.5})`, class: 'pp-tile' + (fixed.has(i) ? ' pp-fixed' : ''), 'data-i': i }, svg);
         Z.s('rect', { x: -0.46, y: -0.46, width: 0.92, height: 0.92, rx: 0.2, class: 'pp-bg' }, outer);
         const inner = Z.s('g', { class: 'pp-rot' }, outer);
         let d = '';
@@ -166,6 +263,7 @@
         outer.addEventListener('pointerdown', e => {
           e.preventDefault();
           if (!cur) return;
+          if (fixed.has(i)) { Z.flashEl(outer); return; }
           const s = Z.clone(cur);
           s.r[i] += e.button === 2 ? -1 : 1;
           ctx.commit(s);
@@ -179,7 +277,7 @@
           t.outer.classList.toggle('wet', !!f.wet[i]);
         });
       }
-      const turn = (i, k) => { if (!cur) return; const s = Z.clone(cur); s.r[i] += k; ctx.commit(s); };
+      const turn = (i, k) => { if (!cur || fixed.has(i)) return; const s = Z.clone(cur); s.r[i] += k; ctx.commit(s); };
       return {
         el: svg, aspect: 1,
         render(s) { cur = s; paint(); },

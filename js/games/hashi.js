@@ -124,17 +124,139 @@
     return nodes > nodeLimit ? -1 : cnt;
   }
 
+  /* ---------- Risolutore «umano» ----------
+     Per ogni collegamento tiene quanti ponti ci sono di sicuro (lo) e quanti ce ne possono stare al massimo (hi).
+     Livello 1: contare i ponti che servono a un'isola contro quelli che le direzioni libere possono accogliere;
+     livello 2: la rete deve restare unica (un ponte che chiuderebbe un gruppo staccato non si può fare;
+     l'unico collegamento tra due parti della rete è obbligato).
+     Se risolve tutto, la soluzione è anche unica. */
+  function makeSolver(P) {
+    const { E, n, pts } = P, X = crossings(P), m = E.length, I = pts.length;
+    const inc = pts.map(() => []);
+    E.forEach(([a, b], e) => { inc[a].push(e); inc[b].push(e); });
+    const other = (e, i) => (E[e][0] === i ? E[e][1] : E[e][0]);
+    const isl = i => `l'isola con ${Z.il(n[i])}`;
+    const many = v => (v === 1 ? 'un ponte' : v + ' ponti');
+    function state(b) {
+      const S = { lo: Array.from(b), hi: E.map(([a, c]) => Math.min(2, n[a], n[c])), log: [] };
+      S.sum = i => inc[i].reduce((t, e) => t + S.lo[e], 0);
+      return S;
+    }
+    /* limiti evidenti: incroci con ponti già fatti, isole già (quasi) complete */
+    function tighten(S) {
+      let ch = true;
+      while (ch) {
+        ch = false;
+        for (let e = 0; e < m; e++) {
+          let h = S.hi[e];
+          if (X[e].some(j => S.lo[j] > 0)) h = S.lo[e];
+          for (const i of E[e]) h = Math.min(h, S.lo[e] + n[i] - S.sum(i));
+          if (h < S.hi[e]) { S.hi[e] = Math.max(h, S.lo[e]); ch = true; }
+        }
+      }
+    }
+    /* livello 1: ponti obbligati contando */
+    function counting(S) {
+      let best = null;
+      for (let i = 0; i < I; i++) {
+        const need = n[i] - S.sum(i);
+        if (need <= 0) continue;
+        const open = inc[i].filter(e => S.hi[e] > S.lo[e]);
+        const cap = open.reduce((t, e) => t + S.hi[e] - S.lo[e], 0);
+        for (const e of open) {
+          const forced = need - (cap - (S.hi[e] - S.lo[e]));
+          if (forced > 0 && (!best || open.length < best.open.length)) best = { i, e, forced, need, open, cap };
+        }
+      }
+      return best;
+    }
+    /* livello 2: la rete */
+    function compOf(lo, from) {
+      const seen = new Set([from]), q = [from];
+      while (q.length) { const x = q.pop(); for (const e of inc[x]) if (lo[e] > 0) { const o = other(e, x); if (!seen.has(o)) { seen.add(o); q.push(o); } } }
+      return seen;
+    }
+    function network(S) {
+      /* un ponte in più che chiuderebbe un gruppo completo staccato dagli altri */
+      for (let e = 0; e < m; e++) {
+        if (S.hi[e] <= S.lo[e]) continue;
+        const lo = S.lo.slice();
+        lo[e]++;
+        const C = compOf(lo, E[e][0]);
+        if (C.size === I) continue;
+        if (![...C].every(i => inc[i].reduce((t, f) => t + lo[f], 0) === n[i])) continue;
+        const [a, b] = E[e];
+        S.hi[e] = S.lo[e];
+        return { kind: 'cut', e, txt: `${S.lo[e] ? 'Un secondo ponte' : 'Un ponte'} tra ${isl(a)} e ${isl(b)} completerebbe ${C.size === 2 ? 'tutte e due' : 'un gruppo di ' + C.size + ' isole'}, che resterebbe${C.size === 2 ? 'ro' : ''} staccat${C.size === 2 ? 'e' : 'o'} dalle altre: quindi lì ${S.lo[e] ? 'il ponte resta singolo' : 'non può esserci un ponte'}.`, src: [a, b] };
+      }
+      /* l'unico collegamento possibile tra due parti: il ponte serve per forza */
+      for (let e = 0; e < m; e++) {
+        if (S.lo[e] > 0 || S.hi[e] === 0) continue;
+        const hi = S.hi.slice();
+        hi[e] = 0;
+        const C = compOf(hi, E[e][0]);
+        if (C.size < I && !C.has(E[e][1])) return { kind: 'link', e, size: Math.min(C.size, I - C.size) };
+      }
+      return null;
+    }
+    const done = S => pts.every((_, i) => S.sum(i) === n[i]) && compOf(S.lo, 0).size === I;
+    /* un passo: eventuali limiti trovati (log), poi un ponte sicuro */
+    function next(b, L) {
+      const S = state(b);
+      for (let k = 0; k < 4 * m + 10; k++) {
+        tighten(S);
+        if (done(S)) return null;
+        const c = counting(S);
+        if (c) return Object.assign({ S, lv: 1 }, c);
+        if (L < 2) return null;
+        const r = network(S);
+        if (!r) return null;
+        if (r.kind === 'link') return { S, lv: 2, link: r, e: r.e, forced: 1 };
+        S.log.push(r);
+      }
+      return null;
+    }
+    return {
+      next,
+      explainCount(c, i, o) {
+        return c.open.length === 1
+          ? `${isl(i)[0].toUpperCase() + isl(i).slice(1)} ha ancora bisogno di ${many(c.need)}, ma può collegarsi solo all'isola ${dirName(P, i, o)}: le altre direzioni sono chiuse (isole già complete, ponti che si incrocerebbero o nessuna isola). ${c.need === 1 ? 'Il ponte va' : 'I ponti vanno'} lì.`
+          : `${isl(i)[0].toUpperCase() + isl(i).slice(1)} ha ancora bisogno di ${many(c.need)} e ha ${c.open.length} direzioni libere, che insieme ne possono accogliere al massimo ${c.cap}. Anche riempiendo al massimo le altre ne mancherebbe${c.forced === 1 ? '' : 'ro'} ${c.forced}: quindi verso l'isola ${dirName(P, i, o)} ${c.forced === 1 ? 'serve almeno un ponte' : 'servono due ponti'}.`;
+      },
+      solve(L) {
+        const S = state(new Array(m).fill(0));
+        let hard = 1;
+        for (let k = 0; k < 8 * m + 10; k++) {
+          tighten(S);
+          if (done(S)) return { ok: true, hard };
+          const c = counting(S);
+          if (c) { S.lo[c.e] += c.forced; continue; }
+          if (L < 2) break;
+          const r = network(S);
+          if (!r) break;
+          hard = 2;
+          if (r.kind === 'link') S.lo[r.e] = 1;
+        }
+        return { ok: false, hard };
+      },
+    };
+  }
+  const solvers = new WeakMap();
+  const solverOf = P => { let s = solvers.get(P); if (!s) { s = makeSolver(P); solvers.set(P, s); } return s; };
+
   function generate(opt) {
     const W = opt.size, H = opt.size;
     let target = Math.round(W * H * [0.3, 0.22, 0.3, 0.36][opt.isl]), last = null;
-    /* solo rompicapo con soluzione unica verificata; se non se ne trovano, qualche isola in meno */
+    /* se non se ne trovano, qualche isola in meno */
     for (let round = 0; round < 12; round++) {
       const t0 = Z.now();
       for (let t = 0; t < 600 && Z.now() - t0 < 1200; t++) {
         const P = build(W, H, target);
         if (!P) continue;
         last = P;
-        if (count(P, 2, 150000) === 1) return P;
+        /* si tengono solo rompicapo che si risolvono ragionando (contare i ponti e tenere unita la rete):
+           così la soluzione è anche unica, e non serve mai tirare a indovinare */
+        if (makeSolver(P).solve(2).ok) return P;
       }
       target = Math.round(target * 0.92);
     }
@@ -158,18 +280,18 @@
       s.b[e] = P.sol[e];
       let tip, why;
       if (full != null) {
-        tip = Z.say(`Guarda l'isola con il <b>${n[full]}</b> che si illumina: quanti ponti ha adesso?`, `Conta con calma i ponti dell'isola con il <b>${n[full]}</b>: sono quelli che il numero chiede?`) +
+        tip = Z.say(`Guarda l'isola con ${Z.il(n[full])} che si illumina: quanti ponti ha adesso?`, `Conta con calma i ponti dell'isola con ${Z.il(n[full])}: sono quelli che il numero chiede?`) +
           " Un'isola non può avere più ponti del suo numero: se sono troppi, uno va ridotto.";
-        why = `L'isola con il <b>${n[full]}</b> ha ${tot(full)} ponti, più del suo numero: il ponte tra queste due isole è di troppo. `;
+        why = `L'isola con ${Z.il(n[full])} ha ${tot(full)} ponti, più del suo numero: il ponte tra queste due isole è di troppo. `;
       } else if (cross != null) {
         const [c, d] = E[cross];
         tip = Z.say('Guarda i ponti vicino alle isole che si illuminano: ce ne sono due che si incrociano?', 'Segui con lo sguardo il ponte tra le isole che si illuminano: attraversa un altro ponte?') +
           " I ponti non possono mai incrociarsi: uno dei due deve lasciare spazio all'altro.";
-        why = `Questo ponte attraversa il collegamento tra le isole con il <b>${n[c]}</b> e il <b>${n[d]}</b>, che serve per completare i loro numeri. Due ponti non possono incrociarsi, quindi qui non può passare. `;
+        why = `Questo ponte attraversa il collegamento tra le isole con ${Z.il(n[c])} e il <b>${n[d]}</b>, che serve per completare i loro numeri. Due ponti non possono incrociarsi, quindi qui non può passare. `;
       } else {
         tip = Z.say('Guarda le due isole che si illuminano: il ponte tra loro è davvero necessario?', 'Per le isole che si illuminano, prova a contare dove possono ancora andare i ponti che mancano.') +
           ' Pensa a quanti ponti restano da mettere a ogni isola vicina e a quali isole possono ancora raggiungere.';
-        why = `Tra le isole con il <b>${n[a]}</b> e il <b>${n[b]}</b> ${cut ? 'non serve nessun ponte' : 'basta meno di così'}: con quello che c'è, le isole vicine non riuscirebbero più a completare i loro ponti, oppure un gruppo resterebbe staccato dal resto. `;
+        why = `Tra le isole con ${Z.il(n[a])} e il <b>${n[b]}</b> ${cut ? 'non serve nessun ponte' : 'basta meno di così'}: con quello che c'è, le isole vicine non riuscirebbero più a completare i loro ponti, oppure un gruppo resterebbe staccato dal resto. `;
       }
       return {
         state: s, focus: [a, b], area: [a, b],
@@ -177,45 +299,31 @@
         why: why + (cut ? "L'ho tolto." : "L'ho ridotto.") + (over.length > 1 ? (over.length === 2 ? ' C\'è ancora un altro ponte da ricontrollare.' : ` Ci sono ancora altri ${over.length - 1} ponti da ricontrollare.`) : ''),
       };
     }
-    const sum = new Array(P.pts.length).fill(0);
-    E.forEach(([a, b], i) => { sum[a] += s.b[i]; sum[b] += s.b[i]; });
-    const inc = P.pts.map(() => []);
-    E.forEach(([a, b], i) => { inc[a].push(i); inc[b].push(i); });
-    const room = (e, from) => {
-      const o = E[e][0] === from ? E[e][1] : E[e][0];
-      if (X[e].some(j => s.b[j] > 0)) return 0;
-      return Math.max(0, Math.min(2 - s.b[e], n[o] - sum[o]));
-    };
-    const cands = [];
-    P.pts.forEach((_, i) => {
-      const need = n[i] - sum[i];
-      if (need <= 0) return;
-      const open = inc[i].filter(e => room(e, i) > 0);
-      const cap = open.reduce((t, e) => t + room(e, i), 0);
-      for (const e of open) {
-        const forced = need - (cap - room(e, i));
-        if (forced > 0 && s.b[e] + forced <= P.sol[e]) cands.push({ i, e, forced, need, open, cap });
+    /* il prossimo ponte sicuro secondo il risolutore «umano» (controllato con la soluzione) */
+    const r = solverOf(P).next(s.b, 2);
+    if (r && s.b[r.e] + r.forced <= P.sol[r.e]) {
+      const e = r.e, [a, b] = E[e];
+      s.b[e] += r.forced;
+      if (r.link) {
+        return {
+          state: s, focus: [a, b], area: [a, b], tag: 'connect',
+          tip: 'Pensa alla rete: alla fine tutte le isole devono essere collegate. C’è un gruppo di isole che può raggiungere le altre in un solo modo?',
+          why: `Tra l'isola con ${Z.il(n[a])} e quella con ${Z.il(n[b])} passa l'unico collegamento possibile tra ${r.link.size === 1 ? 'un’isola' : 'un gruppo di ' + r.link.size + ' isole'} e il resto della rete: le altre strade sono chiuse. Quindi qui serve almeno un ponte.`,
+        };
       }
-    });
-    if (cands.length) {
-      cands.sort((p, q) => p.open.length - q.open.length);
-      const c = cands[0], { i, e } = c;
-      const o = E[e][0] === i ? E[e][1] : E[e][0];
-      s.b[e] += c.forced;
-      let why, tag;
-      if (c.open.length === 1) {
-        tag = 'only'; why = `L'isola con il <b>${n[i]}</b> ha ancora bisogno di ${c.need === 1 ? 'un ponte' : c.need + ' ponti'}, ma può collegarsi solo all'isola ${dirName(P, i, o)}: ` +
-          `le altre direzioni sono bloccate (isole già complete, ponti che si incrocerebbero o nessuna isola). ${c.need === 1 ? 'Il ponte va' : 'I ponti vanno'} lì.`;
-      } else {
-        tag = 'count'; why = `L'isola con il <b>${n[i]}</b> ha ancora bisogno di ${c.need} ponti e ha ${c.open.length} direzioni disponibili, che insieme ne possono accogliere al massimo ${c.cap}. ` +
-          `Anche riempiendo al massimo le altre direzioni ne mancherebbe${c.forced === 1 ? '' : 'ro'} ${c.forced}: quindi verso l'isola ${dirName(P, i, o)} ${c.forced === 1 ? 'serve almeno un ponte' : 'servono due ponti'}.`;
-      }
-      const tip = c.open.length === 1
-        ? Z.say(`Guarda l'isola con il <b>${n[i]}</b>: in quante direzioni può ancora mandare ponti?`, `L'isola con il <b>${n[i]}</b> ha ancora bisogno di ponti. Verso quali isole può davvero andare?`) +
-          ' Un\'isola già completa, un ponte che si incrocerebbe o il bordo chiudono una direzione.'
-        : `Guarda l'isola con il <b>${n[i]}</b>: le servono ancora ${c.need} ponti. Quanti ne possono accogliere, al massimo, le direzioni ancora libere? Se anche riempiendole tutte ne mancano, qualche ponte è obbligato.`;
-      return { state: s, focus: [i, o], area: [i], why, tag, tip };
+      const i = r.i, o = E[e][0] === i ? E[e][1] : E[e][0];
+      const rel = r.S.log.filter(x => E[x.e].includes(i) || r.open.some(f => E[f].includes(E[x.e][0]) && E[f].includes(E[x.e][1])));
+      const tag = rel.length ? 'connect' : r.open.length === 1 ? 'only' : 'count';
+      const why = (rel.length ? [...new Set(rel.map(x => x.txt))].slice(-2).join(' ') + ' ' : '') + solverOf(P).explainCount(r, i, o);
+      const tip = rel.length
+        ? 'Pensa alla rete: alla fine tutte le isole devono essere collegate. Un ponte che completerebbe un gruppo di isole staccato dagli altri non si può fare: questo cambia i conti di qualche isola?'
+        : r.open.length === 1
+          ? Z.say(`Guarda l'isola con ${Z.il(n[i])}: in quante direzioni può ancora mandare ponti?`, `L'isola con ${Z.il(n[i])} ha ancora bisogno di ponti. Verso quali isole può davvero andare?`) +
+            ' Un’isola già completa, un ponte che si incrocerebbe o il bordo chiudono una direzione.'
+          : `Guarda l'isola con ${Z.il(n[i])}: le servono ancora ${r.need} ponti. Quanti ne possono accogliere, al massimo, le direzioni ancora libere? Se anche riempiendole tutte ne mancano, qualche ponte è obbligato.`;
+      return { state: s, focus: [i, o], area: rel.length ? [...new Set([i, ...rel.flatMap(x => x.src)])] : [i], why, tag, tip };
     }
+    /* rompicapo di prima (salvati con le versioni vecchie) che la logica non risolve */
     const miss = s.b.map((v, i) => (v < P.sol[i] ? i : -1)).filter(i => i >= 0);
     if (!miss.length) return null;
     const e = Z.pick(miss);
@@ -252,7 +360,8 @@
     icon: `<svg viewBox="0 0 64 64"><path d="M18 20h28M18 24h28M18 22v26" class="ic-l2"/><circle cx="16" cy="22" r="9" class="ic-s ic-st"/><circle cx="48" cy="22" r="9" class="ic-s ic-st"/><circle cx="16" cy="48" r="9" class="ic-a"/><text x="16" y="26" class="ic-t">3</text><text x="48" y="26" class="ic-t">2</text></svg>`,
     generate,
     _count: count,
-    _check(P) { return count(P, 2, 400000) === 1 ? '' : 'NON unico'; },
+    /* risolto dalla sola logica = soluzione unica; altrimenti si conta con la ricerca */
+    _check(P) { return makeSolver(P).solve(2).ok || count(P, 2, 400000) === 1 ? '' : 'NON unico'; },
     init: P => ({ b: new Array(P.E.length).fill(0) }),
     solved(P, s) {
       const sum = new Array(P.pts.length).fill(0);

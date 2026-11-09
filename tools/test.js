@@ -1,6 +1,6 @@
 // Test generatori in Node: node tools/test.js [gioco] [livello] [n]
 global.window = global;
-require('../js/core.js');
+require('../js/core.js'); require('../js/numgrid.js');
 const fs=require('fs');
 for (const f of fs.readdirSync(__dirname+'/../js/games')) require('../js/games/'+f);
 const Z = window.Zen;

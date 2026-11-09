@@ -115,71 +115,103 @@
     { id: 'cage', label: 'Gabbie', def: 3, choices: [
       { v: 1, label: 'Piccole' }, { v: 2, label: 'Medie' }, { v: 3, label: 'Grandi' }, { v: 4, label: 'Enormi' },
     ] },
+    { id: 'tec', label: 'Ragionamenti', def: 2, choices: [
+      { v: 1, label: 'Semplici', help: 'Bastano righe, colonne e le combinazioni delle gabbie.' },
+      { v: 2, label: 'Medi', help: 'Servono anche le gabbie che «prenotano» un numero e le coppie.' },
+      { v: 3, label: 'Avanzati', help: 'Servono anche terne, X-wing e Y-wing. Mai tentativi a caso.' },
+    ] },
   ];
 
+  /* ---------- Risolutore «umano»: righe, colonne e gabbie ----------
+     Solo ragionamenti che una persona può fare, senza tentativi: se risolve la griglia, la soluzione è anche unica.
+     Livello 1: combinazioni delle gabbie; 2: una gabbia che «prenota» un numero in una riga o colonna, e le coppie;
+     3: terne, X-wing e Y-wing. */
+  const label = cg => cg.t + SYM[cg.op];
+  function makeSolver(n, cages) {
+    const N = n * n, units = Z.lineUnits(n);
+    const peers = Z.range(N).map(i => Z.range(N).filter(j => j !== i && (((j / n) | 0) === ((i / n) | 0) || j % n === i % n)));
+    const T = cages.map(cg => tuplesOf(n, cg));
+    const valid = (S, k) => T[k].filter(t => cages[k].cells.every((i, p) => S.mask(i) & (1 << t[p])));
+    const nums = m => Z.fmtList(Z.bits(m, n).map(d => '<b>' + d + '</b>'));
+    const combos = ok => {
+      const cb = [...new Set(ok.map(t => Z.fmtList(t.slice().sort((a, b) => a - b).map(d => '<b>' + d + '</b>'))))];
+      const list = cb.length > 3 ? cb.slice(0, 3) : cb;
+      return list.map(x => (cb.length > 1 ? '(' + x + ')' : x)).join(' oppure ') + (cb.length > 3 ? ' o poche altre' : '');
+    };
+    const cage = one => S => {
+      for (let k = 0; k < cages.length; k++) {
+        const cg = cages[k];
+        if ((cg.op === '') !== one || cg.cells.every(i => S.v[i])) continue;
+        const ok = valid(S, k);
+        if (!ok.length) continue;
+        const allow = cg.cells.map(() => 0);
+        for (const t of ok) t.forEach((d, p) => { allow[p] |= 1 << d; });
+        const out = cg.cells.map((i, p) => (S.v[i] ? 0 : S.cand[i] & ~allow[p]));
+        if (!out.some(Boolean)) continue;
+        const txt = cg.op === ''
+          ? `La gabbia di una sola casella in ${Z.cellName(cg.cells[0], n)} dice già il numero: ${Z.il(cg.t)}.`
+          : `La gabbia «<b>${label(cg)}</b>» (${cg.cells.length} caselle), con i numeri ancora possibili nelle sue caselle, si può completare solo con ${combos(ok)}.`;
+        cg.cells.forEach((i, p) => { if (out[p]) S.elim(i, out[p], txt, cg.cells); });
+        return true;
+      }
+      return false;
+    };
+    const line = S => {
+      for (let k = 0; k < cages.length; k++) {
+        const cg = cages[k];
+        if (cg.cells.length < 2 || cg.cells.every(i => S.v[i])) continue;
+        const ok = valid(S, k), inCage = new Set(cg.cells);
+        if (!ok.length) continue;
+        for (let d = 1; d <= n; d++) for (const U of units) {
+          if (!cg.cells.some(i => U.cells.includes(i))) continue;
+          if (!ok.every(t => cg.cells.some((i, p) => t[p] === d && U.cells.includes(i)))) continue;
+          const out = U.cells.filter(i => !inCage.has(i) && !S.v[i] && (S.cand[i] & (1 << d)));
+          if (!out.length) continue;
+          const txt = `Tutte le combinazioni possibili della gabbia «<b>${label(cg)}</b>» mettono ${Z.il(d)} ${U.where.replace(/^N/, 'n')}: quindi nel resto ${U.where.replace(/^Nella /, 'della ')} ${Z.il(d)} non può stare.`;
+          for (const i of out) S.elim(i, 1 << d, txt, cg.cells);
+          return true;
+        }
+      }
+      return false;
+    };
+    return Z.latinSolver({ n, units, peers, rules: [{ id: 'one', lv: 1, fam: 'one', run: cage(true) }, { id: 'cage', lv: 1, fam: 'cage', run: cage(false) }, { id: 'cageLine', lv: 2, fam: 'cage', run: line }] });
+  }
+  const solvers = new WeakMap();
+  const solverOf = P => { let s = solvers.get(P); if (!s) { s = makeSolver(P.n, P.cages); solvers.set(P, s); } return s; };
+
+  /* Gabbie a caso finché il rompicapo si risolve ragionando al livello scelto (quindi ha una sola soluzione);
+     tra i primi trovati si preferisce quello che usa davvero il livello. Se tarda, gabbie un po' più piccole. */
   function generate(opt) {
-    const n = opt.size;
-    let w = CFG[opt.cage].slice(), sol = Z.randomLatin(n), last = null, step = 0;
-    const t0 = Z.now();
-    /* solo rompicapo con soluzione unica verificata; se tarda, gabbie un po' più piccole */
-    for (let t = 0; t < 20000; t++) {
+    const n = opt.size, L = Math.min(3, Math.max(1, opt.tec || 2)), t0 = Z.now(), empty = new Array(n * n).fill(0);
+    let w = CFG[opt.cage].slice(), sol = Z.randomLatin(n), best = null, step = 0;
+    for (let t = 0; t < 100000; t++) {
       if (t % 25 === 24) sol = Z.randomLatin(n);
       const el = Z.now() - t0;
-      if (el > 2500 * (step + 1)) {
+      if (el > 1500 * (step + 1)) {
         step++;
         w = [w[0] + 0.02, w[1] + 0.04, Math.max(0, w[2] - 0.03), Math.max(0, w[3] - 0.03)];
       }
       const c = makeCages(n, sol, w);
-      last = { n, sol, cages: c.cages, id: c.id };
-      if (count(n, c.cages, 2, 40000) === 1) return last;
+      const P = { n, sol, cages: c.cages, id: c.id };
+      const r = makeSolver(n, c.cages).solve(empty, L);
+      if (!r.ok) continue;
+      if (!best || r.hard > best.hard) best = { P, hard: r.hard };
+      if (best.hard === L || Z.now() - t0 > 2500) break;
     }
-    return last;
+    return best && best.P;
   }
 
   /* ---------- Suggerimenti spiegati ---------- */
-  const peersOf = n => i => Z.range(n * n).filter(j => j !== i && (((j / n) | 0) === ((i / n) | 0) || j % n === i % n));
-  const label = cg => cg.t + SYM[cg.op];
-  function cageCand(P, v) {
-    const n = P.n, N = n * n, cand = new Int32Array(N), combos = [];
-    P.cages.forEach((cg, k) => {
-      const inCage = new Set(cg.cells);
-      const ok = tuplesOf(n, cg).filter(t => cg.cells.every((i, p) => {
-        if (v[i]) return v[i] === t[p];
-        const r = (i / n) | 0, c = i % n;
-        for (let x = 0; x < n; x++) {
-          const a = r * n + x, b = x * n + c;
-          if (!inCage.has(a) && v[a] === t[p]) return false;
-          if (!inCage.has(b) && v[b] === t[p]) return false;
-        }
-        return true;
-      }));
-      combos[k] = [...new Set(ok.map(t => t.slice().sort((a, b) => a - b).join(', ')))];
-      ok.forEach(t => cg.cells.forEach((i, p) => { if (!v[i]) cand[i] |= 1 << t[p]; }));
-    });
-    return { cand, combos };
-  }
   function hint(P, st) {
-    const n = P.n, peers = peersOf(n);
+    const n = P.n, peers = i => Z.range(n * n).filter(j => j !== i && (((j / n) | 0) === ((i / n) | 0) || j % n === i % n));
     return Z.latinHint(P, st, {
-      n, peers, units: Z.lineUnits(n),
-      extraTip: 'Qui servono le gabbie: per ogni gabbia chiediti quali combinazioni di numeri danno il risultato, tenendo conto di quelli già presenti in riga e colonna.',
-      levels: [v => ({ cand: Z.basicCand(v, n, peers) }), v => cageCand(P, v)],
-      naked(i, d, lv, info) {
-        if (lv === 0) {
-          const present = [...new Set(peers(i).map(p => st.v[p]).filter(x => x))].sort();
-          return `In ${Z.cellName(i, n)} la riga e la colonna contengono già ${Z.fmtList(present)}: l'unico numero possibile è il <b>${d}</b>.`;
-        }
-        const k = P.id[i], cg = P.cages[k];
-        if (cg.op === '') return `La gabbia di ${Z.cellName(i, n)} ha una sola casella: il numero indicato, <b>${d}</b>, è direttamente la risposta.`;
-        const cb = info.combos[k];
-        const list = cb.length > 4 ? cb.slice(0, 4).map(x => '(' + x + ')').join(' oppure ') + ' …' : cb.map(x => '(' + x + ')').join(' oppure ');
-        return `La gabbia «<b>${label(cg)}</b>» (${cg.cells.length} caselle), tenendo conto dei numeri già presenti nelle righe e colonne, può essere completata solo con ${list}. ` +
-          `Combinando queste possibilità con la riga e la colonna di ${Z.cellName(i, n)}, lì può andare solo il <b>${d}</b>.`;
+      n, peers, units: Z.lineUnits(n), solver: solverOf(P),
+      fam: { one: 'Comincia dalle gabbie di una sola casella: il numero scritto nell’angolo è già la risposta.', cage: 'Guarda le gabbie: quali numeri, messi insieme con quell’operazione, danno il risultato? Togli le combinazioni che si scontrano con la riga o la colonna.' },
+      naked(i, d) {
+        const present = [...new Set(peers(i).map(p => st.v[p]).filter(x => x))].sort((a, b) => a - b);
+        return `In ${Z.cellName(i, n)} la riga e la colonna contengono già ${Z.fmtList(present)}: l'unico numero possibile è ${Z.il(d)}.`;
       },
-      hidden(U, d, i, lv) {
-        if (lv === 0) return `${U.where} il <b>${d}</b> manca ancora e può andare solo in ${Z.cellName(i, n)}: nelle altre caselle libere c'è già un ${d} nella stessa colonna o riga.`;
-        return `${U.where} il <b>${d}</b> manca ancora. Nelle altre caselle libere le gabbie non lo permettono (nessuna combinazione valida della loro gabbia lo contiene in quella posizione): l'unico posto è ${Z.cellName(i, n)}.`;
-      },
+      hidden: (U, d, i) => `${U.where} manca ancora ${Z.il(d)} e può andare solo in ${Z.cellName(i, n)}: nelle altre caselle libere c'è già un ${d} nella stessa colonna o riga.`,
     });
   }
 
@@ -206,7 +238,8 @@
     }),
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="10" class="ic-s"/><path d="M8 32h24v24M32 8v24h24" class="ic-l2"/><text x="20" y="25" class="ic-t ic-sm">6×</text><text x="44" y="49" class="ic-t ic-sm ic-a-t">7+</text></svg>`,
     generate,
-    _check(P) { return count(P.n, P.cages, 2, Infinity) === 1 ? '' : 'NON unico'; },
+    /* risolto dalla sola logica = soluzione unica; altrimenti si conta con la ricerca */
+    _check(P) { return solverOf(P).solve(new Array(P.n * P.n).fill(0)).ok || count(P.n, P.cages, 2, Infinity) === 1 ? '' : 'NON unico'; },
     init: P => ({ v: new Array(P.n * P.n).fill(0), m: new Array(P.n * P.n).fill(0) }),
     solved: (P, s) => s.v.every((x, i) => x === P.sol[i]),
     hint,

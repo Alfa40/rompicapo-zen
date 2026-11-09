@@ -8,6 +8,11 @@
       { v: 1, label: 'Qualcuno in più', help: 'Alcuni numeri e segni in più per partire.' },
       { v: 2, label: 'Il minimo', help: 'Solo quelli indispensabili per una soluzione unica.' },
     ] },
+    { id: 'tec', label: 'Ragionamenti', def: 2, choices: [
+      { v: 1, label: 'Semplici', help: 'Bastano righe, colonne e segni.' },
+      { v: 2, label: 'Medi', help: 'Servono anche le coppie di candidati.' },
+      { v: 3, label: 'Avanzati', help: 'Servono anche terne, X-wing e Y-wing. Mai tentativi a caso.' },
+    ] },
   ];
 
   /* Risolutore con propagazione (per l'8×8): righe/colonne, singoli nascosti e catene di segni */
@@ -107,12 +112,59 @@
     return { count: nodes > nodeLimit ? -1 : count, sols };
   }
 
-  const LIM = 6000, LIM_HARD = 3000;
+  /* ---------- Risolutore «umano»: righe, colonne e segni < > ----------
+     Solo ragionamenti che una persona può fare, senza tentativi: se risolve la griglia, la soluzione è anche unica. */
+  const hi = m => 31 - Math.clz32(m), lo = m => 31 - Math.clz32(m & -m);
+  function makeSolver(n, getIneq) {
+    const N = n * n;
+    const peers = Z.range(N).map(i => Z.range(N).filter(j => j !== i && (((j / n) | 0) === ((i / n) | 0) || j % n === i % n)));
+    const side = (a, b) => { const d = b - a; return d === 1 ? 'a destra' : d === -1 ? 'a sinistra' : d === n ? 'sotto' : 'sopra'; };
+    const nums = m => Z.fmtList(Z.bits(m, n).map(d => '<b>' + d + '</b>'));
+    const no = m => (Z.popcount(m) === 1 ? `non può stare ${Z.il(hi(m))}` : `non possono stare ${nums(m)}`);
+    const sign = S => {
+      for (const [a, b] of getIneq()) {
+        const ma = S.mask(a), mb = S.mask(b);
+        if (!ma || !mb) continue;
+        if (!S.v[a]) {
+          const out = S.cand[a] & ~((1 << hi(mb)) - 1);
+          if (out) {
+            S.elim(a, out, `La casella in ${Z.cellName(a, n)} è minore di quella ${side(a, b)}, che ${S.v[b] ? 'vale ' + S.v[b] : 'al massimo può valere ' + hi(mb)}: quindi lì ${no(out)}.`, [b]);
+            return true;
+          }
+        }
+        if (!S.v[b]) {
+          const out = S.cand[b] & ((1 << (lo(ma) + 1)) - 1);
+          if (out) {
+            S.elim(b, out, `La casella in ${Z.cellName(b, n)} è maggiore di quella ${side(b, a)}, che ${S.v[a] ? 'vale ' + S.v[a] : 'vale almeno ' + lo(ma)}: quindi lì ${no(out)}.`, [a]);
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+    return Z.latinSolver({ n, units: Z.lineUnits(n), peers, rules: [{ id: 'sign', lv: 1, fam: 'sign', run: sign }] });
+  }
+  const solvers = new WeakMap();
+  const solverOf = P => { let s = solvers.get(P); if (!s) { s = makeSolver(P.n, () => P.ineq); solvers.set(P, s); } return s; };
+
+  /* Livelli: 1 righe, colonne e segni; 2 anche coppie; 3 anche terne, X-wing e Y-wing.
+     Si parte dalla griglia piena con tutti i segni e si tolgono numeri e segni in ordine misto, finché il
+     rompicapo resta risolvibile ragionando a quel livello. Tra alcuni tentativi si tiene quello che usa davvero
+     il livello scelto. */
   function generate(opt) {
-    const P = generateMin(opt.size);
+    const n = opt.size, N = n * n, L = Math.min(3, Math.max(1, opt.tec || 2)), t0 = Z.now();
+    let best = null;
+    for (let t = 0; t < 30; t++) {
+      const P = carve(n, L);
+      const r = solverOf(P).solve(P.givens, L);
+      const score = (r.hard === L ? 1e4 : r.hard * 1e3) - P.givens.filter(Boolean).length - P.ineq.length / 2 + Math.random();
+      if (!best || score > best.score) best = { P, score, hard: r.hard };
+      if (best.hard === L || Z.now() - t0 > (n >= 10 ? 2500 : 1500)) break;
+    }
+    const P = best.P;
     if (opt.aid === 1) {
       /* un aiuto in più: alcuni numeri e segni rimessi */
-      const n = P.n, N = n * n, { sol, givens } = P;
+      const { sol, givens } = P;
       Z.shuffle(Z.range(N).filter(i => !givens[i])).slice(0, n - 2).forEach(i => { givens[i] = sol[i]; });
       const all = [];
       for (let i = 0; i < N; i++) {
@@ -125,125 +177,40 @@
     }
     return P;
   }
-
-  function generateMin(n) {
-    const N = n * n;
-    const sol = Z.randomLatin(n);
-    const allIneq = [];
+  function carve(n, L) {
+    const N = n * n, sol = Z.randomLatin(n), all = [];
     for (let i = 0; i < N; i++) {
       const r = (i / n) | 0, c = i % n;
-      for (const j of [c < n - 1 ? i + 1 : -1, r < n - 1 ? i + n : -1]) {
-        if (j < 0) continue;
-        allIneq.push(sol[i] < sol[j] ? [i, j] : [j, i]);
-      }
+      if (c < n - 1) all.push(sol[i] < sol[i + 1] ? [i, i + 1] : [i + 1, i]);
+      if (r < n - 1) all.push(sol[i] < sol[i + n] ? [i, i + n] : [i + n, i]);
     }
-    let givens = new Array(N).fill(0), ineq = allIneq.slice();
-    /* Assicura l'unicità di partenza */
-    for (;;) {
-      const r = n >= 8 ? solverProp(n, givens, ineq, 2, 20000) : solver(n, givens, ineq, 2);
-      if (r.count === 1) break;
-      if (r.count < 0) {
-        /* ricerca troppo lunga: un numero in più a caso e si riprova */
-        const free = Z.range(N).filter(i => !givens[i]);
-        const i = Z.pick(free);
-        givens[i] = sol[i];
-        continue;
-      }
-      const alt = r.sols.find(s => s.some((x, i) => x !== sol[i]));
-      const diffs = Z.range(N).filter(i => alt[i] !== sol[i]);
-      const i = Z.pick(diffs);
-      givens[i] = sol[i];
-    }
-    const t0 = Z.now(), late = () => Z.now() - t0 > (n >= 11 ? 4000 : 3000); /* tetto di tempo: si smette di togliere indizi */
-    if (n >= 8) {
-      /* 8×8: numeri e segni tolti in ordine misto, così restano pochi di entrambi */
-      const items = Z.shuffle([
-        ...Z.range(N).filter(i => givens[i]).map(i => ({ g: i })),
-        ...allIneq.map(e => ({ e })),
-      ]);
-      for (const it of items) {
-        if (late()) break;
-        if (it.g != null) {
-          const k = givens[it.g];
-          givens[it.g] = 0;
-          if (solverProp(n, givens, ineq, 2, LIM_HARD).count !== 1) givens[it.g] = k;
-        } else {
-          const without = ineq.filter(x => x !== it.e);
-          if (solverProp(n, givens, without, 2, LIM_HARD).count === 1) ineq = without;
-        }
-      }
-      return { n, sol, givens, ineq };
-    }
-    /* Togli prima i numeri, poi i segni, finché resta unica */
-    const gIdx = Z.shuffle(Z.range(N).filter(i => givens[i]));
-    for (const i of gIdx) {
-      if (late()) break;
-      const k = givens[i];
+    const givens = sol.slice(), on = all.map(() => true);
+    let ineq = all.slice();
+    const S = makeSolver(n, () => ineq);
+    /* prima i numeri (ne restano pochi), poi i segni */
+    for (const i of Z.shuffle(Z.range(N))) {
       givens[i] = 0;
-      if (solver(n, givens, ineq, 2, LIM).count !== 1) givens[i] = k;
+      if (!S.solve(givens, L).ok) givens[i] = sol[i];
     }
-    for (const e of Z.shuffle(allIneq.slice())) {
-      if (late()) break;
-      const without = ineq.filter(x => x !== e);
-      if (solver(n, givens, without, 2, LIM).count === 1) ineq = without;
+    for (const k of Z.shuffle(Z.range(all.length))) {
+      on[k] = false;
+      ineq = all.filter((_, j) => on[j]);
+      if (!S.solve(givens, L).ok) { on[k] = true; ineq = all.filter((_, j) => on[j]); }
     }
     return { n, sol, givens, ineq };
   }
 
   /* ---------- Suggerimenti spiegati ---------- */
-  const peersOf = n => i => Z.range(n * n).filter(j => j !== i && (((j / n) | 0) === ((i / n) | 0) || j % n === i % n));
-  function propagate(P, v) {
-    const n = P.n, N = n * n, peers = peersOf(n);
-    const cand = Z.basicCand(v, n, peers);
-    for (let i = 0; i < N; i++) if (v[i]) cand[i] = 1 << v[i];
-    const hi = m => 31 - Math.clz32(m), lo = m => 31 - Math.clz32(m & -m);
-    for (let it = 0, ch = true; ch && it < 200; it++) {
-      ch = false;
-      for (const [a, b] of P.ineq) {
-        if (!cand[a] || !cand[b]) continue;
-        const na = cand[a] & ((1 << hi(cand[b])) - 1);
-        if (na !== cand[a]) { cand[a] = na; ch = true; }
-        if (!cand[a]) continue;
-        const nb = cand[b] & ~((1 << (lo(cand[a]) + 1)) - 1);
-        if (nb !== cand[b]) { cand[b] = nb; ch = true; }
-      }
-      for (let i = 0; i < N; i++) {
-        const m = cand[i];
-        if (v[i] || !m || (m & (m - 1))) continue;
-        for (const p of peers(i)) if (!v[p] && (cand[p] & m) && cand[p] !== m) { cand[p] &= ~m; ch = true; }
-      }
-    }
-    for (let i = 0; i < N; i++) if (v[i]) cand[i] = 0;
-    return { cand };
-  }
-  function relations(P, i) {
-    const n = P.n, out = [];
-    const side = (a, b) => { const d = b - a; return d === 1 ? 'a destra' : d === -1 ? 'a sinistra' : d === n ? 'sotto' : 'sopra'; };
-    for (const [a, b] of P.ineq) {
-      if (a === i) out.push(`minore della casella ${side(i, b)}`);
-      if (b === i) out.push(`maggiore della casella ${side(i, a)}`);
-    }
-    return out;
-  }
   function hint(P, st) {
-    const n = P.n, peers = peersOf(n);
+    const n = P.n, peers = i => Z.range(n * n).filter(j => j !== i && (((j / n) | 0) === ((i / n) | 0) || j % n === i % n));
     return Z.latinHint(P, st, {
-      n, peers, units: Z.lineUnits(n),
-      extraTip: 'Qui servono anche i segni &lt; &gt;: un numero più piccolo di un vicino non può essere il massimo, uno più grande non può essere 1, e i vincoli si passano da una casella all’altra.',
-      levels: [v => ({ cand: Z.basicCand(v, n, peers) }), v => propagate(P, v)],
-      naked(i, d, lv) {
-        const present = [...new Set(peers(i).map(p => st.v[p]).filter(x => x))].sort();
-        if (lv === 0) return `In ${Z.cellName(i, n)} la riga e la colonna contengono già ${Z.fmtList(present)}: l'unico numero possibile è il <b>${d}</b>.`;
-        const base = Z.bits(Z.basicCand(st.v, n, peers)[i], n);
-        const rel = relations(P, i);
-        return `In ${Z.cellName(i, n)} riga e colonna lasciano ${Z.fmtList(base)}. ` +
-          (rel.length ? `Questa casella è ${Z.fmtList(rel)}: ` : 'Seguendo i segni &lt; &gt; delle caselle vicine (che si influenzano a catena) ') +
-          `questi vincoli, propagati anche alle caselle vicine, escludono gli altri valori. Resta solo il <b>${d}</b>.`;
+      n, peers, units: Z.lineUnits(n), solver: solverOf(P),
+      fam: { sign: 'Guarda i segni &lt; &gt; vicino alle caselle libere: un numero più piccolo di un vicino non può arrivare al massimo, uno più grande non può essere 1. E i limiti passano da una casella all’altra.' },
+      naked(i, d) {
+        const present = [...new Set(peers(i).map(p => st.v[p]).filter(x => x))].sort((a, b) => a - b);
+        return `In ${Z.cellName(i, n)} la riga e la colonna contengono già ${Z.fmtList(present)}: l'unico numero possibile è ${Z.il(d)}.`;
       },
-      hidden(U, d, i, lv) {
-        if (lv === 0) return `${U.where} il <b>${d}</b> manca ancora e può andare solo in ${Z.cellName(i, n)}: nelle altre caselle libere c'è già un ${d} nella stessa colonna o riga.`;
-        return `${U.where} il <b>${d}</b> manca ancora. Considerando colonne, righe e i segni &lt; &gt; (un numero più piccolo di un vicino non può essere ${n}, uno più grande non può essere 1, e così via), l'unico posto possibile è ${Z.cellName(i, n)}.`;
-      },
+      hidden: (U, d, i) => `${U.where} manca ancora ${Z.il(d)} e può andare solo in ${Z.cellName(i, n)}: nelle altre caselle libere c'è già un ${d} nella stessa colonna o riga.`,
     });
   }
 
@@ -268,7 +235,8 @@
     }),
     icon: `<svg viewBox="0 0 64 64"><rect x="6" y="20" width="22" height="22" rx="6" class="ic-s ic-st"/><rect x="36" y="20" width="22" height="22" rx="6" class="ic-a"/><path d="M35 26l-5 5 5 5" class="ic-l2" transform="translate(-3 0)"/><text x="17" y="36" class="ic-t">2</text><text x="47" y="36" class="ic-t ic-w">4</text></svg>`,
     generate,
-    _check(P) { return (P.n >= 8 ? solverProp : solver)(P.n, P.givens, P.ineq, 2, Infinity).count === 1 ? '' : 'NON unico'; },
+    /* risolto dalla sola logica = soluzione unica; altrimenti si conta con la ricerca */
+    _check(P) { return solverOf(P).solve(P.givens).ok || (P.n >= 8 ? solverProp : solver)(P.n, P.givens, P.ineq, 2, Infinity).count === 1 ? '' : 'NON unico'; },
     init: P => ({ v: P.givens.slice(), m: new Array(P.n * P.n).fill(0) }),
     solved: (P, s) => s.v.every((x, i) => x === P.sol[i]),
     hint,

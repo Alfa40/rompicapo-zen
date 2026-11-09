@@ -53,14 +53,24 @@
   };
 
   /* nomi dei ragionamenti (per il resoconto) e un consiglio per allenarli */
-  const NUM = {
+  /* griglie di numeri: dai passi più semplici ai ragionamenti avanzati (Z.latinSolver in numgrid.js);
+     «guess» resta solo per i rompicapo salvati con le versioni vecchie */
+  const NUM_BASE = {
     naked: ['trovare il solo numero possibile in una casella', 'Quando ti blocchi, scegli una casella e togli uno per uno i numeri che non possono andarci: a volte ne resta uno solo.'],
-    hidden: ['trovare il solo posto possibile per un numero', 'Prendi un numero e cercagli posto in una riga o in una colonna: se c\'è una sola casella possibile, va lì.'],
+    hidden: ['trovare il solo posto possibile per un numero', 'Prendi un numero e cercagli posto in una riga o in una colonna: se c’è una sola casella possibile, va lì.'],
+  };
+  const NUM_ADV = {
+    pair: ['usare coppie e terne di candidati', 'Scrivi le note: due caselle della stessa riga con gli stessi due soli numeri li «prenotano», e spariscono dalle altre caselle.'],
+    wing: ['i ragionamenti a incastro (X-wing, Y-wing)', 'Quando un numero in due righe ha solo due posti, sulle stesse due colonne, quelle colonne non lo possono avere altrove.'],
     guess: ['i punti difficili, con poche mosse sicure', 'Nei punti difficili scrivi le note: due caselle con gli stessi due candidati spesso sbloccano tutto.'],
   };
   const TAGS = {
-    sudoku: NUM, futoshiki: NUM,
-    calcudoku: Object.assign({}, NUM, { naked: ['trovare il numero giusto dalle operazioni delle gabbie', 'Parti dalle gabbie piccole: con due caselle e un risultato le combinazioni possibili sono poche.'] }),
+    sudoku: Object.assign({}, NUM_BASE, { locked: ['i candidati bloccati in un riquadro', 'Se in un riquadro un numero può stare solo su una riga, quella riga non lo può avere fuori dal riquadro.'] }, NUM_ADV),
+    futoshiki: Object.assign({}, NUM_BASE, { sign: ['usare i segni maggiore e minore', 'Un numero più piccolo di un vicino non può essere il massimo, uno più grande non può essere 1: e i limiti passano da una casella all’altra.'] }, NUM_ADV),
+    calcudoku: Object.assign({}, NUM_BASE, {
+      one: ['partire dalle gabbie di una casella', 'Le gabbie di una sola casella dicono già il numero: scrivile subito.'],
+      cage: ['trovare le combinazioni delle gabbie', 'Parti dalle gabbie piccole: con due caselle e un risultato le combinazioni possibili sono poche.'],
+    }, NUM_ADV),
     stars: {
       place: ['trovare l\'ultimo posto libero di una regione', 'Conta i posti liberi rimasti in ogni regione, riga e colonna: dove ne resta uno solo, la stella va lì.'],
       touch: ['ricordare che le stelle non si toccano', 'Dopo ogni stella metti subito i puntini nelle 8 caselle attorno: ti aiutano a vedere gli spazi rimasti.'],
@@ -426,8 +436,8 @@
   }
   /* progressi di uno stato (per il quiz) */
   const progress = (id, P, st) => { const f = progressOf(id); try { return f ? f(P, st) : { ok: 0, bad: 0 }; } catch (e) { return { ok: 0, bad: 0 }; } };
-  /* nelle Stelle un esercizio chiede una stella (posto obbligato, trucco avanzato) oppure un puntino (gli altri) */
-  const STAR_TAGS = new Set(['place', 'advanced']);
+  /* nelle Stelle un esercizio chiede una stella (posto obbligato) oppure un puntino (gli altri ragionamenti) */
+  const STAR_TAGS = new Set(['place']);
   function exProgress(id, tag, P, st) {
     if (id !== 'stars') return progress(id, P, st);
     const S2 = new Set(P.sol), want = STAR_TAGS.has(tag) ? 1 : 2;
@@ -461,6 +471,8 @@
     for (const dd of G.options || []) {
       let i = idxOf(dd, o[dd.id]);
       while (i > 0 && dd.choices[i].need && !dd.choices[i].need(o)) i--;
+      /* anche la prima scelta può avere un vincolo (es. Stelle «Semplici» solo con una stella per riga) */
+      while (i < dd.choices.length - 1 && dd.choices[i].need && !dd.choices[i].need(o)) i++;
       o[dd.id] = dd.choices[i].v;
     }
     return o;

@@ -41,96 +41,19 @@
     return { count, sol };
   }
 
-  /* Risolutore "umano": livello 1 = singoli; livello 2 = + candidati bloccati, coppie nude e nascoste */
-  function logic(g, level, out) {
-    const v = g.slice(), cand = new Int32Array(81);
-    let left = 0;
-    for (let i = 0; i < 81; i++) if (!v[i]) {
-      let m = ALL;
-      for (const p of PEERS[i]) if (v[p]) m &= ~(1 << v[p]);
-      cand[i] = m; left++;
-    }
-    const place = (i, d) => {
-      v[i] = d; cand[i] = 0; left--;
-      const b = ~(1 << d);
-      for (const p of PEERS[i]) cand[p] &= b;
-    };
-    while (left > 0) {
-      let prog = false;
-      for (let i = 0; i < 81; i++) if (!v[i]) {
-        const m = cand[i];
-        if (!m) return false;
-        if (!(m & (m - 1))) { place(i, 31 - Math.clz32(m)); prog = true; }
-      }
-      if (prog) continue;
-      for (const U of UNITS) for (let d = 1; d <= 9; d++) {
-        const b = 1 << d;
-        let cnt = 0, last = -1, done = false;
-        for (const i of U) { if (v[i] === d) { done = true; break; } if (cand[i] & b) { cnt++; last = i; } }
-        if (done) continue;
-        if (cnt === 0) return false;
-        if (cnt === 1) { place(last, d); prog = true; }
-      }
-      if (prog) continue;
-      if (level < 2) { if (out) out.left = left; return false; }
-      if (locked(cand) || nakedPairs(cand) || hiddenPairs(cand)) continue;
-      if (out) out.left = left;
-      return false;
-    }
-    return true;
-  }
-  function locked(cand) {
-    let ch = false;
-    for (let u = 0; u < 27; u++) {
-      const U = UNITS[u];
-      for (let d = 1; d <= 9; d++) {
-        const b = 1 << d;
-        const cs = U.filter(i => cand[i] & b);
-        if (cs.length < 2) continue;
-        if (u >= 18) {
-          const bx = u - 18;
-          const r = R[cs[0]];
-          if (cs.every(i => R[i] === r)) for (const i of UNITS[r]) if (B[i] !== bx && (cand[i] & b)) { cand[i] &= ~b; ch = true; }
-          const c = C[cs[0]];
-          if (cs.every(i => C[i] === c)) for (const i of UNITS[9 + c]) if (B[i] !== bx && (cand[i] & b)) { cand[i] &= ~b; ch = true; }
-        } else {
-          const x = B[cs[0]];
-          if (cs.every(i => B[i] === x)) for (const i of UNITS[18 + x]) if (!U.includes(i) && (cand[i] & b)) { cand[i] &= ~b; ch = true; }
-        }
-      }
-    }
-    return ch;
-  }
-  function nakedPairs(cand) {
-    let ch = false;
-    for (const U of UNITS) {
-      const two = U.filter(i => Z.popcount(cand[i]) === 2);
-      for (let a = 0; a < two.length; a++) for (let b = a + 1; b < two.length; b++) {
-        const m = cand[two[a]];
-        if (m !== cand[two[b]]) continue;
-        for (const i of U) if (i !== two[a] && i !== two[b] && (cand[i] & m)) { cand[i] &= ~m; ch = true; }
-      }
-    }
-    return ch;
-  }
-  function hiddenPairs(cand) {
-    let ch = false;
-    for (const U of UNITS) {
-      const pos = [];
-      for (let d = 1; d <= 9; d++) pos[d] = U.filter(i => cand[i] & (1 << d));
-      for (let d1 = 1; d1 <= 9; d1++) {
-        if (pos[d1].length !== 2) continue;
-        for (let d2 = d1 + 1; d2 <= 9; d2++) {
-          if (pos[d2].length !== 2 || pos[d2][0] !== pos[d1][0] || pos[d2][1] !== pos[d1][1]) continue;
-          const m = (1 << d1) | (1 << d2);
-          for (const i of pos[d1]) if (cand[i] & ~m) { cand[i] &= m; ch = true; }
-        }
-      }
-    }
-    return ch;
-  }
+  /* zone con i nomi: servono al risolutore «umano» (Z.latinSolver) e alle spiegazioni */
+  const ROWN = ['in alto', 'al centro', 'in basso'], COLN = ['a sinistra', 'al centro', 'a destra'];
+  const boxName = b => (b === 4 ? 'Nel riquadro centrale' : `Nel riquadro ${ROWN[(b / 3) | 0]} ${COLN[b % 3]}`);
+  const HUNITS = [
+    ...Z.range(9).map(k => ({ where: `Nella riga ${k + 1}`, kind: 'row', cells: UNITS[k] })),
+    ...Z.range(9).map(k => ({ where: `Nella colonna ${k + 1}`, kind: 'col', cells: UNITS[9 + k] })),
+    ...Z.range(9).map(k => ({ where: boxName(k), kind: 'box', cells: UNITS[18 + k] })),
+  ];
+  const SOLVER = Z.latinSolver({ n: 9, units: HUNITS, peers: PEERS });
+  /* risolvibile senza tirare a indovinare, usando i ragionamenti fino al livello scelto (e quindi con una sola soluzione) */
+  const logic = (g, level) => SOLVER.solve(g, level);
 
-  /* Rimozione simmetrica degli indizi mantenendo unicità + criterio di accettazione */
+  /* Toglie indizi a coppie simmetriche finché il rompicapo resta risolvibile con la logica del livello */
   function dig(sol, accept, minClues) {
     const g = sol.slice();
     let clues = 81;
@@ -139,7 +62,7 @@
       if (clues - k < minClues) continue;
       const a = g[i], b = g[j];
       g[i] = 0; g[j] = 0;
-      if (search(g, 2, false).count === 1 && accept(g)) clues -= k;
+      if (accept(g)) clues -= k;
       else { g[i] = a; g[j] = b; }
     }
     return g;
@@ -149,82 +72,41 @@
     { id: 'tec', label: 'Tecniche richieste', def: 3, choices: [
       { v: 1, label: 'Base', help: 'Basta cercare l’unico posto possibile per ogni numero.' },
       { v: 2, label: 'Intermedie', help: 'Servono anche candidati bloccati e coppie.' },
-      { v: 3, label: 'Avanzate', help: 'Indizi minimi: le tecniche comuni non sempre bastano.' },
-      { v: 4, label: 'Esperte', help: 'Scelto tra molti come quello in cui ci si blocca prima.' },
+      { v: 3, label: 'Avanzate', help: 'Servono anche terne, X-wing e Y-wing.' },
+      { v: 4, label: 'Esperte', help: 'Servono anche swordfish e XYZ-wing. Mai tentativi a caso.' },
     ] },
   ];
 
+  /* Ogni livello usa i ragionamenti fino al suo (1 posti e numeri unici, 2 candidati bloccati e coppie,
+     3 terne, X-wing e Y-wing, 4 swordfish e XYZ-wing) e si cerca un rompicapo che li richieda davvero:
+     mai tentativi a caso. */
   function generate(opt) {
-    const level = ['easy', 'easy', 'easy', 'normal', 'hard'][opt.tec] || 'normal';
-    let fallback = null;
-    const t0 = Z.now();
-    for (let t = 0; t < 150; t++) {
+    const L = Math.min(4, Math.max(1, opt.tec || 3)), t0 = Z.now();
+    let best = null;
+    for (let t = 0; t < 400; t++) {
       const sol = search(new Array(81).fill(0), 1, true).sol;
-      if (opt.tec === 1) return { givens: dig(sol, g => logic(g, 1), 36), sol };
-      if (level === 'easy') {
-        /* richiede candidati bloccati o coppie: le sole caselle singole non bastano */
-        const g = dig(sol, x => logic(x, 2), 22);
-        if (!logic(g, 1)) return { givens: g, sol };
-        fallback = fallback || { givens: g, sol };
-      } else if (level === 'normal') {
-        /* minimo: nemmeno candidati bloccati e coppie bastano */
-        const g = dig(sol, () => true, 0);
-        if (!logic(g, 2)) return { givens: g, sol };
-        fallback = fallback || { givens: g, sol };
-      } else {
-        /* come Normale, ma tra molti candidati si sceglie quello in cui
-           le tecniche note si bloccano prima (più caselle ancora vuote) */
-        const g = dig(sol, () => true, 0);
-        const out = {};
-        if (logic(g, 2, out)) continue;
-        const clues = g.filter(Boolean).length;
-        const score = out.left * 2 - clues + Math.random();
-        if (!fallback || score > fallback.score) fallback = { givens: g, sol, score };
-        if ((fallback.score >= 100 && t >= 4) || Z.now() - t0 > 2500) break;
-      }
+      const g = dig(sol, x => logic(x, L).ok, L === 1 ? 36 : 0);
+      const r = logic(g, L);
+      if (!r.ok) continue;
+      let hard = 0;
+      for (const T of SOLVER.TECH) if (T.lv >= 3) hard += r.used[T.id] || 0;
+      const score = (r.hard === L ? 1e4 : r.hard * 1e3) + hard * 10 - g.filter(Boolean).length + Math.random();
+      if (!best || score > best.score) best = { givens: g, sol, score, hard: r.hard };
+      if (best.hard === L && (L < 4 || Z.now() - t0 > 900)) break;
+      if (Z.now() - t0 > 2500) break;
     }
-    return fallback && { givens: fallback.givens, sol: fallback.sol };
+    return best && { givens: best.givens, sol: best.sol };
   }
 
   /* ---------- Suggerimenti spiegati ---------- */
-  const ROWN = ['in alto', 'al centro', 'in basso'], COLN = ['a sinistra', 'al centro', 'a destra'];
-  const boxName = b => (b === 4 ? 'Nel riquadro centrale' : `Nel riquadro ${ROWN[(b / 3) | 0]} ${COLN[b % 3]}`);
-  const HUNITS = [
-    ...Z.range(9).map(k => ({ where: `Nella riga ${k + 1}`, cells: UNITS[k] })),
-    ...Z.range(9).map(k => ({ where: `Nella colonna ${k + 1}`, cells: UNITS[9 + k] })),
-    ...Z.range(9).map(k => ({ where: boxName(k), cells: UNITS[18 + k] })),
-  ];
-  const TECH = {
-    locked: '<b>candidati bloccati</b> (se in un riquadro un numero può stare solo su una riga o colonna, lo togli dal resto di quella riga o colonna)',
-    naked: '<b>coppie nude</b> (due caselle della stessa zona con gli stessi due soli candidati: quei due numeri non possono stare altrove nella zona)',
-    hidden: '<b>coppie nascoste</b> (due numeri che in una zona possono stare solo nelle stesse due caselle: quelle caselle non possono contenere altro)',
-  };
-  const basic = v => ({ cand: Z.basicCand(v, 9, i => PEERS[i]) });
-  const advanced = v => {
-    const cand = Z.basicCand(v, 9, i => PEERS[i]), used = new Set();
-    for (let k = 0; k < 30; k++) {
-      if (locked(cand)) { used.add('locked'); continue; }
-      if (nakedPairs(cand)) { used.add('naked'); continue; }
-      if (hiddenPairs(cand)) { used.add('hidden'); continue; }
-      break;
-    }
-    return { cand, used: [...used] };
-  };
   function hint(P, st) {
     return Z.latinHint(P, st, {
-      n: 9, peers: i => PEERS[i], units: HUNITS, levels: [basic, advanced],
-      naked(i, d, lv, info) {
-        if (lv === 0) {
-          const present = [...new Set(PEERS[i].map(p => st.v[p]).filter(x => x))].sort();
-          return `In ${Z.cellName(i, 9)} i numeri ${Z.fmtList(present)} compaiono già nella sua riga, colonna o riquadro: l'unico possibile è il <b>${d}</b>.`;
-        }
-        return `Annota i candidati e usa le ${Z.fmtList(info.used.map(t => TECH[t]))}. Dopo queste eliminazioni, in ${Z.cellName(i, 9)} resta solo il <b>${d}</b>.`;
+      n: 9, peers: i => PEERS[i], units: HUNITS, solver: SOLVER,
+      naked(i, d) {
+        const present = [...new Set(PEERS[i].map(p => st.v[p]).filter(x => x))].sort();
+        return `In ${Z.cellName(i, 9)} i numeri ${Z.fmtList(present)} compaiono già nella sua riga, colonna o riquadro: l'unico possibile è ${Z.il(d)}.`;
       },
-      hidden(U, d, i, lv, info) {
-        const base = `${U.where} il <b>${d}</b> manca ancora e può andare solo in ${Z.cellName(i, 9)}`;
-        if (lv === 0) return `${base}: tutte le altre caselle libere sono escluse da un ${d} già presente nella loro riga, colonna o riquadro.`;
-        return `${base}. Per vederlo annota i candidati e usa le ${Z.fmtList(info.used.map(t => TECH[t]))}.`;
-      },
+      hidden: (U, d, i) => `${U.where} manca ancora ${Z.il(d)} e può andare solo in ${Z.cellName(i, 9)}: tutte le altre caselle libere sono escluse da un ${d} già presente nella loro riga, colonna o riquadro.`,
     });
   }
 

@@ -7,6 +7,11 @@
     { id: 'k', label: 'Stelle', def: 2, choices: [
       { v: 1, label: '1 per riga' }, { v: 2, label: '2 per riga', help: 'Due stelle per riga, colonna e regione: serve una griglia da almeno 8×8.', need: o => o.size >= 8 },
     ] },
+    { id: 'tec', label: 'Ragionamenti', def: 2, choices: [
+      { v: 1, label: 'Semplici', help: 'Posti obbligati e caselle attorno alle stelle. Solo con una stella per riga.', need: o => o.k === 1 || o.size < 8 },
+      { v: 2, label: 'Medi', help: 'Anche «immagina una stella qui» e regioni chiuse in una riga.' },
+      { v: 3, label: 'Avanzati', help: 'Anche gruppi di regioni chiusi in più righe. Mai tentativi a caso.' },
+    ] },
   ];
 
   function rowSets(n, k) {
@@ -150,7 +155,8 @@
     return seen.size === cells.length;
   }
 
-  function generate(opt) {
+  /* rompicapo con una sola soluzione (le regioni si ritoccano finché non è unica) */
+  function genUnique(opt) {
     const n = opt.size, k = n < 8 ? 1 : opt.k, sets = rowSets(n, k);
     for (let att = 0; att < 200; att++) {
       const rows = genStars(n, k, sets);
@@ -180,6 +186,184 @@
       }
     }
     return null;
+  }
+
+  /* ---------- Risolutore «umano» ----------
+     Stato: 0 libera, 1 stella, 2 vuota (puntino). Solo ragionamenti che una persona può fare, un passo alla volta:
+     livello 1: posti obbligati, caselle attorno a una stella, righe/colonne/regioni già complete;
+     livello 2: «immagina una stella qui» (le conseguenze immediate lasciano una zona senza posto) e
+                una regione chiusa dentro una riga o colonna (e viceversa);
+     livello 3: gruppi di regioni chiusi dentro più righe o colonne, e «immagina» seguendo la catena di conseguenze.
+     Se risolve tutta la griglia, la soluzione è anche unica. */
+  function makeSolver(P) {
+    const n = P.n, k = P.k, N = n * n;
+    const rows = Z.range(n).map(r => ({ kind: 'row', name: `la riga ${r + 1}`, cells: Z.range(n).map(c => r * n + c) }));
+    const cols = Z.range(n).map(c => ({ kind: 'col', name: `la colonna ${c + 1}`, cells: Z.range(n).map(r => r * n + c) }));
+    const regs = Z.range(n).map(R => ({ kind: 'reg', name: 'la regione che si illumina', cells: Z.range(N).filter(i => P.reg[i] === R) }));
+    const units = [...rows, ...cols, ...regs];
+    const unitsOf = Z.range(N).map(i => [rows[(i / n) | 0], cols[i % n], regs[P.reg[i]]]);
+    const touch = (a, b) => Math.abs(((a / n) | 0) - ((b / n) | 0)) <= 1 && Math.abs(a % n - b % n) <= 1;
+    const around = Z.range(N).map(i => Z.range(N).filter(j => j !== i && touch(i, j)));
+    const need = (c, U) => { let s = k; for (const i of U.cells) if (c[i] === 1) s--; return s; };
+    const free = (c, U) => U.cells.filter(i => c[i] === 0);
+    const fits = (fr, m) => m <= 0 || (m === 1 ? fr.length > 0 : fr.some((a, x) => fr.some((b, y) => y > x && !touch(a, b))));
+    const stars = (c, m) => (m === 1 ? 'la sua stella' : m === k ? `le sue ${k} stelle` : 'la stella che le manca');
+    const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+    /* una zona impossibile: troppe stelle, stelle che si toccano, o non c'è più posto */
+    function broken(c) {
+      for (let i = 0; i < N; i++) if (c[i] === 1 && around[i].some(j => c[j] === 1)) return unitsOf[i][0];
+      for (const U of units) { const m = need(c, U); if (m < 0 || !fits(free(c, U), m)) return U; }
+      return null;
+    }
+    const lineList = (W, word) => (W.length === 1 ? W[0].name : `le ${word} ${Z.fmtList(W.map(U => +U.name.split(' ').pop()))}`);
+
+    /* livello 1 */
+    function basic(c) {
+      for (const U of units) {
+        const m = need(c, U), fr = free(c, U);
+        if (m > 0 && fr.length === m) return {
+          lv: 1, tag: 'place', set: fr.map(i => [i, 1]), focus: fr, area: U.cells,
+          tip: Z.say(`Guarda ${U.name}: quante stelle le mancano, e quanti posti liberi le restano?`, `Conta i posti liberi in ${U.name}: sono proprio quanti ne servono?`) +
+            ' Quando i posti liberi sono esattamente quante le stelle che mancano, la scelta è obbligata.',
+          why: `In ${U.name} ${m === 1 ? 'manca una stella' : 'mancano ' + m + ' stelle'} e ${fr.length === 1 ? 'resta un solo posto libero' : 'restano solo ' + fr.length + ' posti liberi'} (le altre caselle sono già escluse): ${fr.length === 1 ? 'la stella va lì' : 'le stelle vanno lì'}.`,
+        };
+      }
+      for (let i = 0; i < N; i++) {
+        if (c[i] !== 1) continue;
+        const fr = around[i].filter(j => c[j] === 0);
+        if (fr.length) return {
+          lv: 1, tag: 'touch', set: fr.map(j => [j, 2]), focus: fr, area: [i],
+          tip: `Guarda la stella in ${Z.cellName(i, n)}: cosa puoi dire delle caselle che la circondano? Segnarle aiuta a vedere dove restano posti liberi.`,
+          why: 'Le stelle non possono toccarsi, nemmeno in diagonale: tutte le caselle attorno a questa stella sono vuote. Le ho segnate con un puntino.',
+        };
+      }
+      for (const U of units) {
+        const fr = free(c, U);
+        if (need(c, U) === 0 && fr.length) return {
+          lv: 1, tag: 'full', set: fr.map(j => [j, 2]), focus: fr, area: U.cells,
+          tip: `${cap(U.name)} ha già ${k === 1 ? 'la sua stella' : 'tutte le sue stelle'}: cosa vuol dire per le altre caselle? Segnarle con un puntino rende la griglia più chiara.`,
+          why: `${cap(U.name)} ha già ${k === 1 ? 'la sua stella' : 'le sue ' + k + ' stelle'}: le altre caselle sono vuote. Le ho segnate con un puntino.`,
+        };
+      }
+      return null;
+    }
+    /* «immagina una stella qui»: conseguenze immediate (o a catena) e una zona resta senza posto */
+    /* conseguenze di un'ipotesi: prima quelle immediate, poi (deep) le mosse obbligate a catena */
+    function suppose(c, i, v, deep) {
+      const t = c.slice();
+      t[i] = v;
+      if (v === 1) {
+        for (const j of around[i]) if (t[j] === 0) t[j] = 2;
+        for (const U of unitsOf[i]) if (need(t, U) === 0) for (const j of U.cells) if (t[j] === 0) t[j] = 2;
+      }
+      let U = broken(t);
+      for (let it = 0; deep && it < 300 && !U; it++) {
+        const d = basic(t) || confine(t, 1, 1);
+        if (!d) break;
+        for (const [j, x] of d.set) t[j] = x;
+        U = broken(t);
+      }
+      return U && { U, m: need(t, U) };
+    }
+    function imagine(c, deep) {
+      for (const v of deep ? [1, 2] : [1]) for (let i = 0; i < N; i++) {
+        if (c[i] !== 0) continue;
+        const r = suppose(c, i, v, deep);
+        if (!r) continue;
+        const { U, m } = r, where = Z.cellName(i, n);
+        const end = `${U.name} ${m < 0 ? 'avrebbe troppe stelle' : 'non avrebbe più spazio per ' + stars(c, Math.max(1, m))}.`;
+        if (v === 2) return {
+          lv: 3, tag: 'imagine', set: [[i, 1]], focus: [i], area: [i, ...U.cells],
+          tip: `Prova a immaginare che in ${Z.cellName(i, n)} non ci sia una stella: seguendo le mosse che diventano obbligate, cosa succederebbe a ${U.name}?`,
+          why: `Immagina che in ${where} non ci sia una stella: seguendo le mosse obbligate che ne vengono, ${end} Quindi lì ci va proprio una stella.`,
+        };
+        return {
+          lv: deep ? 3 : 2, tag: 'imagine', set: [[i, 2]], focus: [i], area: [i, ...U.cells],
+          tip: `Prova a immaginare una stella in ${where}: le caselle attorno diventerebbero vuote${deep ? ', e da lì altre mosse diventerebbero obbligate' : ''}. Cosa succederebbe a ${U.name}?`,
+          why: `Immagina una stella in ${where}: le caselle attorno diventerebbero vuote` +
+            (deep ? ' e, seguendo le mosse obbligate che ne vengono, ' : ' e ') + end + ' Quindi lì non può esserci una stella: ci va un puntino.',
+        };
+      }
+      return null;
+    }
+    /* regioni chiuse dentro m righe (o colonne) consecutive */
+    function confine(c, m1, m2) {
+      for (const [dir, word] of [[rows, 'righe'], [cols, 'colonne']]) for (let m = m1; m <= m2; m++) for (let a = 0; a + m <= n; a++) {
+        const W = dir.slice(a, a + m), inW = new Set(W.flatMap(U => U.cells));
+        let quota = 0;
+        for (const U of W) quota += need(c, U);
+        if (quota <= 0) continue;
+        const touching = regs.filter(R => need(c, R) > 0 && free(c, R).some(i => inW.has(i)));
+        const inside = touching.filter(R => free(c, R).every(i => inW.has(i)));
+        const sum = L => L.reduce((s, R) => s + need(c, R), 0);
+        const lines = lineList(W, word), one = inside.length === 1;
+        if (inside.length && sum(inside) === quota) {
+          const own = new Set(inside.flatMap(R => R.cells));
+          const out = [...inW].filter(i => c[i] === 0 && !own.has(i));
+          if (out.length) return {
+            lv: m === 1 ? 2 : 3, tag: 'advanced', set: out.map(i => [i, 2]), focus: out, area: [...own].filter(i => inW.has(i) || c[i] === 0),
+            tip: `Guarda ${one ? 'la regione che si illumina' : 'le regioni che si illuminano'}: ${one ? 'i suoi posti liberi stanno' : 'i loro posti liberi stanno'} tutti dentro ${lines}. Cosa vuol dire per le altre caselle di ${m === 1 ? 'quella ' + (word === 'righe' ? 'riga' : 'colonna') : 'quelle ' + word}?`,
+            why: `${one ? 'La regione che si illumina ha' : 'Le regioni che si illuminano hanno'} tutti i posti liberi dentro ${lines}, e ${one ? 'le servono' : 'servono loro'} proprio le ${quota === 1 ? 'stella che manca' : quota + ' stelle che mancano'} ${m === 1 ? 'lì' : 'a quelle ' + word}. Quindi nelle altre caselle di ${m === 1 ? 'quella ' + (word === 'righe' ? 'riga' : 'colonna') : 'quelle ' + word} non ci sono stelle.`,
+          };
+        }
+        if (touching.length && touching.length > inside.length && sum(touching) === quota) {
+          const out = touching.flatMap(R => free(c, R).filter(i => !inW.has(i)));
+          if (out.length) {
+            const one2 = touching.length === 1;
+            return {
+              lv: m === 1 ? 2 : 3, tag: 'advanced', set: out.map(i => [i, 2]), focus: out, area: [...inW],
+              tip: `Guarda ${lines}: ${quota === 1 ? 'manca una stella' : 'mancano ' + quota + ' stelle'}. Quali regioni possono dargliele?`,
+              why: `A ${lines} ${quota === 1 ? 'manca una stella' : 'mancano ' + quota + ' stelle'}, e possono dargliele solo ${one2 ? 'una regione, che ne ha bisogno' : touching.length + ' regioni, che ne hanno bisogno'} proprio di ${quota}. Quindi ${one2 ? 'quella regione mette' : 'quelle regioni mettono'} lì tutte le stelle che le mancano: le loro caselle fuori da ${lines} sono vuote.`,
+            };
+          }
+        }
+      }
+      return null;
+    }
+    function step(c, L) {
+      return basic(c) || (L >= 2 && (confine(c, 1, 1) || imagine(c, false))) || (L >= 3 && (confine(c, 2, n - 1) || imagine(c, true))) || null;
+    }
+    const done = c => { let s = 0; for (let i = 0; i < N; i++) if (c[i] === 1) s++; return s === n * k && !broken(c); };
+    return {
+      step,
+      solve(L) {
+        const c = new Array(N).fill(0);
+        let hard = 1;
+        for (let it = 0; it < 4 * N; it++) {
+          if (done(c)) return { ok: true, hard };
+          const d = step(c, L);
+          if (!d) return { ok: false, hard };
+          for (const [i, v] of d.set) c[i] = v;
+          if (d.lv > hard) hard = d.lv;
+          if (broken(c)) return { ok: false, hard };
+        }
+        return { ok: false, hard };
+      },
+    };
+  }
+  const solvers = new WeakMap();
+  const solverOf = P => { let s = solvers.get(P); if (!s) { s = makeSolver(P); solvers.set(P, s); } return s; };
+
+  /* Si tengono solo rompicapo risolvibili ragionando al livello scelto (Ragionamenti), preferendo quelli che lo
+     usano davvero: mai tentativi a caso. */
+  let fallbackUsed = 0;
+  function generate(opt) {
+    let L = Math.min(3, Math.max(1, opt.tec || 2));
+    const t0 = Z.now();
+    let best = null, last = null;
+    for (let t = 0; t < 5000; t++) {
+      const el = Z.now() - t0;
+      if (best && (best.hard === L || el > 2000)) break;
+      if (el > 5000) { fallbackUsed++; break; }
+      /* se a questo livello non se ne trova uno in fretta, si accetta anche il livello sopra */
+      if (!best && el > 700 * (4 - L) && L < 3) L++;
+      const P = genUnique(opt);
+      if (!P) continue;
+      last = P;
+      const r = makeSolver(P).solve(L);
+      if (r.ok && (!best || r.hard > best.hard)) best = { P, hard: r.hard };
+    }
+    return best ? best.P : last || genUnique(opt);
   }
 
   const HUES = [8, 40, 75, 140, 175, 205, 240, 275, 310, 340];
@@ -213,78 +397,13 @@
           ` L'ho tolt${g}, così riparti da una base sicura.` + (wrong.length > 1 ? ` Ci sono altre ${wrong.length - 1} caselle da ricontrollare.` : ''),
       };
     }
-    const units = [];
-    for (let r = 0; r < n; r++) units.push({ name: `la riga ${r + 1}`, cells: Z.range(n).map(c => r * n + c) });
-    for (let c = 0; c < n; c++) units.push({ name: `la colonna ${c + 1}`, cells: Z.range(n).map(r => r * n + c) });
-    for (let R = 0; R < n; R++) units.push({ name: 'questa regione', cells: Z.range(N).filter(i => P.reg[i] === R) });
-    const star = k === 1 ? 'una stella' : `${k} stelle`;
-    for (const U of Z.shuffle(units.slice())) {
-      const have = U.cells.filter(i => s.c[i] === 1).length, free = U.cells.filter(i => s.c[i] === 0);
-      if (have < k && free.length && free.length === k - have) {
-        free.forEach(i => { s.c[i] = 1; });
-        return {
-          state: s, focus: free, area: U.cells,
-          tip: Z.say(`Guarda ${U.name}: quante stelle le mancano, e quanti posti liberi le restano?`, `Conta i posti liberi in ${U.name}: sono proprio quanti ne servono?`) +
-            ' Quando i posti liberi sono esattamente quante le stelle che mancano, la scelta è obbligata.',
-          tag: 'place', why: `In ${U.name} servono ${star} e restano solo ${free.length === 1 ? 'un posto libero' : free.length + ' posti liberi'} (le altre caselle sono già escluse): ${free.length === 1 ? 'la stella va lì' : 'le stelle vanno lì'}.`,
-        };
-      }
+    /* il prossimo passo del risolutore «umano» (controllato con la soluzione) */
+    const d = solverOf(P).step(s.c, 3);
+    if (d && d.set.every(([i, v]) => (v === 1) === sol.has(i))) {
+      for (const [i, v] of d.set) s.c[i] = v;
+      return { state: s, focus: d.focus, area: d.area, tag: d.tag, tip: d.tip, why: d.why };
     }
-    for (const i of Z.shuffle(Z.range(N).filter(i => s.c[i] === 1))) {
-      const r = (i / n) | 0, c = i % n, around = [];
-      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-        const y = r + dy, x = c + dx;
-        if ((dx || dy) && x >= 0 && y >= 0 && x < n && y < n && s.c[y * n + x] === 0) around.push(y * n + x);
-      }
-      if (around.length) {
-        around.forEach(j => { s.c[j] = 2; });
-        return { state: s, focus: around, area: [i], tag: 'touch',
-          tip: `Guarda la stella in ${Z.cellName(i, n)}: cosa puoi dire delle caselle che la circondano? Segnarle aiuta a vedere dove restano posti liberi.`, why: 'Le stelle non possono toccarsi, nemmeno in diagonale: tutte le caselle attorno a questa stella sono vuote. Le ho segnate con un puntino.' };
-      }
-    }
-    for (const U of Z.shuffle(units.slice())) {
-      const have = U.cells.filter(i => s.c[i] === 1).length, free = U.cells.filter(i => s.c[i] === 0);
-      if (have === k && free.length) {
-        free.forEach(i => { s.c[i] = 2; });
-        const name = U.name[0].toUpperCase() + U.name.slice(1);
-        return { state: s, focus: free, area: U.cells, tag: 'full',
-          tip: `${name} ha già ${k === 1 ? 'la sua stella' : 'tutte le sue stelle'}: cosa vuol dire per le altre caselle? Segnarle con un puntino rende la griglia più chiara.`, why: `${name} ha già ${k === 1 ? 'la sua stella' : 'le sue ' + k + ' stelle'}: le altre caselle sono vuote. Le ho segnate con un puntino.` };
-      }
-    }
-    /* 4) una stella qui toglierebbe spazio a una riga, colonna o regione */
-    for (const i of Z.shuffle(Z.range(N).filter(i => s.c[i] === 0 && !sol.has(i)))) {
-      const t = s.c.slice(), r = (i / n) | 0, c = i % n;
-      t[i] = 1;
-      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-        const y = r + dy, x = c + dx;
-        if ((dx || dy) && x >= 0 && y >= 0 && x < n && y < n && t[y * n + x] === 0) t[y * n + x] = 2;
-      }
-      for (const U of units) {
-        const have = U.cells.filter(j => t[j] === 1).length;
-        if (have > k) continue;
-        if (have === k && U.cells.includes(i)) continue;
-        const free = U.cells.filter(j => t[j] === 0);
-        /* massimo esatto di stelle non adiacenti che entrano nelle caselle libere */
-        let fit = 99;
-        if (free.length <= 8) {
-          fit = 0;
-          for (let mask = 1; mask < (1 << free.length); mask++) {
-            const pick = free.filter((_, q) => mask & (1 << q));
-            if (pick.length <= fit) continue;
-            const okPick = pick.every((a, x) => pick.every((b2, y) => x >= y || Math.abs(((a / n) | 0) - ((b2 / n) | 0)) > 1 || Math.abs(a % n - b2 % n) > 1));
-            if (okPick) fit = pick.length;
-          }
-        }
-        if (have + fit < k) {
-          s.c[i] = 2;
-          return {
-            state: s, focus: [i], area: [i],
-            tip: `Prova a immaginare una stella in ${Z.cellName(i, n)}: le caselle attorno diventerebbero vuote. Cosa succederebbe a ${U.name}?`,
-            tag: 'imagine', why: `Prova a immaginare una stella in ${Z.cellName(i, n)}: le caselle attorno diventerebbero vuote e ${U.name} non avrebbe più spazio per ${k === 1 ? 'la sua stella' : 'le sue ' + k + ' stelle'}. Quindi qui non può esserci una stella: ho messo un puntino.`,
-          };
-        }
-      }
-    }
+    /* rompicapo di prima (salvati con le versioni vecchie) che la logica non risolve */
     const miss = P.sol.filter(i => s.c[i] !== 1);
     if (!miss.length) return null;
     const i = Z.pick(miss);
@@ -316,6 +435,7 @@
     }),
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="10" class="ic-s"/><path d="M32 8v24H8M32 32h24" class="ic-l2"/><path d="M20 13l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z" class="ic-a"/><path d="M44 37l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z" class="ic-a"/></svg>`,
     generate,
+    _fallbacks: () => fallbackUsed,
     _check(P) { const s = solve(P.n, P.k, P.reg, 2, rowSets(P.n, P.k)); return s && s.length === 1 ? '' : 'NON unico'; },
     init: P => ({ c: new Array(P.n * P.n).fill(0) }),
     solved(P, s) {
