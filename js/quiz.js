@@ -33,25 +33,29 @@
     const tags = Object.keys(T).filter(t => !(SKIP[id] || []).includes(t));
     const res = {};            /* tag → elenco di punteggi (1 giusto subito, 0.5 con errori o lento, 0 saltato) */
     const missing = new Set(); /* ragionamenti per cui non si è trovato un esercizio */
-    let count = 0, quit = false, keyOff = null;
+    const taught = new Set();  /* ragionamenti già spiegati con un esercizio guidato */
+    let count = 0, lessons = 0, quit = false, keyOff = null;
     Z.ui.closeOverlay();
     Z.ui.leave();
     Z.ui.applyTheme(Z.themeById(Z.nextTheme()));
     const screen = Z.ui.screen;
     screen.style.removeProperty('--h');
 
-    /* quale ragionamento chiedere adesso (null = basta, si passa al mini rompicapo) */
+    /* quale ragionamento chiedere adesso (null = basta, si passa al mini rompicapo).
+       Ogni ragionamento nuovo comincia con un esercizio guidato (learn): spiegato, con la zona che si illumina, su
+       una griglia piccola e quasi finita; poi lo stesso ragionamento da soli. Solo questi ultimi danno il punteggio. */
     function pick() {
       if (count >= MAX) return null;
       const avail = tags.filter(t => !missing.has(t));
-      for (const t of avail) if (!res[t]) return t;
-      for (const t of avail) if (res[t].length === 1 && (res[t][0] < 1 || count < MIN)) return t;
-      for (const t of avail) if (res[t].length === 2 && res[t][0] !== res[t][1] && count < MAX) return t;
+      for (const t of avail) if (!res[t]) return { t, learn: !taught.has(t) };
+      for (const t of avail) if (res[t].length === 1 && (res[t][0] < 1 || count < MIN)) return { t };
+      for (const t of avail) if (res[t].length === 2 && res[t][0] !== res[t][1] && count < MAX) return { t };
       return null;
     }
-    function opts(t) {
-      const j = Math.max(0, tags.indexOf(t)), base = Math.round(j / Math.max(1, tags.length - 1) * 4);
-      return [base, base + 2, base + 4].map(r => S.optsAt(id, Math.min(S.RUNGS - 1, r)));
+    /* difficoltà: i guidati sempre dai gradini più bassi, gli altri salgono piano coi ragionamenti più avanzati */
+    function opts(t, learn) {
+      const j = Math.max(0, tags.indexOf(t)), base = learn ? 0 : Math.round(j / Math.max(1, tags.length - 1) * 3);
+      return (learn ? [0, 1, 3, 6] : [base, base + 2, base + 4]).map(r => S.optsAt(id, Math.min(S.RUNGS - 1, r)));
     }
     function waiting(text) {
       screen.innerHTML = '';
@@ -72,21 +76,34 @@
 
     async function nextOne() {
       if (quit) return;
-      const t = pick();
-      if (!t) { miniStep(); return; }
-      waiting('Preparo il prossimo esercizio…');
-      const d = await S.work({ job: 'exercise', id, tag: t, opts: opts(t), ms: 3000 });
+      const q = pick();
+      if (!q) { miniStep(); return; }
+      const t = q.t, learn = !!q.learn;
+      waiting(learn ? 'Preparo un esempio da guardare insieme…' : 'Preparo il prossimo esercizio…');
+      const d = await S.work({ job: 'exercise', id, tag: t, opts: opts(t, learn), ms: learn ? 4000 : 3000, easy: learn });
       if (quit) return;
-      if (!d || d.none || !d.P) { missing.add(t); nextOne(); return; }
+      if (!d || d.none || !d.P) {
+        /* senza esempio guidato si prova comunque l'esercizio normale */
+        if (learn) taught.add(t); else missing.add(t);
+        nextOne();
+        return;
+      }
+      const ex = { P: d.P, s: d.s, tag: t, goal: d.goal, task: task(id, t), tip: d.tip, why: d.why, area: d.area, focus: d.focus };
+      if (learn) {
+        taught.add(t);
+        lessons++;
+        play(Object.assign(ex, { learn: true, label: `Impara · ${lessons}` }), () => nextOne());
+        return;
+      }
       count++;
-      play({ P: d.P, s: d.s, tag: t, goal: d.goal, label: `Esercizio ${count}`, task: task(id, t) }, score => {
+      play(Object.assign(ex, { label: `Esercizio ${count}` }), score => {
         (res[t] = res[t] || []).push(score);
         nextOne();
       });
     }
     async function miniStep() {
       waiting('Preparo il mini rompicapo finale…');
-      const d = await S.work({ job: 'mini', id, opt: S.optsAt(id, 1) });
+      const d = await S.work({ job: 'mini', id, opt: S.optsAt(id, 0) });
       if (quit) return;
       if (!d || !d.P) { finish(null); return; }
       play({ P: d.P, s: d.s, mini: true, label: 'Ultimo: un mini rompicapo', task: 'Risolvilo fino in fondo, con calma.' }, (score, info) => finish(info));
@@ -124,7 +141,29 @@
         over = true;
         end(0, { skipped: true });
       } } });
-      screen.append(bar(ex.label), h('p.qz-task', { text: ex.task }), wrap, msg, controls, h('nav.toolbar.qz-tools', null, bUndo, bSkip));
+      /* esercizio guidato: cos'è il ragionamento, dove guardare (la zona si illumina) e, se serve, la mossa spiegata */
+      let learn = null;
+      const glow = list => { if (view.flash && list && list.length && wrap.isConnected) view.flash(list); };
+      if (ex.learn) {
+        const name = T[ex.tag] ? T[ex.tag][0] : '';
+        const here = h('p.qz-here', { html: ex.tip || 'Guarda la zona che si illumina: lì c’è la mossa.' });
+        const bWhere = h('button.btn.qz-small', { type: 'button', text: 'Dove guardo?', on: { click: () => glow(ex.area || ex.focus) } });
+        const bShow = h('button.btn.qz-small', { type: 'button', text: 'Mostrami la mossa', on: { click: () => {
+          if (ex.why) here.innerHTML = ex.why;
+          here.classList.add('why');
+          bShow.remove();
+          glow(ex.focus || ex.area);
+        } } });
+        learn = { here, el: h('section.qz-learn', null,
+          h('p.qz-kind', { text: 'Un ragionamento nuovo' }),
+          name ? h('h3', { text: name[0].toUpperCase() + name.slice(1) }) : null,
+          T[ex.tag] ? h('p', { text: T[ex.tag][1] }) : null,
+          here,
+          h('div.qz-btns', null, bWhere, ex.why ? bShow : null)) };
+      }
+      screen.append(bar(ex.label), learn ? learn.el : null, h('p.qz-task', { text: ex.learn ? 'Prova tu: ' + ex.task[0].toLowerCase() + ex.task.slice(1) : ex.task }),
+        wrap, msg, controls, h('nav.toolbar.qz-tools', null, bUndo, bSkip));
+      if (learn) { setTimeout(() => glow(ex.area || ex.focus), 500); setTimeout(() => glow(ex.area || ex.focus), 2300); }
       function move(a, b) {
         const e = S.judge(id, P, a, b);
         hist.push(a); bUndo.disabled = false;
@@ -143,13 +182,21 @@
           msg.className = 'qz-msg ok';
           msg.textContent = Z.say('Giusto!', 'Esatto!', 'Ben fatto!', 'Proprio così!');
           if (ex.mini) view.el.classList.add('solved');
+          if (learn) {
+            /* nel guidato si legge con calma il perché, poi si va avanti quando si vuole */
+            if (ex.why) { learn.here.innerHTML = ex.why; learn.here.classList.add('why'); }
+            learn.el.querySelector('.qz-btns').replaceChildren(h('button.btn.primary.qz-small', { type: 'button', text: 'Avanti: ora prova da solo', on: { click: () => end(1, { ok: true }) } }));
+            return;
+          }
           setTimeout(() => end(errs ? 0.5 : ms > SLOW ? 0.5 : 1, { ok: true, err: errs, ms }), ex.mini ? 1300 : 900);
         } else if (msg.classList.contains('no')) { msg.className = 'qz-msg'; msg.textContent = ''; }
       }
       function wrong() {
         errs++;
         msg.className = 'qz-msg no';
-        msg.textContent = Z.say('Non è questa: riprova con calma.', 'Questa mossa non va: prova a guardare meglio.', 'Non ancora: riprova, hai tutto il tempo.');
+        msg.textContent = ex.learn ? Z.say('Non è questa: guarda la zona che si illumina.', 'Quasi: rileggi il consiglio e guarda dove si illumina.')
+          : Z.say('Non è questa: riprova con calma.', 'Questa mossa non va: prova a guardare meglio.', 'Non ancora: riprova, hai tutto il tempo.');
+        if (ex.learn) setTimeout(() => glow(ex.area || ex.focus), 700);
         clearTimeout(flip);
       }
       function end(score, info) {

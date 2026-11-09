@@ -843,6 +843,16 @@ html.mz-swipe button, html.mz-swipe a, html.mz-swipe input { touch-action: manip
 .qz-msg.ok { background: var(--rp-ok-soft); }
 .qz-msg.no { background: var(--rp-doubt-soft); }
 .qz-tools { grid-template-columns: repeat(2, 1fr); }
+/* esercizio guidato del quiz: il ragionamento spiegato sopra la griglia */
+.qz-learn { margin: 4px 0 2px; padding: 10px 12px; border-radius: 16px; background: var(--tint); display: grid; gap: 4px; font-size: 14.5px; line-height: 1.4; max-height: 38vh; overflow-y: auto; }
+.qz-learn h3 { margin: 0; font-size: 16px; color: var(--accent-deep); }
+.qz-learn p { margin: 0; }
+.qz-kind { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-soft); }
+.qz-here { padding: 6px 10px; border-radius: 12px; background: var(--accent-soft); }
+.qz-here.why { background: var(--rp-ok-soft); }
+.qz-here b { color: var(--accent-deep); }
+.qz-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.qz-small { font-size: 14px; padding: 7px 12px; flex: 1 1 auto; }
 .pc-go .btn { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 18px; font-weight: 600; padding: 14px 20px; }
 .pc-go .btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .pc-go p { margin: 0; font-size: 13.5px; color: var(--ink-soft); text-align: center; line-height: 1.4; }

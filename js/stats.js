@@ -403,7 +403,7 @@
           else st.o = P.words.map((p, i) => (i === k ? p.start : p.w));
           const fin = clone(st);
           if (d.id === 'wordsearch') fin.f[k] = 1; else fin.o[k] = P.words[k].w;
-          return { P, s: st, tag: d.tag, goal: f(P, fin).ok };
+          return { P, s: st, tag: d.tag, goal: f(P, fin).ok, area: [k], focus: [k] };
         }
         let st = G.init(P), n = 0;
         const found = [];
@@ -414,9 +414,11 @@
           st = r.state;
         }
         if (!found.length) continue;
-        const x = found[Math.floor(Math.random() * found.length)];
+        /* esercizio guidato (d.easy): una situazione verso la fine, con la griglia quasi piena e pochi dubbi */
+        const from = d.easy ? Math.floor(found.length * 2 / 3) : 0;
+        const x = found[from + Math.floor(Math.random() * (found.length - from))];
         const goal = FULL.has(d.id) ? f(P, x.r.state).ok : exProgress(d.id, d.tag, P, x.s).ok + 1;
-        return { P, s: x.s, tag: d.tag, goal };
+        return { P, s: x.s, tag: d.tag, goal, tip: x.r.tip || null, why: x.r.why || null, area: x.r.area || null, focus: x.r.focus || null };
       }
     }
     return null;

@@ -38,7 +38,9 @@ https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `mai
   secondo come è andata; nel worker si generano alcuni rompicapo e si tiene quello che usa di più i ragionamenti
   difficili per il giocatore (`Z.Stats.nextStep`).
   `js/quiz.js`: quiz di un gioco (sblocca il Percorso anche senza 5 partite): esercizi «trova la mossa» preparati nel
-  worker (una situazione di un rompicapo vero in cui serve proprio quel ragionamento), adattivi (8–11, dal più facile),
+  worker (una situazione di un rompicapo vero in cui serve proprio quel ragionamento); ogni ragionamento nuovo comincia
+  con un esercizio guidato e non valutato (griglia piccola e quasi finita, spiegazione, zona che si illumina, «Mostrami
+  la mossa» col perché del Suggerimento), poi lo stesso da soli; adattivi (8–11, dal più facile),
   senza suggerimenti, si possono saltare; le mosse sbagliate tornano indietro; mini rompicapo finale; poi
   `Z.Stats.quizDone` scrive profilo (`quiz:<id>`, `weak:<id>`, `path:<id>`) e mostra un resoconto.
 - Solitari: `js/games/cards.js` (carte francesi). Sono 5 giochi con id e dati separati (`klondike`, `freecell`,
