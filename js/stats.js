@@ -95,8 +95,9 @@
     },
     flow: {
       forced: ['vedere i percorsi obbligati', 'Cerca i pallini con una sola casella libera accanto: da lì il percorso è obbligato.'],
-      border: ['usare i bordi', 'I percorsi lungo i bordi lasciano spazio agli altri colori nel centro.'],
-      fill: ['riempire tutte le caselle', 'Ricorda che ogni casella va riempita: un percorso che isola un angolo è sempre sbagliato.'],
+      fill: ['riempire tutte le caselle', 'Ricorda che ogni casella va riempita: una casella vuota con due soli vicini liberi dice già dove passa il filo.'],
+      reach: ['capire dove un colore non può arrivare', 'Guarda quali fili possono ancora raggiungere una zona: spesso ne resta uno solo.'],
+      imagine: ['immaginare una strada e vederne le conseguenze', 'Prova a immaginare il filo da una parte: se lascia una casella isolata, la strada giusta è l’altra.'],
     },
     maze: {
       fork: ['scegliere la strada giusta ai bivi', 'Ai bivi prova a guardare avanti con gli occhi, oppure parti dall\'uscita e cammina al contrario.'],

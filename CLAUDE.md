@@ -9,10 +9,13 @@ https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `mai
 - `js/core.js`: oggetto globale `window.Zen` (Z): registro dei giochi (`Z.register`), opzioni di difficoltà
   (`Z.defaultOpts`, `Z.getOpts`, `Z.setOpts`, `Z.optsSummary`), temi, `Z.store` (localStorage con prefisso), `Z.h` (DOM).
 - `js/numgrid.js`: griglie con numeri (Sudoku, Futoshiki, Calcudoku) e `Z.latinSolver`, il risolutore «umano» condiviso.
-- **Rompicapo logici, mai a tentativi**: Sudoku, Futoshiki, Calcudoku, Stelle, Ponti e Tubi hanno un risolutore che usa
-  solo ragionamenti da persona, a livelli (opzione «Ragionamenti» o «Tecniche»). Il generatore tiene solo rompicapo
-  che questo risolutore completa al livello scelto (così sono anche unici) e il Suggerimento spiega il passo che lui
-  trova. Nei Tubi grandi, dove il ragionamento si ferma, il generatore fissa qualche pezzo (`P.fixed`, non si gira).
+- **Rompicapo logici, mai a tentativi**: Sudoku, Futoshiki, Calcudoku, Stelle, Ponti, Tubi e Collega i colori hanno un
+  risolutore che usa solo ragionamenti da persona, a livelli (opzione «Ragionamenti» o «Tecniche»). Il generatore tiene
+  solo rompicapo che questo risolutore completa al livello scelto (così sono anche unici) e il Suggerimento spiega il
+  passo che lui trova. Dove il ragionamento si ferma, il generatore aggiunge un aiuto visibile e bloccato: pezzi fissati
+  nei Tubi (`P.fixed`), stelle già messe nelle Stelle (`P.given`), tratti di filo già disegnati in Collega i colori
+  (`P.links`, che `solved` controlla). Luci: si tocca solo dalla seconda riga in giù, così «inseguire le luci»
+  dall'alto risolve sempre. Porte colorate: `plan` cerca una sequenza di uscite e spostamenti che liberano un blocco.
   Se aggiungi una regola o un gioco logico, segui lo stesso schema e controlla che il Suggerimento non debba mai
   «svelare» una mossa.
 - Giochi di parole: `js/games/crossword.js` (Cruciverba e Incastro) contiene il dizionario con le definizioni

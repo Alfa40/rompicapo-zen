@@ -9,7 +9,7 @@
   const MIN = 8;
   const SLOW = 90000;
   /* ragionamenti che non si possono preparare come esercizio */
-  const SKIP = { sudoku: ['guess'], futoshiki: ['guess'], calcudoku: ['guess'], blocks: ['reset'], maze: ['corridor'], crossword: ['only'], incastro: ['clue'],
+  const SKIP = { lights: ['calc'], sudoku: ['guess'], futoshiki: ['guess'], calcudoku: ['guess'], blocks: ['reset'], maze: ['corridor'], crossword: ['only'], incastro: ['clue'],
     klondike: ['draw', 'shift'], freecell: ['cell', 'empty'], pyramid: ['draw'], tripeaks: ['draw'], golf: ['draw'] };
   const NEAR = { play: 'Prendi una carta vicina a quella girata.', plan: 'Prendi una carta vicina a quella girata: ce n’è più di una.' };
   const CARD_TASK = {

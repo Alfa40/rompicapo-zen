@@ -428,6 +428,7 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spac
 .fl-bg { fill: var(--tint); }
 .fl-cell { fill: var(--surface); transition: fill-opacity 0.2s; }
 .fl-cell.on { fill-opacity: 0.26; }
+.fl-link { stroke-width: 0.22; stroke-linecap: round; opacity: 0.55; stroke-dasharray: 0.12 0.1; }
 .fl-path { fill: none; stroke-width: 0.3; stroke-linecap: round; stroke-linejoin: round; opacity: 0.95; }
 .fl-dot { stroke: var(--surface); stroke-width: 0.06; }
 .fl-dot-sh { fill: var(--edge); }
@@ -443,6 +444,8 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); font-weight: 600; letter-spac
 .st-dot { position: absolute; width: 16%; height: 16%; border-radius: 50%; background: var(--ink-soft); opacity: 0; transition: opacity 0.15s; }
 .st-cell.star .st-star { transform: scale(1); }
 .st-cell.dot .st-dot { opacity: 0.55; }
+.st-cell.given { box-shadow: inset 0 0 0 2px hsl(var(--rh) 45% 35% / 0.55); cursor: default; }
+.st-cell.given .st-star { filter: saturate(0.6) brightness(0.92); }
 .st-cell.bad .st-star { fill: var(--warn-soft); stroke: var(--warn); }
 .board.solved .st-star { animation: twinkle 1.6s ease-in-out 2; }
 @keyframes twinkle { 50% { transform: scale(1.15) rotate(12deg); } }

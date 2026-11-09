@@ -61,44 +61,49 @@
     return best.x;
   }
 
+  /* Si tocca a caso solo dalla seconda riga in giù: così «inseguire le luci» dall'alto risolve sempre tutto,
+     senza calcoli. Ogni passo ha un perché: le righe sopra sono già spente, e l'unico modo di spegnere una
+     lanterna senza riaccenderle è toccare quella subito sotto. */
   function generate(opt) {
     const n = opt.size, N = n * n, k = Math.max(3, Math.round(N * [0.45, 0.25, 0.45, 0.55][opt.mv]));
-    let best = null;
-    for (let t = 0; ; t++) {
+    for (;;) {
       const on = new Array(N).fill(0);
-      for (const i of Z.shuffle(Z.range(N)).slice(0, k)) press(n, on, i);
-      const lit = on.reduce((a, b) => a + b, 0);
-      if (lit < N * 0.3) continue;
-      const x = solve(n, on);
-      if (!x) continue;
-      const w = x.reduce((a, b) => a + b, 0);
-      if (w >= k * 0.8) return { n, start: on };
-      /* griglie con più soluzioni (4×4, 5×5, 9×9): si tiene la più lunga trovata */
-      if (!best || w > best.w) best = { w, P: { n, start: on } };
-      if (t > 300) return best.P;
+      for (const i of Z.shuffle(Z.range(N - n)).slice(0, k)) press(n, on, i + n);
+      if (on.reduce((a, b) => a + b, 0) >= N * 0.3 && on.slice(0, n).some(Boolean)) return { n, start: on };
     }
   }
 
   /* ---------- Suggerimento spiegato ---------- */
   function hint(P, st) {
-    const n = P.n, x = solve(n, st.on);
+    const n = P.n, N = n * n, s = Z.clone(st);
+    if (st.on.every(v => !v)) return null;
+    /* la prima riga con una lanterna accesa (tranne l'ultima): si tocca quella subito sotto */
+    for (let r = 0; r < n - 1; r++) {
+      const lit = Z.range(n).map(c => r * n + c).filter(i => st.on[i]);
+      if (!lit.length) continue;
+      const j = lit[0], i = j + n;
+      press(n, s.on, i);
+      const above = r ? (r === 1 ? 'La riga sopra è già spenta' : `Le ${r} righe sopra sono già spente`) : '';
+      return {
+        state: s, focus: [i], area: [j], tag: 'chase',
+        tip: Z.say(`Prova a «inseguire le luci»: guarda la lanterna accesa che si illumina. Per spegnerla senza riaccendere ${r ? 'le righe sopra' : 'niente sopra'}, quale lanterna puoi toccare?`,
+          'Spegni le luci riga dopo riga, dall’alto: per ogni lanterna accesa tocca quella subito sotto. Parti da quella che si illumina.'),
+        why: `La lanterna in ${Z.cellName(j, n)} è accesa. ${above ? above + ': toccando in quella riga, o accanto, le riaccenderesti. ' : ''}` +
+          `Toccando la lanterna subito sotto, lei si spegne e le righe sopra non cambiano: le luci scendono verso il basso, fino a sparire.`,
+      };
+    }
+    /* restano accese solo lanterne dell'ultima riga (succede se si sono toccate lanterne della prima riga):
+       si sistema la prima riga, poi si insegue di nuovo */
+    const x = solve(n, st.on);
     if (!x) return null;
-    const list = Z.range(n * n).filter(i => x[i]);
-    if (!list.length) return null;
-    const s = Z.clone(st);
-    const chase = list.filter(i => i >= n && st.on[i - n]);
-    const i = Z.pick(chase.length ? chase : list);
+    const top = Z.range(n).filter(i => x[i]), list = Z.range(N).filter(i => x[i]);
+    const i = top.length ? top[0] : list[0];
     press(n, s.on, i);
-    const left = list.length - 1;
-    let why = "Conta solo <b>quali</b> lanterne tocchi, non l'ordine, e toccarne una due volte annulla l'effetto. ";
-    why += chase.includes(i)
-      ? 'Un metodo utile è "inseguire le luci": per spegnere una lanterna accesa tocca quella subito sotto, così riga dopo riga le luci scendono verso il basso. '
-      : "Ho calcolato l'insieme più piccolo di tocchi che spegne tutto. ";
-    why += left ? `Questa lanterna fa parte della soluzione: ne restano altre ${left} da toccare.` : "Era l'ultimo tocco!";
-    const tip = chase.includes(i)
-      ? Z.say(`Prova a «inseguire le luci»: guarda la lanterna accesa che si illumina. Per spegnerla senza toccarla, quale lanterna sotto di lei puoi toccare?`, `Un metodo: spegni le luci riga dopo riga, toccando ogni volta la lanterna subito sotto quella accesa. Parti da quella che si illumina.`)
-      : 'Conta solo quali lanterne tocchi, non l\'ordine, e toccarne una due volte annulla l\'effetto. Guarda la zona che si illumina: quale tocco spegne più luci senza accenderne altre?';
-    return { state: s, focus: [i], area: chase.includes(i) ? [i - n] : [i], why, tip, tag: chase.includes(i) ? 'chase' : 'calc' };
+    return {
+      state: s, focus: [i], area: Z.range(N - n, N), tag: 'calc',
+      tip: 'Sono rimaste accese solo lanterne dell’ultima riga: per spegnerle bisogna cambiare qualcosa nella prima riga e poi inseguire di nuovo le luci verso il basso.',
+      why: `Con le lanterne della prima riga toccate fin qui, inseguendo le luci ne restano accese alcune in fondo. Toccando questa lanterna della prima riga e inseguendo di nuovo, alla fine si spengono tutte.`,
+    };
   }
 
   Z.register({
@@ -117,7 +122,7 @@
         `Tocca una lanterna, accesa o spenta.`,
         `Toccare due volte la stessa lanterna è come non toccarla. L'<b>ordine</b> dei tocchi non conta: conta solo quali lanterne tocchi.`,
       ],
-      start: `Prova il metodo «riga per riga»: per ogni lanterna accesa nella prima riga, tocca quella subito sotto. La prima riga si spegne. Fai lo stesso per la seconda riga, poi per la terza, fino in fondo. Se alla fine resta accesa qualche lanterna nell'ultima riga, chiedi un Suggerimento: ti dirà da dove ripartire.`,
+      start: `Usa il metodo «riga per riga»: per ogni lanterna accesa nella prima riga, tocca quella subito sotto. La prima riga si spegne. Fai lo stesso per la seconda riga, poi per la terza, fino in fondo. Funziona sempre: ogni griglia è fatta perché questo metodo la spenga tutta.`,
     }),
     icon: `<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="10" class="ic-s"/><path d="M32 14v6" class="ic-l2"/><rect x="22" y="20" width="20" height="26" rx="9" class="ic-a"/><path d="M26 46h12v4H26z" class="ic-l2f"/></svg>`,
     generate,

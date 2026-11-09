@@ -187,6 +187,60 @@
     ] },
   ];
 
+  /* ---------- Piano «ragionato» ----------
+     Solo due tipi di passo, quelli che una persona capisce subito: far uscire un blocco che ha la strada libera
+     (non fa mai danni: libera solo spazio) e, se nessuno è libero, spostare un blocco che chiude la strada a un altro.
+     Si cerca una sequenza di questi passi che faccia uscire tutti i blocchi; null se non c'è (entro un limite). */
+  function plan(P, pos0, rem0, limit = 250) {
+    let nodes = 0;
+    const seen = new Set();
+    const keyOf = (pos, rem) => pos.map((p, i) => (rem[i] ? '-' : p[0] + ',' + p[1])).join(';');
+    function rec(pos, rem) {
+      rem = rem.slice();
+      const steps = [];
+      for (let go = true; go;) {
+        go = false;
+        for (let i = 0; i < P.blocks.length; i++) {
+          if (rem[i]) continue;
+          const ex = exitPath(P, i, pos, rem);
+          if (ex) { rem[i] = true; steps.push({ k: 'exit', i, ex }); go = true; }
+        }
+      }
+      const left = P.blocks.map((_, i) => i).filter(i => !rem[i]);
+      if (!left.length) return steps;
+      if (++nodes > limit) return null;
+      const key = keyOf(pos, rem);
+      if (seen.has(key)) return null;
+      seen.add(key);
+      /* chi chiude la strada a chi: j uscirebbe se a non ci fosse */
+      const cands = [];
+      for (const a of left) {
+        const remA = rem.slice();
+        remA[a] = true;
+        const occA = occupancy(P, pos, remA);
+        const blocked = left.filter(j => j !== a && exitPath(P, j, pos, remA, occA));
+        if (!blocked.length) continue;
+        const b = P.blocks[a], occ = occupancy(P, pos, rem);
+        for (const [x, y, d] of reach(P, b.shape, pos[a][0], pos[a][1], occ, a, b.lock)) {
+          if (!d) continue;
+          const pos2 = pos.map(p => p.slice());
+          pos2[a] = [x, y];
+          const occ2 = occupancy(P, pos2, rem);
+          const j = blocked.find(q => exitPath(P, q, pos2, rem, occ2));
+          if (j != null) cands.push({ a, x, y, d, j, pos2 });
+        }
+      }
+      cands.sort((p, q) => p.d - q.d);
+      for (const c of cands) {
+        const r = rec(c.pos2, rem);
+        if (r) return steps.concat([{ k: 'move', a: c.a, x: c.x, y: c.y, j: c.j }], r);
+        if (nodes > limit) return null;
+      }
+      return null;
+    }
+    return rec(pos0.map(p => p.slice()), rem0.slice());
+  }
+
   function generate(opt) {
     const cfg = { W: opt.size, H: opt.size, colors: opt.col, fill: CFG.fill[opt.crowd], cands: CFG.cands[opt.crowd], lock: CFG.lock[opt.lock] };
     let best = null;
@@ -195,8 +249,11 @@
       if (best && Z.now() - t0 > 1200) break; /* griglie grandi: basta il migliore trovato finora */
       const P = build(cfg);
       if (!P) continue;
-      const r = rate(P);
-      const score = r.rounds * 3 - r.freeAtStart * 2 + (r.stuck ? 4 : 0) + Math.random();
+      /* solo griglie che si risolvono con passi ragionati (uscite e spostamenti che liberano un altro blocco) */
+      const pl = plan(P, P.start, P.blocks.map(() => false));
+      if (!pl) continue;
+      const r = rate(P), moves = pl.filter(x => x.k === 'move').length;
+      const score = r.rounds * 3 - r.freeAtStart * 2 + Math.min(moves, 4) * 2 + Math.random();
       if (!best || score > best.score) best = { score, P, n: (best ? best.n : 0) + 1 };
       else best.n++;
     }
@@ -220,25 +277,19 @@
           (ex.d ? ` (bastano ${ex.d} ${ex.d === 1 ? 'passo' : 'passi'})` : '') + ': l\'ho fatto uscire. Cerca sempre prima i blocchi già liberi: ogni uscita fa spazio agli altri.',
       };
     }
-    /* 2) spostare un blocco per liberarne un altro */
-    for (const a of Z.shuffle(left.slice())) {
-      const b = P.blocks[a];
-      const occ = occupancy(P, s.pos, s.removed);
-      const spots = reach(P, b.shape, s.pos[a][0], s.pos[a][1], occ, a, b.lock).filter(p => p[2] > 0);
-      for (const [x, y] of spots) {
-        const pos2 = s.pos.map(p => p.slice());
-        pos2[a] = [x, y];
-        const occ2 = occupancy(P, pos2, s.removed);
-        const other = left.find(j => j !== a && exitPath(P, j, pos2, s.removed, occ2));
-        if (other != null) {
-          s.pos = pos2;
-          return {
-            state: s, focus: [a, other], area: [other], tag: 'move',
-            tip: `Nessun blocco può uscire subito. Guarda il blocco <b>${colName(P.blocks[other].color)}</b>: chi gli chiude la strada verso la sua porta, e dove potrebbe spostarsi?`,
-            why: `Nessun blocco può uscire subito. Sposta il blocco <b>${colName(b.color)}</b> come ho fatto io: così si libera il passaggio per il blocco <b>${colName(P.blocks[other].color)}</b>, che ora può raggiungere la sua porta.`,
-          };
-        }
-      }
+    /* 2) spostare un blocco che chiude la strada a un altro (scelto in modo che poi si possa finire) */
+    const pl = plan(P, s.pos, s.removed);
+    const mv = pl && pl.find(x => x.k === 'move');
+    if (mv) {
+      const a = mv.a, j = mv.j;
+      s.pos = s.pos.map(p => p.slice());
+      s.pos[a] = [mv.x, mv.y];
+      return {
+        state: s, focus: [a, j], area: [j], tag: 'move',
+        tip: `Nessun blocco può uscire subito. Guarda il blocco <b>${colName(P.blocks[j].color)}</b>: chi gli chiude la strada verso la sua porta, e dove potrebbe spostarsi senza chiudere altre strade?`,
+        why: `Nessun blocco può uscire subito. Il blocco <b>${colName(P.blocks[j].color)}</b> arriverebbe alla sua porta, ma il blocco <b>${colName(P.blocks[a].color)}</b> gli chiude la strada. ` +
+          `L’ho spostato in un posto dove non dà fastidio a nessuno: ora il <b>${colName(P.blocks[j].color)}</b> può uscire.`,
+      };
     }
     /* 3) tornare alla disposizione iniziale, da cui esiste sempre un ordine di uscita */
     s.pos = P.start.map(p => p.slice());

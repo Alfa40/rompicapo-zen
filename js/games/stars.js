@@ -328,16 +328,17 @@
       step,
       solve(L) {
         const c = new Array(N).fill(0);
+        for (const i of P.given || []) c[i] = 1;
         let hard = 1;
         for (let it = 0; it < 4 * N; it++) {
-          if (done(c)) return { ok: true, hard };
+          if (done(c)) return { ok: true, hard, c };
           const d = step(c, L);
-          if (!d) return { ok: false, hard };
+          if (!d) return { ok: false, hard, c };
           for (const [i, v] of d.set) c[i] = v;
           if (d.lv > hard) hard = d.lv;
-          if (broken(c)) return { ok: false, hard };
+          if (broken(c)) return { ok: false, hard, c };
         }
-        return { ok: false, hard };
+        return { ok: false, hard, c };
       },
     };
   }
@@ -363,7 +364,23 @@
       const r = makeSolver(P).solve(L);
       if (r.ok && (!best || r.hard > best.hard)) best = { P, hard: r.hard };
     }
-    return best ? best.P : last || genUnique(opt);
+    if (best) return best.P;
+    /* non trovata in tempo: si mettono alcune stelle già al loro posto dove il ragionamento si ferma */
+    const P = last || genUnique(opt);
+    if (!P) return null;
+    P.given = [];
+    const n = P.n;
+    for (let k = 0; k < P.sol.length; k++) {
+      const r = makeSolver(P).solve(3);
+      if (r.ok) return P;
+      const open = P.sol.filter(i => r.c[i] === 0);
+      if (!open.length) break;
+      /* la stella che toglie più dubbi: con più caselle incerte nella sua riga e colonna */
+      const doubt = i => Z.range(n * n).filter(j => r.c[j] === 0 && (((j / n) | 0) === ((i / n) | 0) || j % n === i % n)).length;
+      P.given.push(open.reduce((a, b) => (doubt(b) > doubt(a) ? b : a)));
+    }
+    fallbackUsed++;
+    return P;
   }
 
   const HUES = [8, 40, 75, 140, 175, 205, 240, 275, 310, 340];
@@ -426,6 +443,8 @@
       rules: [
         `Ogni <b>riga</b>, ogni <b>colonna</b> e ogni <b>regione</b> ha <b>una stella</b>. Se hai scelto «2 per riga» nella difficoltà, ne ha <b>due</b>.`,
         `Due stelle <b>non si toccano</b>, nemmeno in diagonale: le otto caselle intorno a una stella restano vuote.`,
+        `A volte qualche stella è <b>già messa</b>, con il bordo scuro: è giusta e non si toglie.`,
+        `C'è sempre una sola soluzione, e ci si arriva ragionando.`,
       ],
       play: [
         `Tocca una casella <b>una volta</b> per mettere una stella, <b>due volte</b> per un puntino (il tuo promemoria: «qui non c'è una stella»), <b>tre volte</b> per svuotarla.`,
@@ -437,7 +456,7 @@
     generate,
     _fallbacks: () => fallbackUsed,
     _check(P) { const s = solve(P.n, P.k, P.reg, 2, rowSets(P.n, P.k)); return s && s.length === 1 ? '' : 'NON unico'; },
-    init: P => ({ c: new Array(P.n * P.n).fill(0) }),
+    init: P => { const c = new Array(P.n * P.n).fill(0); for (const i of P.given || []) c[i] = 1; return { c }; },
     solved(P, s) {
       const st = [];
       s.c.forEach((v, i) => { if (v === 1) st.push(i); });
@@ -445,7 +464,7 @@
     },
     hint,
     view(ctx) {
-      const P = ctx.puzzle, n = P.n, k = P.k;
+      const P = ctx.puzzle, n = P.n, k = P.k, given = new Set(P.given || []);
       let cur = null;
       const el = Z.h('div.stars');
       el.style.setProperty('--n', n);
@@ -487,7 +506,8 @@
       });
       el.addEventListener('pointerup', e => {
         if (!down || e.pointerId !== down.id) return;
-        if (!down.drag) {
+        if (!down.drag && given.has(down.i)) Z.flashEl(cells[down.i]);
+        else if (!down.drag) {
           const s = Z.clone(cur), i = down.i;
           s.c[i] = down.right ? (s.c[i] === 2 ? 0 : 2) : (s.c[i] + 1) % 3;
           ctx.preview(s);
@@ -510,12 +530,13 @@
         for (const g of [rowC, colC, regC]) for (const key in g) if (g[key].length > k) g[key].forEach(i => bad.add(i));
         cells.forEach((c, i) => {
           c.classList.toggle('star', cur.c[i] === 1);
+          c.classList.toggle('given', given.has(i));
           c.classList.toggle('dot', cur.c[i] === 2);
           c.classList.toggle('bad', bad.has(i));
         });
       }
       /* comandi con le frecce */
-      const put = (i, v) => { if (!cur) return; const s = Z.clone(cur); s.c[i] = s.c[i] === v ? 0 : v; ctx.commit(s); };
+      const put = (i, v) => { if (!cur || given.has(i)) return; const s = Z.clone(cur); s.c[i] = s.c[i] === v ? 0 : v; ctx.commit(s); };
       return {
         el, aspect: 1,
         render(s) { cur = s; paint(); },
@@ -526,7 +547,7 @@
           keys: [
             { label: 'Stella', icon: Z.ICONS.star, act: i => put(i, 1) },
             { label: 'Puntino', icon: Z.ICONS.dot, act: i => put(i, 2) },
-            { label: 'Cancella', icon: Z.ICONS.erase, act: i => { if (cur && cur.c[i]) { const s = Z.clone(cur); s.c[i] = 0; ctx.commit(s); } } },
+            { label: 'Cancella', icon: Z.ICONS.erase, act: i => { if (cur && cur.c[i] && !given.has(i)) { const s = Z.clone(cur); s.c[i] = 0; ctx.commit(s); } } },
             { label: 'Puntini in fila', icon: Z.ICONS.pen, pen: true, tip: 'Muovendoti metti un puntino in ogni casella vuota. Tocca di nuovo per smettere.',
               act: i => { if (cur && cur.c[i] === 0) { const s = Z.clone(cur); s.c[i] = 2; ctx.commit(s); } } },
           ],
