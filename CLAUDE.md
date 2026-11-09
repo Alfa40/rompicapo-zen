@@ -65,6 +65,9 @@ https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `mai
 - Aiuti solo Annulla/Ripristina e Suggerimento, entrambi illimitati. Il Suggerimento è a due passi: prima un consiglio
   (`tip`, con `area` da far lampeggiare: dove guardare e che ragionamento usare, senza fare la mossa), poi la mossa con
   `why` che spiega bene perché. Tono gentile e mai critico (anche sugli errori), frasi variate con `Z.say`.
+  I testi dei suggerimenti (e i consigli in `Z.Stats.TAGS`) sono semplicissimi, come per un bambino di 5 anni: frasi
+  corte, una idea per frase, parole di tutti i giorni (niente «candidati», «vincolo»…), passi concreti («Facciamo finta…»,
+  «Allora qui va il 4!»).
   Chi ha il codice degli amici o del proprietario può valutare ogni suggerimento (scelte veloci → server `/rz/hint`);
   una volta a settimana il server ne fa una proposta «Valutazioni dei suggerimenti» per Claude.
 - Il tema visivo cambia a ogni partita; la partita in corso resta salvata.

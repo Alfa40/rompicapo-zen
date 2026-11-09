@@ -217,15 +217,16 @@
     }
     const lineList = (W, word) => (W.length === 1 ? W[0].name : `le ${word} ${Z.fmtList(W.map(U => +U.name.split(' ').pop()))}`);
 
+    const aU = s => (s.startsWith('la ') ? 'al' + s : s.startsWith('le ') ? 'al' + s : 'a ' + s);
     /* livello 1 */
     function basic(c) {
       for (const U of units) {
         const m = need(c, U), fr = free(c, U);
         if (m > 0 && fr.length === m) return {
           lv: 1, tag: 'place', set: fr.map(i => [i, 1]), focus: fr, area: U.cells,
-          tip: Z.say(`Guarda ${U.name}: quante stelle le mancano, e quanti posti liberi le restano?`, `Conta i posti liberi in ${U.name}: sono proprio quanti ne servono?`) +
-            ' Quando i posti liberi sono esattamente quante le stelle che mancano, la scelta è obbligata.',
-          why: `In ${U.name} ${m === 1 ? 'manca una stella' : 'mancano ' + m + ' stelle'} e ${fr.length === 1 ? 'resta un solo posto libero' : 'restano solo ' + fr.length + ' posti liberi'} (le altre caselle sono già escluse): ${fr.length === 1 ? 'la stella va lì' : 'le stelle vanno lì'}.`,
+          tip: Z.say(`Guarda ${U.name}. Quante stelle le mancano? E quanti posti liberi ha ancora?`, `Conta i posti liberi in ${U.name}: sono tanti quante le stelle che mancano?`) +
+            ' Se i posti sono proprio quelli che servono, le stelle vanno lì!',
+          why: `${cap(aU(U.name))} ${m === 1 ? 'manca una stella' : 'mancano ' + m + ' stelle'}. Ha ${fr.length === 1 ? 'un posto libero solo' : 'solo ' + fr.length + ' posti liberi'}: nelle altre caselle c’è già un puntino. Allora ${fr.length === 1 ? 'la stella va lì' : 'le stelle vanno proprio lì'}!`,
         };
       }
       for (let i = 0; i < N; i++) {
@@ -233,16 +234,16 @@
         const fr = around[i].filter(j => c[j] === 0);
         if (fr.length) return {
           lv: 1, tag: 'touch', set: fr.map(j => [j, 2]), focus: fr, area: [i],
-          tip: `Guarda la stella in ${Z.cellName(i, n)}: cosa puoi dire delle caselle che la circondano? Segnarle aiuta a vedere dove restano posti liberi.`,
-          why: 'Le stelle non possono toccarsi, nemmeno in diagonale: tutte le caselle attorno a questa stella sono vuote. Le ho segnate con un puntino.',
+          tip: `Guarda la stella in ${Z.cellName(i, n)}. Le stelle non si toccano mai. Cosa vuol dire per le caselle tutte intorno?`,
+          why: 'Le stelle non si toccano mai, neanche con gli angoli. Quindi le caselle tutte intorno a questa stella sono vuote: ci ho messo un puntino.',
         };
       }
       for (const U of units) {
         const fr = free(c, U);
         if (need(c, U) === 0 && fr.length) return {
           lv: 1, tag: 'full', set: fr.map(j => [j, 2]), focus: fr, area: U.cells,
-          tip: `${cap(U.name)} ha già ${k === 1 ? 'la sua stella' : 'tutte le sue stelle'}: cosa vuol dire per le altre caselle? Segnarle con un puntino rende la griglia più chiara.`,
-          why: `${cap(U.name)} ha già ${k === 1 ? 'la sua stella' : 'le sue ' + k + ' stelle'}: le altre caselle sono vuote. Le ho segnate con un puntino.`,
+          tip: `${cap(U.name)} ha già ${k === 1 ? 'la sua stella' : 'tutte le sue stelle'}. Ne può avere altre?`,
+          why: `${cap(U.name)} ha già ${k === 1 ? 'la sua stella' : 'le sue ' + k + ' stelle'}: è al completo! Nelle altre caselle non ci vanno stelle, quindi ci ho messo un puntino.`,
         };
       }
       return null;
@@ -271,17 +272,17 @@
         const r = suppose(c, i, v, deep);
         if (!r) continue;
         const { U, m } = r, where = Z.cellName(i, n);
-        const end = `${U.name} ${m < 0 ? 'avrebbe troppe stelle' : 'non avrebbe più spazio per ' + stars(c, Math.max(1, m))}.`;
+        const end = `${U.name} ${m < 0 ? 'avrebbe troppe stelle' : 'resterebbe senza posto per ' + stars(c, Math.max(1, m))}.`;
         if (v === 2) return {
           lv: 3, tag: 'imagine', set: [[i, 1]], focus: [i], area: [i, ...U.cells],
-          tip: `Prova a immaginare che in ${Z.cellName(i, n)} non ci sia una stella: seguendo le mosse che diventano obbligate, cosa succederebbe a ${U.name}?`,
-          why: `Immagina che in ${where} non ci sia una stella: seguendo le mosse obbligate che ne vengono, ${end} Quindi lì ci va proprio una stella.`,
+          tip: `Facciamo finta: in ${Z.cellName(i, n)} niente stella. Poi fai le mosse che vengono da sole. Cosa succede ${aU(U.name)}?`,
+          why: `Facciamo finta che in ${where} non ci sia una stella. Facendo le mosse che vengono da sole, ${end} Non va bene! Quindi lì c’è proprio una stella.`,
         };
         return {
           lv: deep ? 3 : 2, tag: 'imagine', set: [[i, 2]], focus: [i], area: [i, ...U.cells],
-          tip: `Prova a immaginare una stella in ${where}: le caselle attorno diventerebbero vuote${deep ? ', e da lì altre mosse diventerebbero obbligate' : ''}. Cosa succederebbe a ${U.name}?`,
-          why: `Immagina una stella in ${where}: le caselle attorno diventerebbero vuote` +
-            (deep ? ' e, seguendo le mosse obbligate che ne vengono, ' : ' e ') + end + ' Quindi lì non può esserci una stella: ci va un puntino.',
+          tip: `Facciamo finta: una stella in ${where}. Le caselle intorno diventano vuote${deep ? ', poi altre mosse vengono da sole' : ''}. Cosa succede ${aU(U.name)}?`,
+          why: `Facciamo finta che in ${where} ci sia una stella. Le caselle intorno diventano vuote` +
+            (deep ? ' e, facendo le mosse che vengono da sole, ' : ', e ') + end + ' Non va bene! Quindi lì niente stella: ci va un puntino.',
         };
       }
       return null;
@@ -302,8 +303,8 @@
           const out = [...inW].filter(i => c[i] === 0 && !own.has(i));
           if (out.length) return {
             lv: m === 1 ? 2 : 3, tag: 'advanced', set: out.map(i => [i, 2]), focus: out, area: [...own].filter(i => inW.has(i) || c[i] === 0),
-            tip: `Guarda ${one ? 'la regione che si illumina' : 'le regioni che si illuminano'}: ${one ? 'i suoi posti liberi stanno' : 'i loro posti liberi stanno'} tutti dentro ${lines}. Cosa vuol dire per le altre caselle di ${m === 1 ? 'quella ' + (word === 'righe' ? 'riga' : 'colonna') : 'quelle ' + word}?`,
-            why: `${one ? 'La regione che si illumina ha' : 'Le regioni che si illuminano hanno'} tutti i posti liberi dentro ${lines}, e ${one ? 'le servono' : 'servono loro'} proprio le ${quota === 1 ? 'stella che manca' : quota + ' stelle che mancano'} ${m === 1 ? 'lì' : 'a quelle ' + word}. Quindi nelle altre caselle di ${m === 1 ? 'quella ' + (word === 'righe' ? 'riga' : 'colonna') : 'quelle ' + word} non ci sono stelle.`,
+            tip: `Guarda ${one ? 'la regione che si illumina' : 'le regioni che si illuminano'}: ${one ? 'tutti i suoi posti liberi sono' : 'tutti i loro posti liberi sono'} dentro ${lines}. Chi prende le stelle di ${m === 1 ? 'quella ' + (word === 'righe' ? 'riga' : 'colonna') : 'quelle ' + word}?`,
+            why: `${one ? 'La regione che si illumina ha' : 'Le regioni che si illuminano hanno'} tutti i posti liberi dentro ${lines}. Le sue stelle andranno lì, e ${quota === 1 ? 'è proprio la stella che manca' : 'sono proprio le ' + quota + ' stelle che mancano'} ${aU(lines)}. Non resta posto per altre: nelle altre caselle di ${m === 1 ? 'quella ' + (word === 'righe' ? 'riga' : 'colonna') : 'quelle ' + word} ci va un puntino.`,
           };
         }
         if (touching.length && touching.length > inside.length && sum(touching) === quota) {
@@ -312,8 +313,8 @@
             const one2 = touching.length === 1;
             return {
               lv: m === 1 ? 2 : 3, tag: 'advanced', set: out.map(i => [i, 2]), focus: out, area: [...inW],
-              tip: `Guarda ${lines}: ${quota === 1 ? 'manca una stella' : 'mancano ' + quota + ' stelle'}. Quali regioni possono dargliele?`,
-              why: `A ${lines} ${quota === 1 ? 'manca una stella' : 'mancano ' + quota + ' stelle'}, e possono dargliele solo ${one2 ? 'una regione, che ne ha bisogno' : touching.length + ' regioni, che ne hanno bisogno'} proprio di ${quota}. Quindi ${one2 ? 'quella regione mette' : 'quelle regioni mettono'} lì tutte le stelle che le mancano: le loro caselle fuori da ${lines} sono vuote.`,
+              tip: `Guarda ${lines}: ${quota === 1 ? 'manca una stella' : 'mancano ' + quota + ' stelle'}. Quali regioni possono metterle lì?`,
+              why: `${cap(aU(lines))} ${quota === 1 ? 'manca una stella' : 'mancano ' + quota + ' stelle'}. Possono metterle solo ${one2 ? 'una regione' : touching.length + ' regioni'}, e ${one2 ? 'le servono' : 'servono loro'} proprio ${quota === 1 ? 'una stella' : quota + ' stelle'}. Quindi tutte le loro stelle vanno lì: fuori da ${lines} queste regioni non hanno stelle.`,
             };
           }
         }
@@ -399,19 +400,19 @@
         const near = Z.range(N).find(j => j !== i && s.c[j] === 1 && Math.abs(((j / n) | 0) - r0) <= 1 && Math.abs(j % n - c0) <= 1);
         const rowS = Z.range(n).filter(x => s.c[r0 * n + x] === 1).length, colS = Z.range(n).filter(y => s.c[y * n + c0] === 1).length;
         const regS = Z.range(N).filter(j => P.reg[j] === P.reg[i] && s.c[j] === 1).length;
-        if (near != null) because = `tocca la stella in ${Z.cellName(near, n)}, e le stelle non possono toccarsi nemmeno in diagonale.`;
-        else if (rowS > k) because = `la riga ${r0 + 1} avrebbe più di ${star1(k)}.`;
-        else if (colS > k) because = `la colonna ${c0 + 1} avrebbe più di ${star1(k)}.`;
-        else if (regS > k) because = `la sua regione avrebbe più di ${star1(k)}.`;
+        if (near != null) because = `tocca la stella in ${Z.cellName(near, n)}, e le stelle non si toccano mai, neanche con gli angoli.`;
+        else if (rowS > k) because = `fa avere alla riga ${r0 + 1} più di ${star1(k)}.`;
+        else if (colS > k) because = `fa avere alla colonna ${c0 + 1} più di ${star1(k)}.`;
+        else if (regS > k) because = `fa avere alla sua regione più di ${star1(k)}.`;
       }
       s.c[i] = 0;
       return {
         state: s, focus: [i], area: Z.range(n).map(x => r0 * n + x),
         tag: 'wrong',
-        tip: Z.say('C\'è qualcosa da ricontrollare nella riga che si illumina.', 'Ricontrolla con calma la riga che si illumina.') +
-          ` Conta le stelle di ogni riga, colonna e regione (${k === 1 ? 'ne serve una' : 'ne servono ' + k} per ciascuna) e verifica che nessuna stella ne tocchi un'altra.`,
-        why: `${what} in ${Z.cellName(i, n)} ` + (because || `sembrava possibile, ma porta a un problema più avanti: alla fine una riga, una colonna o una regione resterebbe senza spazio per ${k === 1 ? 'la sua stella' : 'le sue stelle'}.`) +
-          ` L'ho tolt${g}, così riparti da una base sicura.` + (wrong.length > 1 ? ` Ci sono altre ${wrong.length - 1} caselle da ricontrollare.` : ''),
+        tip: Z.say('Qualcosa non torna nella riga che si illumina.', 'Guarda bene la riga che si illumina.') +
+          ` Conta le stelle: ${k === 1 ? 'una' : k} per ogni riga, colonna e regione. E nessuna stella deve toccarne un’altra.`,
+        why: `${what} in ${Z.cellName(i, n)} ` + (because || `sembrava giust${g}, ma non lo è: più avanti una riga, una colonna o una regione resterebbe senza posto per ${k === 1 ? 'la sua stella' : 'le sue stelle'}.`) +
+          ` L’ho tolt${g} io: nessun problema, si riparte da qui.` + (wrong.length > 1 ? ` Ci sono altre ${wrong.length - 1} caselle da controllare.` : ''),
       };
     }
     /* il prossimo passo del risolutore «umano» (controllato con la soluzione) */
@@ -427,8 +428,8 @@
     s.c[i] = 1;
     return {
       state: s, focus: [i], area: [],
-      tip: 'Non ci sono mosse dirette. Un trucco: cerca gruppi di regioni che stanno tutte dentro lo stesso numero di righe (o di colonne). Quelle righe sono riservate a loro, e nelle altre caselle di quelle righe non possono esserci stelle.',
-      tag: 'advanced', why: `Non ci sono mosse dirette. Un trucco avanzato: se alcune regioni stanno tutte dentro lo stesso numero di righe (o colonne), quelle righe sono "riservate" a loro e nelle altre caselle di quelle righe non possono esserci stelle. Ecco una stella della soluzione, in ${Z.cellName(i, n)}.`,
+      tip: 'Qui è difficile, con calma. Cerca una regione che sta tutta dentro una riga (o una colonna): la stella di quella riga sarà sua, e nel resto della riga ci vanno puntini.',
+      tag: 'advanced', why: `Qui è difficile: non c’è una mossa facile. Ti aiuto io: in ${Z.cellName(i, n)} c’è una stella.`,
     };
   }
 

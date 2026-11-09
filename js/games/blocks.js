@@ -272,9 +272,9 @@
       s.removed[i] = true;
       return {
         state: s, focus: [i], area: [], tag: 'free',
-        tip: Z.say('C\'è un blocco che ha già la strada libera fino alla porta del suo colore: riesci a trovarlo?', 'Prima di spostare qualcosa, guarda ogni blocco: ce n\'è uno che può già uscire dalla sua porta?') + ' Ogni blocco che esce fa spazio agli altri.',
+        tip: Z.say('C’è un blocco che può già arrivare alla porta del suo stesso colore, senza niente in mezzo. Lo trovi?', 'Guarda ogni blocco: ce n’è uno con la strada libera fino alla sua porta?') + ' Ogni blocco che esce lascia più spazio agli altri.',
         why: `Il blocco <b>${colName(P.blocks[i].color)}</b> ha la strada libera fino alla porta ${colName(ex.door.color)} ${SIDE_NAME[ex.door.side]}` +
-          (ex.d ? ` (bastano ${ex.d} ${ex.d === 1 ? 'passo' : 'passi'})` : '') + ': l\'ho fatto uscire. Cerca sempre prima i blocchi già liberi: ogni uscita fa spazio agli altri.',
+          (ex.d ? ` (bastano ${ex.d} ${ex.d === 1 ? 'passo' : 'passi'})` : '') + ': niente in mezzo! L’ho fatto uscire. Ora c’è più spazio per gli altri.',
       };
     }
     /* 2) spostare un blocco che chiude la strada a un altro (scelto in modo che poi si possa finire) */
@@ -286,17 +286,17 @@
       s.pos[a] = [mv.x, mv.y];
       return {
         state: s, focus: [a, j], area: [j], tag: 'move',
-        tip: `Nessun blocco può uscire subito. Guarda il blocco <b>${colName(P.blocks[j].color)}</b>: chi gli chiude la strada verso la sua porta, e dove potrebbe spostarsi senza chiudere altre strade?`,
-        why: `Nessun blocco può uscire subito. Il blocco <b>${colName(P.blocks[j].color)}</b> arriverebbe alla sua porta, ma il blocco <b>${colName(P.blocks[a].color)}</b> gli chiude la strada. ` +
-          `L’ho spostato in un posto dove non dà fastidio a nessuno: ora il <b>${colName(P.blocks[j].color)}</b> può uscire.`,
+        tip: `Nessun blocco può uscire subito. Guarda il blocco <b>${colName(P.blocks[j].color)}</b>: chi gli sta in mezzo alla strada? Dove puoi spostarlo?`,
+        why: `Il blocco <b>${colName(P.blocks[j].color)}</b> vuole uscire, ma il blocco <b>${colName(P.blocks[a].color)}</b> gli sta in mezzo alla strada. ` +
+          `L’ho spostato in un posto dove non dà fastidio a nessuno: ora il <b>${colName(P.blocks[j].color)}</b> può uscire!`,
       };
     }
     /* 3) tornare alla disposizione iniziale, da cui esiste sempre un ordine di uscita */
     s.pos = P.start.map(p => p.slice());
     return {
       state: s, focus: left,
-      area: [], tip: 'Così i blocchi si chiudono la strada a vicenda. Guarda dove si fermerebbe ogni blocco prima di muoverlo: a volte conviene tornare indietro di qualche mossa.',
-      tag: 'reset', why: 'Così i blocchi si bloccano a vicenda. Li ho rimessi dove erano all\'inizio: da quella disposizione esiste sempre un ordine in cui escono tutti. Prova a partire dal blocco che ha la strada più corta verso la sua porta.',
+      area: [], tip: 'Ora i blocchi si chiudono la strada a vicenda. Prima di muovere un blocco, guarda dove si fermerà. A volte conviene tornare indietro.',
+      tag: 'reset', why: 'Ora i blocchi si chiudono la strada a vicenda. Li ho rimessi al loro posto di partenza: da lì si può sempre farli uscire tutti. Comincia dal blocco più vicino alla sua porta.',
     };
   }
 

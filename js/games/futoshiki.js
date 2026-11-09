@@ -128,14 +128,14 @@
         if (!S.v[a]) {
           const out = S.cand[a] & ~((1 << hi(mb)) - 1);
           if (out) {
-            S.elim(a, out, `La casella in ${Z.cellName(a, n)} è minore di quella ${side(a, b)}, che ${S.v[b] ? 'vale ' + S.v[b] : 'al massimo può valere ' + hi(mb)}: quindi lì ${no(out)}.`, [b]);
+            S.elim(a, out, `Il segno dice che la casella in ${Z.cellName(a, n)} è più piccola di quella ${side(a, b)}. Quella ${S.v[b] ? 'è ' + S.v[b] : 'può essere al massimo ' + hi(mb)}. Quindi qui ${no(out)}: ${Z.popcount(out) === 1 ? 'è troppo grande' : 'sono troppo grandi'}.`, [b]);
             return true;
           }
         }
         if (!S.v[b]) {
           const out = S.cand[b] & ((1 << (lo(ma) + 1)) - 1);
           if (out) {
-            S.elim(b, out, `La casella in ${Z.cellName(b, n)} è maggiore di quella ${side(b, a)}, che ${S.v[a] ? 'vale ' + S.v[a] : 'vale almeno ' + lo(ma)}: quindi lì ${no(out)}.`, [a]);
+            S.elim(b, out, `Il segno dice che la casella in ${Z.cellName(b, n)} è più grande di quella ${side(b, a)}. Quella ${S.v[a] ? 'è ' + S.v[a] : 'è almeno ' + lo(ma)}. Quindi qui ${no(out)}: ${Z.popcount(out) === 1 ? 'è troppo piccolo' : 'sono troppo piccoli'}.`, [a]);
             return true;
           }
         }
@@ -205,12 +205,12 @@
     const n = P.n, peers = i => Z.range(n * n).filter(j => j !== i && (((j / n) | 0) === ((i / n) | 0) || j % n === i % n));
     return Z.latinHint(P, st, {
       n, peers, units: Z.lineUnits(n), solver: solverOf(P),
-      fam: { sign: 'Guarda i segni &lt; &gt; vicino alle caselle libere: un numero più piccolo di un vicino non può arrivare al massimo, uno più grande non può essere 1. E i limiti passano da una casella all’altra.' },
+      fam: { sign: 'Guarda i segni &lt; e &gt; vicino alle caselle che si illuminano. La punta del segno indica il numero più piccolo. Un numero più piccolo del vicino non può essere il più grande di tutti; uno più grande non può essere 1.' },
       naked(i, d) {
         const present = [...new Set(peers(i).map(p => st.v[p]).filter(x => x))].sort((a, b) => a - b);
-        return `In ${Z.cellName(i, n)} la riga e la colonna contengono già ${Z.fmtList(present)}: l'unico numero possibile è ${Z.il(d)}.`;
+        return `Guarda la casella in ${Z.cellName(i, n)}. Nella sua riga e nella sua colonna ci sono già ${Z.fmtList(present)}. Manca solo ${Z.il(d)}: allora qui va ${Z.il(d)}!`;
       },
-      hidden: (U, d, i) => `${U.where} manca ancora ${Z.il(d)} e può andare solo in ${Z.cellName(i, n)}: nelle altre caselle libere c'è già un ${d} nella stessa colonna o riga.`,
+      hidden: (U, d, i) => `${U.where} manca ${Z.il(d)}. Le altre caselle vuote non vanno bene: nella loro colonna o riga c’è già un ${d}. Resta solo ${Z.cellName(i, n)}: ${Z.il(d)} va lì!`,
     });
   }
 

@@ -185,19 +185,19 @@
       const i = first, h = L.how[i];
       setTo(i);
       const x = i % n, y = (i / n) | 0, corner = (x === 0 || x === n - 1) && (y === 0 || y === n - 1);
-      if (h.tag === 'edge') return { state: s, focus: [i], area: [i], tag: 'edge', tip: `Guarda il pezzo che si illumina: è ${corner ? 'in un angolo' : 'sul bordo'}. In quali rotazioni un suo tubo punterebbe fuori dalla griglia?`, why: `Questo pezzo è ${corner ? 'in un angolo' : 'sul bordo'}: in qualsiasi altra rotazione un tubo punterebbe fuori dalla griglia e l'acqua uscirebbe. C'è un solo verso possibile.` };
+      if (h.tag === 'edge') return { state: s, focus: [i], area: [i], tag: 'edge', tip: `Guarda il pezzo che si illumina: è ${corner ? 'in un angolo' : 'sul bordo'}. Un tubo non può guardare fuori dalla griglia: come lo giri?`, why: `Questo pezzo è ${corner ? 'in un angolo' : 'sul bordo'}. Girato in un altro modo, un tubo guarderebbe fuori dalla griglia e l’acqua scapperebbe via! C’è un modo solo per girarlo.` };
       const around = Z.range(N).filter(j => Math.abs(j % n - x) + Math.abs(((j / n) | 0) - y) === 1);
-      if (h.tag === 'near') return { state: s, focus: [i], area: [i, ...around], tag: 'near', tip: Z.say('Guarda il pezzo che si illumina e i suoi vicini: da quali lati deve avere un tubo, e da quali no?', 'Il pezzo che si illumina è vincolato dai vicini: dove un vicino gli punta contro di sicuro un tubo, qui ne serve uno che lo incontri.'), why: 'Guarda i pezzi vicini che hanno già un solo verso possibile (e il bordo): dove un vicino ha di sicuro un tubo rivolto verso questo pezzo, qui serve un tubo che lo incontri; dove di sicuro non ce l’ha, qui non ci deve essere. Una sola rotazione rispetta tutto.' };
-      return { state: s, focus: [i], area: [i, ...around], tag: 'flow', tip: 'Ricorda la rete: non ha anelli chiusi e tutti i pezzi sono collegati alla fontana. In quali versi questo pezzo chiuderebbe un anello, o un pezzo di rete senza uscita?', why: h.cyc
-        ? 'Nell’altro verso questo pezzo si collegherebbe due volte allo stesso tratto di rete già sicuro, chiudendo un anello: la rete non ha anelli. Resta un solo verso.'
-        : 'Nell’altro verso questo pezzo chiuderebbe un pezzo di rete senza più uscite, staccato dal resto e dalla fontana. Resta un solo verso.' };
+      if (h.tag === 'near') return { state: s, focus: [i], area: [i, ...around], tag: 'near', tip: Z.say('Guarda il pezzo che si illumina e i pezzi vicini. Da che parte arrivano i loro tubi?', 'I tubi devono darsi la mano: se un vicino ha un tubo che arriva qui, anche questo pezzo deve avere un tubo da quella parte.'), why: 'I tubi devono darsi la mano. Dove un pezzo vicino manda un tubo verso questo, qui ci vuole un tubo che lo incontra. Dove il vicino non lo manda, qui non ci deve essere. C’è un modo solo per girarlo così.' };
+      return { state: s, focus: [i], area: [i, ...around], tag: 'flow', tip: 'L’acqua deve arrivare dappertutto, senza fare giri in tondo. Girato male, questo pezzo farebbe un giro chiuso, o lascerebbe dei tubi senza acqua?', why: h.cyc
+        ? 'Girato nell’altro modo, questo pezzo farebbe un giro in tondo con dei tubi già sistemati. Ma i tubi non fanno mai giri chiusi! Resta un modo solo.'
+        : 'Girato nell’altro modo, questo pezzo chiuderebbe un gruppetto di tubi tutto da solo, dove l’acqua della fontana non arriva. Resta un modo solo.' };
     }
     /* reti di prima (salvate con le versioni vecchie) che la logica non risolve */
     const f = flow(P, s);
     const nearWet = wrongs.filter(i => { const x = i % n, y = (i / n) | 0; return D.some(([dx, dy]) => { const xx = x + dx, yy = y + dy; return xx >= 0 && yy >= 0 && xx < n && yy < n && f.wet[yy * n + xx]; }); });
     const i = Z.pick(nearWet.length ? nearWet : wrongs);
     setTo(i);
-    return { state: s, focus: [i], area: [], tag: 'flow', tip: 'Nessun pezzo è obbligato dai soli vicini. Segui l’acqua dalla fontana e ricorda: la rete non ha anelli chiusi e ogni bocciolo è la fine di un ramo.', why: "Non c'è un pezzo obbligato dai soli vicini. Ricorda: la rete non può avere anelli chiusi e ogni bocciolo è la fine di un ramo. Questa rotazione porta l'acqua un passo più avanti senza chiudere anelli." };
+    return { state: s, focus: [i], area: [], tag: 'flow', tip: 'Qui è difficile, con calma. Segui l’acqua dalla fontana: dove può andare il prossimo tubo senza fare giri in tondo?', why: 'Qui è difficile: non c’è una mossa facile. Ti aiuto io: girato così, questo pezzo porta l’acqua un passo più avanti.' };
   }
 
   Z.register({

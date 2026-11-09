@@ -127,9 +127,9 @@
     let rare = p.w[0];
     for (const L of p.w) if (count(L) < count(rare)) rare = L;
     let why = `<b>${p.w}</b> comincia alla riga ${p.y + 1}, colonna ${p.x + 1} e prosegue ${DIR_NAME[p.dx + ',' + p.dy]}. `;
-    why += `Per trovarla conviene partire dalla lettera più rara della parola, la <b>${rare}</b>: nella griglia ce ne sono solo ${count(rare)}, e intorno a ciascuna si controlla se continua la parola. `;
+    why += `Un trucco per trovarla: cerca prima la <b>${rare}</b>, che nella griglia c’è solo ${count(rare) === 1 ? 'una volta' : count(rare) + ' volte'}. Poi guarda tutto intorno se la parola continua. `;
     why += left.length > 1 ? `Restano ${left.length - 1} parole.` : `Era l'ultima: le lettere rimaste formano la chiave <b>${P.key}</b>.`;
-    return { state: s, focus: cellsOf(n, p), area: [], tip: Z.say(`Cerca <b>${p.w}</b>: parti dalla lettera più rara della parola, la <b>${rare}</b>. Nella griglia ce ne sono solo ${count(rare)}: intorno a ciascuna, guarda se continua la parola.`, `Prova con <b>${p.w}</b>. Invece della prima lettera cerca la più rara, la <b>${rare}</b> (ce ne sono ${count(rare)}), e guarda in tutte le direzioni.`), why, tag: !p.dy ? (p.dx > 0 ? 'row' : 'rowBack') : !p.dx ? (p.dy > 0 ? 'col' : 'colBack') : 'diag' };
+    return { state: s, focus: cellsOf(n, p), area: [], tip: Z.say(`Cerca <b>${p.w}</b>. Il trucco: cerca prima la <b>${rare}</b>, che nella griglia c’è poche volte (${count(rare)}). Poi guarda tutto intorno se la parola continua.`, `Prova con <b>${p.w}</b>. Cerca la <b>${rare}</b>: ce ne sono solo ${count(rare)}. Poi guarda in tutte le direzioni, anche in diagonale e all’indietro.`), why, tag: !p.dy ? (p.dx > 0 ? 'row' : 'rowBack') : !p.dx ? (p.dy > 0 ? 'col' : 'colBack') : 'diag' };
   }
 
   Z.register({

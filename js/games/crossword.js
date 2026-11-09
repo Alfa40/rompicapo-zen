@@ -631,10 +631,10 @@ CINTURA|Tiene su i pantaloni`;
       if (wrong.length) {
         p = P.words.find(q => cellsOf(P, q).includes(wrong[0]));
         tag = 'wrong';
-        tip = fit ? `C'è una lettera da ricontrollare nello spazio ${dirName(p)} che si illumina: le parole che lo incrociano sono giuste?`
-          : `C'è una lettera da ricontrollare nella <b>${label(p)}</b>. Rileggi la definizione: «${p.clue}».`;
-        why = fit ? `Nello spazio ${dirName(p)} che si illumina c'è una lettera sbagliata: lì va <b>${p.word}</b>. `
-          : `In <b>${label(p)}</b> c'è una lettera sbagliata. «${p.clue}»: la risposta è <b>${p.word}</b>. `;
+        tip = fit ? `C’è una lettera da cambiare nello spazio ${dirName(p)} che si illumina. Le parole che lo incrociano sono giuste?`
+          : `C’è una lettera da cambiare nella <b>${label(p)}</b>. Rileggi la domanda: «${p.clue}».`;
+        why = fit ? `Nello spazio ${dirName(p)} che si illumina c’era una lettera sbagliata: lì va <b>${p.word}</b>. L’ho sistemata io! `
+          : `In <b>${label(p)}</b> c’era una lettera sbagliata. «${p.clue}»: la risposta è <b>${p.word}</b>. L’ho sistemata io! `;
       } else {
         const open = P.words.filter(q => cellsOf(P, q).some(i => st.v[i] !== P.sol[i]));
         if (!open.length) return null;
@@ -647,12 +647,12 @@ CINTURA|Tiene su i pantaloni`;
           for (const q of open) { const c = cand(q).length; if (c < bestN) { bestN = c; p = q; } }
           const k = cellsOf(P, p).filter(i => st.v[i]).length;
           tag = bestN === 1 ? 'only' : 'cross';
-          tip = bestN === 1 ? Z.say(`Guarda lo spazio ${dirName(p)} che si illumina: conta le sue caselle e confrontalo con le parole rimaste.`, `Lo spazio ${dirName(p)} che si illumina ha ${p.word.length} caselle: quante parole rimaste sono lunghe così, e quali rispettano le lettere già scritte?`)
-            : `Nello spazio ${dirName(p)} che si illumina possono entrare più parole: guarda le lettere degli incroci per scegliere quella giusta.`;
+          tip = bestN === 1 ? Z.say(`Guarda lo spazio ${dirName(p)} che si illumina. Conta le caselle: quale parola dell’elenco è lunga così?`, `Lo spazio ${dirName(p)} che si illumina ha ${p.word.length} caselle. Quale parola rimasta ci sta, con le lettere già scritte?`)
+            : `Nello spazio ${dirName(p)} che si illumina ci stanno più parole. Guarda le lettere già scritte per scegliere quella giusta.`;
           why = bestN === 1
-            ? (k ? `Nello spazio ${dirName(p)} che si illumina (${shape(p)}), con le lettere già scritte, fra le parole da ${p.word.length} lettere rimaste entra solo <b>${p.word}</b>. `
-              : `<b>${p.word}</b> è l'unica parola da ${p.word.length} lettere rimasta: va nello spazio ${dirName(p)} che si illumina. `)
-            : `Nello spazio ${dirName(p)} che si illumina potrebbero entrare ${bestN} parole da ${p.word.length} lettere; guardando gli incroci, quella giusta è <b>${p.word}</b>. `;
+            ? (k ? `Lo spazio ${dirName(p)} che si illumina è così: ${shape(p)}. Tra le parole rimaste, ci sta solo <b>${p.word}</b>! `
+              : `<b>${p.word}</b> è l’unica parola rimasta lunga ${p.word.length} lettere: va nello spazio ${dirName(p)} che si illumina. `)
+            : `Nello spazio ${dirName(p)} che si illumina ci stanno ${bestN} parole lunghe ${p.word.length} lettere. Con le lettere degli incroci, quella giusta è <b>${p.word}</b>. `;
         } else {
           /* la parola con più lettere già scritte grazie agli incroci è la più facile */
           const known = q => cellsOf(P, q).filter(i => st.v[i]).length / q.word.length;
@@ -660,15 +660,14 @@ CINTURA|Tiene su i pantaloni`;
           p = Z.pick(open.filter(q => known(q) === top));
           const k = cellsOf(P, p).filter(i => st.v[i]).length;
           tag = k ? 'cross' : 'clue';
-          tip = `Prova la <b>${label(p)}</b>: «${p.clue}». ` + (k ? `Hai già ${k === 1 ? 'una lettera' : k + ' lettere'} su ${p.word.length} grazie agli incroci.` : `Sono ${p.word.length} lettere.`);
+          tip = `Prova la <b>${label(p)}</b>: «${p.clue}». ` + (k ? `Hai già ${k === 1 ? 'una lettera' : k + ' lettere'} su ${p.word.length}: ti aiutano!` : `È lunga ${p.word.length} lettere.`);
           why = `<b>${label(p)}</b>: «${p.clue}». ` + (k
-            ? `Avevi già ${k === 1 ? 'una lettera' : k + ' lettere'} su ${p.word.length}, che restringono molto le possibilità: è <b>${p.word}</b>. `
+            ? `Avevi già ${k === 1 ? 'una lettera' : k + ' lettere'} su ${p.word.length}: con quelle è più facile. È <b>${p.word}</b>! `
             : `La risposta è <b>${p.word}</b>. `);
         }
       }
       for (const i of cellsOf(P, p)) s.v[i] = P.sol[i];
-      if (tag === 'wrong') why = why.replace('c\'è una lettera sbagliata', 'c\'era una lettera da sistemare');
-      why += 'Ora le parole che la incrociano hanno una lettera in più da cui partire.';
+      why += 'Ora le parole che la incrociano hanno una lettera in più per aiutarti.';
       return { state: s, focus: cellsOf(P, p), area: cellsOf(P, p), why, tag, tip };
     };
   }

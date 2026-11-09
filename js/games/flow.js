@@ -456,9 +456,9 @@
       s.p[c].length = k;
       return {
         state: s, focus: [c], area: [c], tag: 'wrong',
-        tip: `Ricontrolla con calma il filo <b>${NAMES[c]}</b>: prova a seguirlo con il dito e chiediti se lascia spazio a tutti gli altri colori.`,
-        why: `Il filo <b>${NAMES[c]}</b> ha preso una strada che non porta alla soluzione: lasciandolo così, più avanti qualche casella resterebbe isolata o un colore non arriverebbe al suo pallino. ` +
-          (k > 1 ? 'L’ho accorciato fino all’ultimo tratto sicuro.' : 'L’ho tolto, così riparti da una base sicura.'),
+        tip: `Segui con il dito il filo <b>${NAMES[c]}</b>. Lascia passare tutti gli altri colori?`,
+        why: `Il filo <b>${NAMES[c]}</b> ha preso la strada sbagliata: più avanti una casella resterebbe vuota, o un colore non arriverebbe al suo pallino. ` +
+          (k > 1 ? 'L’ho accorciato fino al pezzo giusto: nessun problema!' : 'L’ho tolto io: nessun problema, si riparte!'),
       };
     }
     const L = logicOf(P);
@@ -491,21 +491,21 @@
     const tag = why0.k === 'imagine' || offs.includes('imagine') ? 'imagine'
       : offs.includes('color') && near ? 'reach' : why0.k === 'fill' ? 'fill' : 'forced';
     const name = `<b>${NAMES[c]}</b>`;
-    const more = m - k > 1 ? ` Da lì il filo prosegue senza scelte per altre ${m - k - 1} caselle.` : '';
+    const more = m - k > 1 ? ` Poi il filo va avanti da solo per ${m - k - 1 === 1 ? 'un’altra casella' : 'altre ' + (m - k - 1) + ' caselle'}: c’è una strada sola.` : '';
     const isEnd = P.ends.some(([a, b]) => a === i || b === i);
     const WHY = {
       forced: isEnd
-        ? `Il pallino in ${cell(i)} ha una sola strada possibile: le altre caselle accanto sono bordo, altri pallini o fili già sicuri.`
-        : `In ${cell(i)} il filo arriva già da una parte e ha una sola casella libera in cui continuare.`,
-      fill: `La casella in ${cell(i)} va riempita, e ha solo due vicini da cui un filo può entrare e uscire: il filo passa per tutti e due.`,
-      reach: `Vicino alla casella in ${cell(i)} non tutti i colori possono arrivare: gli altri fili resterebbero tagliati fuori dai loro pallini. Così in ${cell(i)} resta una sola strada buona, quella del ${name}.`,
-      imagine: `Prova a immaginare il contrario: se il filo andasse da un’altra parte vicino alla casella in ${cell(i)}, una casella resterebbe isolata o un colore non potrebbe più raggiungere il suo pallino. Quindi il filo ${name} passa di qui.`,
+        ? `Il pallino in ${cell(i)} ha una strada sola: tutto intorno ci sono il bordo, altri pallini o altri fili. Il filo deve andare lì!`
+        : `Il filo è arrivato in ${cell(i)} e da lì ha una sola casella libera dove andare. Allora va lì!`,
+      fill: `Ogni casella deve avere un filo. La casella in ${cell(i)} ha solo due vicini liberi: il filo entra da uno ed esce dall’altro.`,
+      reach: `Vicino alla casella in ${cell(i)} gli altri colori non possono arrivare: sono troppo lontani, o la strada è chiusa. Resta solo il ${name}!`,
+      imagine: `Facciamo finta che il filo vada da un’altra parte vicino alla casella in ${cell(i)}. Una casella resterebbe vuota, o un colore non arriverebbe più al suo pallino. Non va bene! Quindi il ${name} passa di qui.`,
     };
     const TIP = {
-      forced: `Guarda il filo ${name}: dalla casella in cui si trova, quante strade libere ha davvero?`,
-      fill: 'Cerca una casella vuota con solo due vicini liberi: il filo che la riempie deve passare da entrambi.',
-      reach: `Guarda la zona vicino alla casella in ${cell(i)}: quali colori possono ancora arrivarci senza restare tagliati fuori?`,
-      imagine: `Prova a immaginare le strade possibili del ${name} vicino alla casella in ${cell(i)}: quale lascerebbe una casella isolata?`,
+      forced: `Guarda il filo ${name}. Da dove si trova, quante strade libere ha?`,
+      fill: 'Ogni casella deve avere un filo. Cerca una casella vuota con solo due vicini liberi: da dove entra il filo, e da dove esce?',
+      reach: `Guarda vicino alla casella in ${cell(i)}. Quali colori riescono ad arrivare fin lì?`,
+      imagine: `Facciamo finta: dove può andare il ${name} vicino alla casella in ${cell(i)}? Una strada lascerebbe una casella vuota?`,
     };
     return { state: s, focus: [c], area: [c], tag, tip: TIP[tag], why: WHY[tag] + more };
   }

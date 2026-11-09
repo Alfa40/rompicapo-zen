@@ -149,8 +149,8 @@
         const out = cg.cells.map((i, p) => (S.v[i] ? 0 : S.cand[i] & ~allow[p]));
         if (!out.some(Boolean)) continue;
         const txt = cg.op === ''
-          ? `La gabbia di una sola casella in ${Z.cellName(cg.cells[0], n)} dice già il numero: ${Z.il(cg.t)}.`
-          : `La gabbia «<b>${label(cg)}</b>» (${cg.cells.length} caselle), con i numeri ancora possibili nelle sue caselle, si può completare solo con ${combos(ok)}.`;
+          ? `La gabbia in ${Z.cellName(cg.cells[0], n)} ha una casella sola. Il numero nell’angolo è già la risposta: ${Z.il(cg.t)}!`
+          : `Nella gabbia «<b>${label(cg)}</b>» (${cg.cells.length} caselle) ci stanno solo ${combos(ok)}. Gli altri numeri non fanno il risultato giusto, o sono già nella riga o nella colonna.`;
         cg.cells.forEach((i, p) => { if (out[p]) S.elim(i, out[p], txt, cg.cells); });
         return true;
       }
@@ -167,7 +167,7 @@
           if (!ok.every(t => cg.cells.some((i, p) => t[p] === d && U.cells.includes(i)))) continue;
           const out = U.cells.filter(i => !inCage.has(i) && !S.v[i] && (S.cand[i] & (1 << d)));
           if (!out.length) continue;
-          const txt = `Tutte le combinazioni possibili della gabbia «<b>${label(cg)}</b>» mettono ${Z.il(d)} ${U.where.replace(/^N/, 'n')}: quindi nel resto ${U.where.replace(/^Nella /, 'della ')} ${Z.il(d)} non può stare.`;
+          const txt = `La gabbia «<b>${label(cg)}</b>» ha bisogno ${d === 1 || d === 8 || d === 11 ? 'dell’' : 'del '}<b>${d}</b>, e in ogni caso lo mette ${U.where.replace(/^N/, 'n')}. Quindi nel resto ${U.where.replace(/^Nella /, 'della ')} ${Z.il(d)} non ci va.`;
           for (const i of out) S.elim(i, 1 << d, txt, cg.cells);
           return true;
         }
@@ -206,12 +206,12 @@
     const n = P.n, peers = i => Z.range(n * n).filter(j => j !== i && (((j / n) | 0) === ((i / n) | 0) || j % n === i % n));
     return Z.latinHint(P, st, {
       n, peers, units: Z.lineUnits(n), solver: solverOf(P),
-      fam: { one: 'Comincia dalle gabbie di una sola casella: il numero scritto nell’angolo è già la risposta.', cage: 'Guarda le gabbie: quali numeri, messi insieme con quell’operazione, danno il risultato? Togli le combinazioni che si scontrano con la riga o la colonna.' },
+      fam: { one: 'Cerca una gabbia con una casella sola: il numero nell’angolo è già la risposta!', cage: 'Guarda la gabbia che si illumina. Quali numeri, con quel segno, fanno il risultato? Per esempio «5+» con due caselle: 1 e 4, oppure 2 e 3. Poi togli quelli che sono già nella riga o nella colonna.' },
       naked(i, d) {
         const present = [...new Set(peers(i).map(p => st.v[p]).filter(x => x))].sort((a, b) => a - b);
-        return `In ${Z.cellName(i, n)} la riga e la colonna contengono già ${Z.fmtList(present)}: l'unico numero possibile è ${Z.il(d)}.`;
+        return `Guarda la casella in ${Z.cellName(i, n)}. Nella sua riga e nella sua colonna ci sono già ${Z.fmtList(present)}. Manca solo ${Z.il(d)}: allora qui va ${Z.il(d)}!`;
       },
-      hidden: (U, d, i) => `${U.where} manca ancora ${Z.il(d)} e può andare solo in ${Z.cellName(i, n)}: nelle altre caselle libere c'è già un ${d} nella stessa colonna o riga.`,
+      hidden: (U, d, i) => `${U.where} manca ${Z.il(d)}. Le altre caselle vuote non vanno bene: nella loro colonna o riga c’è già un ${d}. Resta solo ${Z.cellName(i, n)}: ${Z.il(d)} va lì!`,
     });
   }
 

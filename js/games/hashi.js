@@ -187,7 +187,7 @@
         if (![...C].every(i => inc[i].reduce((t, f) => t + lo[f], 0) === n[i])) continue;
         const [a, b] = E[e];
         S.hi[e] = S.lo[e];
-        return { kind: 'cut', e, txt: `${S.lo[e] ? 'Un secondo ponte' : 'Un ponte'} tra ${isl(a)} e ${isl(b)} completerebbe ${C.size === 2 ? 'tutte e due' : 'un gruppo di ' + C.size + ' isole'}, che resterebbe${C.size === 2 ? 'ro' : ''} staccat${C.size === 2 ? 'e' : 'o'} dalle altre: quindi lì ${S.lo[e] ? 'il ponte resta singolo' : 'non può esserci un ponte'}.`, src: [a, b] };
+        return { kind: 'cut', e, txt: `Facciamo finta di mettere ${S.lo[e] ? 'un secondo ponte' : 'un ponte'} tra ${isl(a)} e ${isl(b)}. ${C.size === 2 ? 'Quelle due isole sarebbero finite e resterebbero sole, staccate da tutte le altre' : 'Un gruppo di ' + C.size + ' isole sarebbe finito e resterebbe solo, staccato da tutte le altre'}. Non va bene! Quindi lì ${S.lo[e] ? 'il ponte resta uno solo' : 'niente ponte'}.`, src: [a, b] };
       }
       /* l'unico collegamento possibile tra due parti: il ponte serve per forza */
       for (let e = 0; e < m; e++) {
@@ -220,8 +220,8 @@
       next,
       explainCount(c, i, o) {
         return c.open.length === 1
-          ? `${isl(i)[0].toUpperCase() + isl(i).slice(1)} ha ancora bisogno di ${many(c.need)}, ma può collegarsi solo all'isola ${dirName(P, i, o)}: le altre direzioni sono chiuse (isole già complete, ponti che si incrocerebbero o nessuna isola). ${c.need === 1 ? 'Il ponte va' : 'I ponti vanno'} lì.`
-          : `${isl(i)[0].toUpperCase() + isl(i).slice(1)} ha ancora bisogno di ${many(c.need)} e ha ${c.open.length} direzioni libere, che insieme ne possono accogliere al massimo ${c.cap}. Anche riempiendo al massimo le altre ne mancherebbe${c.forced === 1 ? '' : 'ro'} ${c.forced}: quindi verso l'isola ${dirName(P, i, o)} ${c.forced === 1 ? 'serve almeno un ponte' : 'servono due ponti'}.`;
+          ? `${isl(i)[0].toUpperCase() + isl(i).slice(1)} vuole ancora ${many(c.need)}. Può andare in una strada sola: verso l'isola ${dirName(P, i, o)}. Le altre strade sono chiuse (un’isola già finita, un ponte in mezzo, o nessuna isola). Allora ${c.need === 1 ? 'il ponte va' : 'i ponti vanno'} lì!`
+          : `${isl(i)[0].toUpperCase() + isl(i).slice(1)} vuole ancora ${many(c.need)}. Ha ${c.open.length} strade libere. Prova a mettere più ponti possibile nelle altre strade: ne manca${c.forced === 1 ? '' : 'no'} ancora ${c.forced}. Allora verso l'isola ${dirName(P, i, o)} ${c.forced === 1 ? 'ci va almeno un ponte' : 'ci vanno due ponti'}!`;
       },
       solve(L) {
         const S = state(new Array(m).fill(0));
@@ -280,23 +280,23 @@
       s.b[e] = P.sol[e];
       let tip, why;
       if (full != null) {
-        tip = Z.say(`Guarda l'isola con ${Z.il(n[full])} che si illumina: quanti ponti ha adesso?`, `Conta con calma i ponti dell'isola con ${Z.il(n[full])}: sono quelli che il numero chiede?`) +
-          " Un'isola non può avere più ponti del suo numero: se sono troppi, uno va ridotto.";
-        why = `L'isola con ${Z.il(n[full])} ha ${tot(full)} ponti, più del suo numero: il ponte tra queste due isole è di troppo. `;
+        tip = Z.say(`Guarda l'isola con ${Z.il(n[full])} che si illumina. Quanti ponti ha adesso?`, `Conta i ponti dell'isola con ${Z.il(n[full])}: sono tanti quanto il suo numero?`) +
+          ' Il numero dice quanti ponti ha l’isola: non uno di più!';
+        why = `L'isola con ${Z.il(n[full])} ha ${tot(full)} ponti: sono troppi! Il ponte tra queste due isole è di troppo. `;
       } else if (cross != null) {
         const [c, d] = E[cross];
-        tip = Z.say('Guarda i ponti vicino alle isole che si illuminano: ce ne sono due che si incrociano?', 'Segui con lo sguardo il ponte tra le isole che si illuminano: attraversa un altro ponte?') +
-          " I ponti non possono mai incrociarsi: uno dei due deve lasciare spazio all'altro.";
-        why = `Questo ponte attraversa il collegamento tra le isole con ${Z.il(n[c])} e il <b>${n[d]}</b>, che serve per completare i loro numeri. Due ponti non possono incrociarsi, quindi qui non può passare. `;
+        tip = Z.say('Guarda il ponte tra le isole che si illuminano. Taglia la strada a un altro ponte?', 'Segui con il dito il ponte tra le isole che si illuminano: passa sopra un altro ponte?') +
+          ' I ponti non si incrociano mai.';
+        why = `Questo ponte taglia la strada al ponte tra l’isola con ${Z.il(n[c])} e quella con il <b>${n[d]}</b>, e quel ponte serve. I ponti non si incrociano mai, quindi questo qui non può passare. `;
       } else {
-        tip = Z.say('Guarda le due isole che si illuminano: il ponte tra loro è davvero necessario?', 'Per le isole che si illuminano, prova a contare dove possono ancora andare i ponti che mancano.') +
-          ' Pensa a quanti ponti restano da mettere a ogni isola vicina e a quali isole possono ancora raggiungere.';
-        why = `Tra le isole con ${Z.il(n[a])} e il <b>${n[b]}</b> ${cut ? 'non serve nessun ponte' : 'basta meno di così'}: con quello che c'è, le isole vicine non riuscirebbero più a completare i loro ponti, oppure un gruppo resterebbe staccato dal resto. `;
+        tip = Z.say('Guarda le due isole che si illuminano. Il ponte tra loro serve davvero?', 'Guarda le isole che si illuminano: dove possono andare i ponti che mancano?') +
+          ' Pensa alle isole vicine: riescono ancora ad avere tutti i loro ponti?';
+        why = `Tra l’isola con ${Z.il(n[a])} e quella con il <b>${n[b]}</b> ${cut ? 'non ci va nessun ponte' : 'ci vuole un ponte solo'}. Così com’era, più avanti un’isola vicina resterebbe senza i suoi ponti, o un gruppo di isole resterebbe staccato. `;
       }
       return {
         state: s, focus: [a, b], area: [a, b],
         tag: 'wrong', tip,
-        why: why + (cut ? "L'ho tolto." : "L'ho ridotto.") + (over.length > 1 ? (over.length === 2 ? ' C\'è ancora un altro ponte da ricontrollare.' : ` Ci sono ancora altri ${over.length - 1} ponti da ricontrollare.`) : ''),
+        why: why + (cut ? 'L’ho tolto io: nessun problema!' : 'L’ho fatto diventare singolo: nessun problema!') + (over.length > 1 ? (over.length === 2 ? ' C’è ancora un altro ponte da controllare.' : ` Ci sono ancora altri ${over.length - 1} ponti da controllare.`) : ''),
       };
     }
     /* il prossimo ponte sicuro secondo il risolutore «umano» (controllato con la soluzione) */
@@ -307,8 +307,8 @@
       if (r.link) {
         return {
           state: s, focus: [a, b], area: [a, b], tag: 'connect',
-          tip: 'Pensa alla rete: alla fine tutte le isole devono essere collegate. C’è un gruppo di isole che può raggiungere le altre in un solo modo?',
-          why: `Tra l'isola con ${Z.il(n[a])} e quella con ${Z.il(n[b])} passa l'unico collegamento possibile tra ${r.link.size === 1 ? 'un’isola' : 'un gruppo di ' + r.link.size + ' isole'} e il resto della rete: le altre strade sono chiuse. Quindi qui serve almeno un ponte.`,
+          tip: 'Alla fine tutte le isole devono essere unite, come una sola grande famiglia. C’è un gruppo di isole che ha una strada sola per raggiungere le altre?',
+          why: `${r.link.size === 1 ? 'C’è un’isola' : 'C’è un gruppo di ' + r.link.size + ' isole'} che ha una strada sola per unirsi alle altre: quella tra l'isola con ${Z.il(n[a])} e quella con ${Z.il(n[b])}. Tutte le altre strade sono chiuse. Allora lì ci va un ponte!`,
         };
       }
       const i = r.i, o = E[e][0] === i ? E[e][1] : E[e][0];
@@ -316,11 +316,11 @@
       const tag = rel.length ? 'connect' : r.open.length === 1 ? 'only' : 'count';
       const why = (rel.length ? [...new Set(rel.map(x => x.txt))].slice(-2).join(' ') + ' ' : '') + solverOf(P).explainCount(r, i, o);
       const tip = rel.length
-        ? 'Pensa alla rete: alla fine tutte le isole devono essere collegate. Un ponte che completerebbe un gruppo di isole staccato dagli altri non si può fare: questo cambia i conti di qualche isola?'
+        ? 'Alla fine tutte le isole devono essere unite. Un ponte che chiude un gruppo di isole tutto da solo non va bene. Guarda le isole che si illuminano: cosa cambia?'
         : r.open.length === 1
-          ? Z.say(`Guarda l'isola con ${Z.il(n[i])}: in quante direzioni può ancora mandare ponti?`, `L'isola con ${Z.il(n[i])} ha ancora bisogno di ponti. Verso quali isole può davvero andare?`) +
-            ' Un’isola già completa, un ponte che si incrocerebbe o il bordo chiudono una direzione.'
-          : `Guarda l'isola con ${Z.il(n[i])}: le servono ancora ${r.need} ponti. Quanti ne possono accogliere, al massimo, le direzioni ancora libere? Se anche riempiendole tutte ne mancano, qualche ponte è obbligato.`;
+          ? Z.say(`Guarda l'isola con ${Z.il(n[i])}. Verso quante isole può ancora mandare ponti?`, `L'isola con ${Z.il(n[i])} vuole ancora ponti. Verso quali isole può andare?`) +
+            ' Una strada è chiusa se l’isola vicina è già finita, se c’è un ponte in mezzo, o se non c’è nessuna isola.'
+          : `Guarda l'isola con ${Z.il(n[i])}: vuole ancora ${r.need} ponti. Prova a contare: quanti ponti ci stanno, al massimo, nelle sue strade libere? Se sono pochi, qualche ponte è sicuro.`;
       return { state: s, focus: [i, o], area: rel.length ? [...new Set([i, ...rel.flatMap(x => x.src)])] : [i], why, tag, tip };
     }
     /* rompicapo di prima (salvati con le versioni vecchie) che la logica non risolve */
@@ -331,8 +331,8 @@
     for (const j of X[e]) s.b[j] = 0;
     return {
       state: s, focus: [E[e][0], E[e][1]], area: [],
-      tip: 'Contando i ponti di ogni isola non c\'è niente di obbligato. Pensa alla rete: alla fine tutte le isole devono essere collegate. Quali ponti chiuderebbero un gruppo di isole separato dal resto?',
-      tag: 'connect', why: "Contando i ponti di ogni isola non c'è una mossa obbligata. Serve un ragionamento sulla <b>connessione</b>: alcune scelte chiuderebbero un gruppo di isole separato dal resto, che non potrebbe più collegarsi. Questo ponte fa parte della soluzione.",
+      tip: 'Qui è difficile, con calma. Alla fine tutte le isole devono essere unite: quale ponte lascerebbe un gruppo di isole tutto da solo?',
+      tag: 'connect', why: 'Qui è difficile: non c’è una mossa facile. Ti aiuto io: questo ponte è giusto.',
     };
   }
 

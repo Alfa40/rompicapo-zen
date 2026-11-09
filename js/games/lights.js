@@ -83,13 +83,13 @@
       if (!lit.length) continue;
       const j = lit[0], i = j + n;
       press(n, s.on, i);
-      const above = r ? (r === 1 ? 'La riga sopra è già spenta' : `Le ${r} righe sopra sono già spente`) : '';
+      const above = r ? (r === 1 ? 'La riga sopra è già tutta spenta' : `Le ${r} righe sopra sono già tutte spente`) : '';
       return {
         state: s, focus: [i], area: [j], tag: 'chase',
-        tip: Z.say(`Prova a «inseguire le luci»: guarda la lanterna accesa che si illumina. Per spegnerla senza riaccendere ${r ? 'le righe sopra' : 'niente sopra'}, quale lanterna puoi toccare?`,
-          'Spegni le luci riga dopo riga, dall’alto: per ogni lanterna accesa tocca quella subito sotto. Parti da quella che si illumina.'),
-        why: `La lanterna in ${Z.cellName(j, n)} è accesa. ${above ? above + ': toccando in quella riga, o accanto, le riaccenderesti. ' : ''}` +
-          `Toccando la lanterna subito sotto, lei si spegne e le righe sopra non cambiano: le luci scendono verso il basso, fino a sparire.`,
+        tip: Z.say('Guarda la lanterna accesa che si illumina. Il trucco: tocca la lanterna proprio sotto di lei!',
+          'Spegniamo le luci dall’alto verso il basso. Per ogni lanterna accesa, tocca quella subito sotto. Comincia da quella che si illumina.'),
+        why: `La lanterna in ${Z.cellName(j, n)} è accesa. ${above ? above + ': non vogliamo riaccenderla. ' : ''}` +
+          `Tocco la lanterna subito sotto: quella di sopra si spegne, e le righe più in alto non cambiano. Così le luci scendono giù, giù, fino a sparire!`,
       };
     }
     /* restano accese solo lanterne dell'ultima riga (succede se si sono toccate lanterne della prima riga):
@@ -101,8 +101,8 @@
     press(n, s.on, i);
     return {
       state: s, focus: [i], area: Z.range(N - n, N), tag: 'calc',
-      tip: 'Sono rimaste accese solo lanterne dell’ultima riga: per spegnerle bisogna cambiare qualcosa nella prima riga e poi inseguire di nuovo le luci verso il basso.',
-      why: `Con le lanterne della prima riga toccate fin qui, inseguendo le luci ne restano accese alcune in fondo. Toccando questa lanterna della prima riga e inseguendo di nuovo, alla fine si spengono tutte.`,
+      tip: 'Sono rimaste accese delle luci in fondo. Per spegnerle si riparte dall’alto: tocca una lanterna della prima riga, poi spegni di nuovo le luci scendendo verso il basso.',
+      why: 'Sono rimaste accese delle luci in fondo. Tocco questa lanterna in alto: poi, spegnendo di nuovo le luci dall’alto verso il basso, alla fine si spengono tutte.',
     };
   }
 

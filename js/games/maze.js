@@ -72,8 +72,8 @@
       const back = path.length - k;
       return {
         state: s, focus: [sol[k - 1]], area: [], tag: 'wrong',
-        tip: Z.say('Prova a seguire con gli occhi la strada che stai facendo: arriva davvero all\'uscita?', 'Fermati un momento e guarda avanti: questa strada porta all\'uscita o finisce contro un muro?'),
-        why: `Questa strada più avanti finisce in un vicolo cieco, quindi non porta all'uscita. Sono tornato indietro di ${back} ${back === 1 ? 'passo' : 'passi'}, fino all'ultimo bivio giusto: da lì prova un'altra direzione.`,
+        tip: Z.say('Segui con il dito la strada che stai facendo. Arriva all’uscita?', 'Guarda avanti: questa strada porta all’uscita, o finisce contro un muro?'),
+        why: `Questa strada più avanti finisce contro un muro: non porta all’uscita. Sono tornato indietro di ${back} ${back === 1 ? 'passo' : 'passi'}, fino all’ultimo incrocio giusto. Da lì prova un’altra strada!`,
       };
     }
     if (k >= sol.length) return null;
@@ -86,12 +86,12 @@
     s.p = sol.slice(0, Math.min(sol.length, j));
     const left = sol.length - s.p.length;
     const why = forks || nbrs(P, sol[k - 1] ?? sol[0]).length > 2
-      ? 'Al bivio la strada giusta è questa: le altre, seguendole fino in fondo, finiscono in vicoli ciechi. Un trucco: si può anche partire dall\'uscita e camminare al contrario, perché i vicoli ciechi si vedono meglio. '
-      : 'Qui non ci sono scelte: il corridoio porta avanti da solo. ';
+      ? 'All’incrocio la strada giusta è questa: le altre, seguite fino in fondo, finiscono contro un muro. Un trucco: puoi anche partire dall’uscita e tornare indietro con il dito. '
+      : 'Qui c’è una strada sola: basta andare avanti. ';
     const tip = forks || nbrs(P, sol[k - 1] ?? sol[0]).length > 2
-      ? Z.say('Al prossimo bivio, prima di scegliere, segui ogni strada con gli occhi fino in fondo: quelle che finiscono contro un muro si scartano.', 'Un trucco per i bivi: guarda il labirinto partendo dall\'uscita e cammina al contrario, i vicoli ciechi si riconoscono meglio.')
-      : 'Qui il corridoio non ha scelte: puoi andare avanti tranquillo fino al prossimo bivio.';
-    return { state: s, focus: s.p.slice(k), area: [], tip, tag: forks || nbrs(P, sol[k - 1] ?? sol[0]).length > 2 ? 'fork' : 'corridor', why: why + (left ? `Mancano ${left} caselle all'uscita.` : 'Sei arrivato all\'uscita!') };
+      ? Z.say('Al prossimo incrocio, prima di scegliere, segui ogni strada con il dito fino in fondo. Quelle che finiscono contro un muro non vanno bene.', 'Un trucco: parti dall’uscita e torna indietro con il dito. Così si vede meglio la strada giusta.')
+      : 'Qui c’è una strada sola: vai avanti tranquillo fino al prossimo incrocio.';
+    return { state: s, focus: s.p.slice(k), area: [], tip, tag: forks || nbrs(P, sol[k - 1] ?? sol[0]).length > 2 ? 'fork' : 'corridor', why: why + (left ? `Mancano ${left} caselle all’uscita.` : 'Sei arrivato all’uscita!') };
   }
 
   Z.register({

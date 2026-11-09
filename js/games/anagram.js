@@ -52,9 +52,9 @@
     s.o[i] = p.w;
     const k = okCount(i);
     let why = `«${p.clue}»: con le lettere ${p.start.split('').sort().join(' ')} si forma <b>${p.w}</b>. `;
-    why += k ? `Avevi già ${k} lettere al posto giusto. ` : '';
-    why += 'Un metodo: cerca i gruppi di lettere che in italiano stanno spesso insieme (CH, GL, GN, SC, -ONE, -INO, -ATO) e prova a metterli in fondo o all\'inizio.';
-    return { state: s, focus: [i], area: [i], tip: `«${p.clue}»: ` + Z.say(`la parola comincia con la <b>${p.w[0]}</b>.`, `la parola finisce con la <b>${p.w[p.w.length - 1]}</b>.`) + ' Cerca i gruppi di lettere che in italiano stanno spesso insieme (CH, GN, SC, -ONE, -ATO).', why, tag: p.w.length <= 5 ? 'short' : p.w.length <= 7 ? 'mid' : 'long' };
+    why += k ? `Avevi già ${k} lettere al posto giusto: ottimo! ` : '';
+    why += 'Un trucco: alcune lettere stanno spesso insieme, come CH, GN, SC, o finali come -ONE, -INO, -ATO. Prova a metterle all’inizio o alla fine.';
+    return { state: s, focus: [i], area: [i], tip: `«${p.clue}»: ` + Z.say(`la parola comincia con la <b>${p.w[0]}</b>.`, `la parola finisce con la <b>${p.w[p.w.length - 1]}</b>.`) + ' Prova a dirla ad alta voce, spostando le lettere nella testa.', why, tag: p.w.length <= 5 ? 'short' : p.w.length <= 7 ? 'mid' : 'long' };
   }
 
   Z.register({

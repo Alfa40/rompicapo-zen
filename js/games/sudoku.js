@@ -104,9 +104,9 @@
       n: 9, peers: i => PEERS[i], units: HUNITS, solver: SOLVER,
       naked(i, d) {
         const present = [...new Set(PEERS[i].map(p => st.v[p]).filter(x => x))].sort();
-        return `In ${Z.cellName(i, 9)} i numeri ${Z.fmtList(present)} compaiono già nella sua riga, colonna o riquadro: l'unico possibile è ${Z.il(d)}.`;
+        return `Guarda la casella in ${Z.cellName(i, 9)}. Nella sua riga, colonna e riquadro ci sono già ${Z.fmtList(present)}. Manca solo ${Z.il(d)}: allora qui va ${Z.il(d)}!`;
       },
-      hidden: (U, d, i) => `${U.where} manca ancora ${Z.il(d)} e può andare solo in ${Z.cellName(i, 9)}: tutte le altre caselle libere sono escluse da un ${d} già presente nella loro riga, colonna o riquadro.`,
+      hidden: (U, d, i) => `${U.where} manca ${Z.il(d)}. Le altre caselle vuote non vanno bene: vicino a ognuna, nella sua riga, colonna o riquadro, c’è già un ${d}. Resta solo ${Z.cellName(i, 9)}: ${Z.il(d)} va lì!`,
     });
   }
 

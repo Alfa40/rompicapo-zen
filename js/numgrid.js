@@ -200,7 +200,7 @@
           if (Z.popcount(m) !== k) return false;
           const others = free.filter(i => !set.includes(i) && (S.cand[i] & m));
           if (!others.length) return false;
-          const txt = `${U.where} ${cellsIn(U, set)} possono contenere solo ${nums(m)}: quei ${W} numeri vanno lì, quindi non possono stare nelle altre caselle ${udi(U)}.`;
+          const txt = `${U.where} ci sono ${W} caselle (${cellsIn(U, set)}) dove possono andare solo ${nums(m)}. Quei ${W} numeri vanno per forza lì. Allora nelle altre caselle ${udi(U)} non ci vanno.`;
           for (const i of others) S.elim(i, m, txt, set);
           return true;
         })) return true;
@@ -214,7 +214,7 @@
           if (at.length !== k) return false;
           const keep = ds.reduce((m, d) => m | bit(d), 0);
           if (!at.some(i => S.cand[i] & ~keep)) return false;
-          const txt = `${U.where} i numeri ${nums(keep)} possono stare solo in ${cellsIn(U, at)}: quelle ${W} caselle sono riservate a loro e non possono avere altri numeri.`;
+          const txt = `${U.where} i numeri ${nums(keep)} hanno posto solo ${cellsIn(U, at).replace(/^le /, 'nelle ')}. Quelle ${W} caselle sono tutte per loro: lì non ci va nessun altro numero.`;
           for (const i of at) S.elim(i, S.cand[i] & ~keep, txt, at);
           return true;
         })) return true;
@@ -229,7 +229,7 @@
         if (at.length < 2 || !at.every(i => common.has(i))) continue;
         const out = B.cells.filter(i => !common.has(i) && !S.v[i] && (S.cand[i] & bit(d)));
         if (!out.length) continue;
-        const txt = `${A.where} ${Z.il(d)} può stare solo dove incrocia ${uname(B)}: di sicuro sarà lì, quindi ${lc(B.where)} ${Z.il(d)} non può stare altrove.`;
+        const txt = `${A.where} ${Z.il(d)} può andare solo nelle caselle che stanno anche dentro ${uname(B)}. Quindi ${Z.il(d)} ${udi(B)} sarà per forza lì. Nel resto ${udi(B)} ${Z.il(d)} non ci va.`;
         for (const i of out) S.elim(i, bit(d), txt, at);
         return true;
       }
@@ -255,7 +255,7 @@
             for (const x of xs) for (const i of cover[x].cells) if (!own.has(i) && !S.v[i] && (S.cand[i] & bit(d))) out.push(i);
             if (!out.length) return false;
             const ln = Z.fmtList(set.map(s => s.li + 1)), cl = Z.fmtList(xs.sort((a, b) => a - b).map(x => x + 1));
-            const txt = `Nelle ${bn} ${ln} ${Z.il(d)} può stare solo nelle ${cvn} ${cl}: ognuna di queste ${bn} ne mette uno lì, e così ${k === 2 ? 'le due' : 'le tre'} ${cvn} hanno già il loro. Nelle altre caselle di quelle ${cvn} ${Z.il(d)} non può stare.`;
+            const txt = `Guarda ${Z.il(d)} nelle ${bn} ${ln}. In ognuna può andare solo nelle ${cvn} ${cl}. Così ${k === 2 ? 'le due' : 'le tre'} ${cvn} ricevono già ${Z.il(d)} da queste ${bn}. Nelle altre caselle di quelle ${cvn} ${Z.il(d)} non ci va.`;
             for (const i of out) S.elim(i, bit(d), txt, [...own]);
             return true;
           })) return true;
@@ -284,9 +284,10 @@
             if (sees[i * N + X] && sees[i * N + Y] && (!three || sees[i * N + p])) out.push(i);
           }
           if (!out.length) continue;
+          const ax = 31 - Math.clz32(mx & pm), ay = 31 - Math.clz32(my & pm);
           const txt = three
-            ? `La casella in ${cn(p)} può avere solo ${alt(pm)}; due caselle che la vedono, in ${cn(X)} e in ${cn(Y)}, solo ${alt(mx)} e solo ${alt(my)}. Comunque vada, una di queste tre avrà ${Z.il(d)}: le caselle che le vedono tutte e tre non possono averlo.`
-            : `La casella in ${cn(p)} può avere solo ${alt(pm)}. Qualunque dei due sia, una tra la casella in ${cn(X)} (${alt(mx)}) e quella in ${cn(Y)} (${alt(my)}) dovrà avere ${Z.il(d)}: le caselle che le vedono entrambe non possono averlo.`;
+            ? `La casella in ${cn(p)} può essere solo ${alt(pm)}. Le caselle in ${cn(X)} e in ${cn(Y)} la vedono e possono essere solo ${alt(mx)} e ${alt(my)}. Prova tutti i casi: ${Z.il(d)} finisce sempre in una di queste tre caselle. Allora una casella che le vede tutte e tre non può avere ${Z.il(d)}.`
+            : `Facciamo finta. La casella in ${cn(p)} può essere solo ${alt(pm)}. Se è ${Z.il(ax)}, la casella in ${cn(X)} diventa ${Z.il(d)}. Se è ${Z.il(ay)}, è la casella in ${cn(Y)} a diventare ${Z.il(d)}. In tutti e due i casi c'è un ${d} lì: una casella che le vede tutte e due non può avere ${Z.il(d)}.`;
           for (const i of out) S.elim(i, c, txt, [p, X, Y]);
           return true;
         }
@@ -391,9 +392,9 @@
   /* Suggerimento per le griglie latine.
      o: { n, units, peers(i), solver, naked(i, d), hidden(U, d, i): testi dei passi semplici, fam: { famiglia: consiglio } } */
   const FAM_TIP = {
-    locked: 'Annota i candidati e guarda un riquadro: c\'è un numero che può stare solo su una riga o su una colonna? Allora quella riga o colonna non può averlo fuori dal riquadro.',
-    pair: 'Annota i candidati e cerca due caselle della stessa WHERE con gli stessi due soli numeri: quei numeri sono «prenotati» e spariscono dalle altre caselle. Vale anche al contrario: due numeri che hanno solo le stesse due caselle.',
-    wing: 'Qui serve un ragionamento a incastro: annota i candidati e cerca caselle con due soli numeri che si vedono tra loro, oppure un numero che in due righe ha solo due posti, sulle stesse colonne.',
+    locked: 'Scrivi le note: i numerini che possono andare in ogni casella. Poi guarda il riquadro che si illumina: c’è un numero che può stare solo su una riga (o su una colonna)? Allora, fuori dal riquadro, su quella riga quel numero non ci va.',
+    pair: 'Scrivi le note: i numerini che possono andare in ogni casella. Poi cerca due caselle della stessa WHERE che possono avere solo gli stessi due numeri. Quei due numeri sono «loro»: nelle altre caselle non ci vanno.',
+    wing: 'Questo è un passo difficile, con calma. Scrivi le note e guarda le caselle che si illuminano: hanno solo due numeri possibili. Prova a pensare «se qui va questo, allora là va quello».',
   };
   Z.latinHint = function (P, st, o) {
     const n = o.n, N = n * n, s = Z.clone(st);
@@ -409,12 +410,12 @@
       return {
         state: s, focus: [i], area: U.cells,
         tag: 'wrong',
-        tip: Z.say(`C'è qualcosa da ricontrollare ${U.where.toLowerCase()}.`, `Vale la pena ricontrollare ${zone(U)}.`) +
-          ` Per ogni numero che hai scritto chiediti: è già presente nella sua ${where}? E lascia ancora un posto a tutti gli altri numeri?`,
+        tip: Z.say(`Qualcosa non torna ${U.where.toLowerCase()}.`, `Guarda bene ${zone(U)}: c’è un numero da cambiare.`) +
+          ` Controlla i numeri che hai scritto, uno alla volta: c’è un numero che compare due volte?`,
         why: (twin != null
-          ? `Il <b>${d}</b> in ${Z.cellName(i, n)} si ripete: c'è già un ${d} in ${Z.cellName(twin, n)}, ${((twin / n) | 0) === ((i / n) | 0) ? 'nella stessa riga' : twin % n === i % n ? 'nella stessa colonna' : 'nello stesso riquadro'}.`
-          : `Il <b>${d}</b> in ${Z.cellName(i, n)} sembrava possibile, ma non è quello giusto: lasciandolo lì, più avanti qualche casella resterebbe senza numeri possibili.`) +
-          ` L'ho tolto, così riparti da una base sicura.` + (wrong.length > 1 ? ` Ci sono altri ${wrong.length - 1} numeri da ricontrollare.` : ''),
+          ? `Il <b>${d}</b> in ${Z.cellName(i, n)} c’è due volte: ce n’è già uno in ${Z.cellName(twin, n)}, ${((twin / n) | 0) === ((i / n) | 0) ? 'nella stessa riga' : twin % n === i % n ? 'nella stessa colonna' : 'nello stesso riquadro'}.`
+          : `Il <b>${d}</b> in ${Z.cellName(i, n)} sembrava giusto, ma non lo è. Più avanti un’altra casella resterebbe senza nessun numero possibile.`) +
+          ` L’ho tolto io: nessun problema, si riparte da qui.` + (wrong.length > 1 ? ` Ci sono altri ${wrong.length - 1} numeri da controllare.` : ''),
       };
     }
     const place = (i, d) => { s.v[i] = d; s.m[i] = 0; for (const p of o.peers(i)) s.m[p] &= ~(1 << d); };
@@ -425,10 +426,10 @@
       if (!r.rel.length) {
         const why = r.kind === 'naked' ? o.naked(i, d) : o.hidden(U, d, i);
         const tip = r.kind === 'naked'
-          ? Z.say(`Guarda ${zone(U)}: in una delle sue caselle libere può andare un solo numero.`, `${U.where} c'è una casella con un solo numero possibile. Riesci a trovarla?`) +
-            ` Per ogni casella libera elimina i numeri che vede già nella sua ${where}: quelli che restano sono i candidati.`
-          : Z.say(`${U.where} manca ancora il <b>${d}</b>: dove può andare?`, `Prova con il <b>${d}</b> ${zone(U).replace(/^(la|il) /, m => (m === 'la ' ? 'nella ' : 'nel '))}: quante caselle libere possono ospitarlo?`) +
-            ` Escludi le caselle che hanno già un ${d} nella loro ${where}: se ne resta una sola, è quella.`;
+          ? Z.say(`Guarda ${zone(U)}: c’è una casella vuota dove può andare un numero solo.`, `${U.where} c’è una casella con un numero solo possibile. La trovi?`) +
+            ` Prendi una casella vuota e guarda i numeri che ha intorno, nella sua ${where}. Quale numero manca?`
+          : Z.say(`${U.where} manca il <b>${d}</b>. Dove può andare?`, `Cerca un posto per il <b>${d}</b> ${zone(U).replace(/^(la|il) /, m => (m === 'la ' ? 'nella ' : 'nel '))}.`) +
+            ` Prova casella per casella: se lì vicino, nella sua ${where}, c’è già un ${d}, non va bene. Ne resta una sola!`;
         return { state: s, focus: [i], area: U.cells, why, tip, tag: r.kind };
       }
       /* il ragionamento più avanzato tra quelli che servono dà il nome al passo */
@@ -436,13 +437,13 @@
       const steps = [...new Set(r.rel.map(e => e.txt))];
       const shown = steps.length > 3 ? steps.slice(-3) : steps;
       const end = r.kind === 'naked'
-        ? `Così in ${Z.cellName(i, n)} resta solo ${Z.il(d)}.`
-        : `Così ${lc(U.where)} ${Z.il(d)} può andare solo in ${Z.cellName(i, n)}.`;
+        ? `Così in ${Z.cellName(i, n)} resta un numero solo: ${Z.il(d)}!`
+        : `Così ${lc(U.where)} ${Z.il(d)} ha un posto solo: ${Z.cellName(i, n)}!`;
       const area = [...new Set([i, ...r.rel.flatMap(e => e.src), ...(r.kind === 'hidden' ? U.cells : [])])];
       return {
         state: s, focus: [i], area, tag: top.t.fam,
-        tip: ((o.fam && o.fam[top.t.fam]) || FAM_TIP[top.t.fam] || 'Annota i candidati: qui serve un passo in più.').replace('WHERE', where),
-        why: (steps.length > shown.length ? 'Annotando i candidati si arriva a questo punto. ' : '') + shown.join(' ') + ' ' + end,
+        tip: ((o.fam && o.fam[top.t.fam]) || FAM_TIP[top.t.fam] || 'Scrivi le note: qui serve un passo in più.').replace('WHERE', where),
+        why: (steps.length > shown.length ? 'Scrivendo le note si arriva fin qui. ' : '') + shown.join(' ') + ' ' + end,
       };
     }
     /* rompicapo di prima (salvati con le versioni vecchie) che la logica non risolve: casella con meno candidati */
@@ -458,9 +459,9 @@
     place(best, d);
     return {
       state: s, focus: [best], area: [best],
-      tip: `Qui non c'è una mossa immediata: è il momento delle note. Scrivi i candidati di ${Z.cellName(best, n)}, sono pochi: prova a immaginarne uno alla volta e guarda quale porta a un problema.`,
-      tag: 'guess', why: `Qui non c'è una mossa immediata. In ${Z.cellName(best, n)} restano i candidati ${Z.fmtList(list.map(x => '<b>' + x + '</b>'))}: ` +
-        `per scartare quelli sbagliati bisogna seguire una catena di conseguenze finché non si arriva a una contraddizione. Il valore giusto è <b>${d}</b>.`,
+      tip: `Qui è difficile, con calma. Guarda ${Z.cellName(best, n)}: può avere pochi numeri. Prova a immaginarne uno alla volta: quale crea un problema?`,
+      tag: 'guess', why: `Qui è difficile. In ${Z.cellName(best, n)} possono andare ${Z.fmtList(list.map(x => '<b>' + x + '</b>'))}. ` +
+        `Provando gli altri, prima o poi qualcosa non torna. Il numero giusto è il <b>${d}</b>.`,
     };
   };
 

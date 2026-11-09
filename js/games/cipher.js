@@ -113,8 +113,8 @@ CHI VUOL ESSER LIETO SIA`.split('\n').map(s => s.trim()).filter(Boolean);
       s.m[n] = dec[n];
       return {
         state: s, focus: [+n], area: [+n], tag: 'wrong',
-        tip: `C'è una lettera da ricontrollare: rileggi le parole dove compare il numero <b>${n}</b>. Formano parole italiane?`,
-        why: `Con la ${st.m[n]} al posto del numero <b>${n}</b> alcune parole non avrebbero senso: è la <b>${dec[n]}</b>. L'ho cambiata, così le parole tornano a leggersi.`,
+        tip: `C’è una lettera da cambiare. Leggi ad alta voce le parole con il numero <b>${n}</b>: sono parole vere?`,
+        why: `Con la ${st.m[n]} al posto del numero <b>${n}</b> le parole non si capiscono. Il numero <b>${n}</b> è la <b>${dec[n]}</b>: l’ho cambiata io, ora le parole si leggono!`,
       };
     }
     const missing = Object.keys(dec).filter(n => st.m[n] !== dec[n]);
@@ -135,19 +135,19 @@ CHI VUOL ESSER LIETO SIA`.split('\n').map(s => s.trim()).filter(Boolean);
       L = best.L;
       tag = best.one ? 'word' : 'guessword';
       why = best.one
-        ? `Con le lettere già scoperte la parola «${shape(best.w)}» può essere solo <b>${best.w}</b>: quindi il numero <b>${P.code[L]}</b> è la <b>${L}</b>.`
-        : `La parola «${shape(best.w)}» è quella con più lettere già scoperte, e fa pensare a <b>${best.w}</b>: il numero <b>${P.code[L]}</b> è la <b>${L}</b>.`;
+        ? `Guarda la parola «${shape(best.w)}»: manca una lettera sola. Può essere solo <b>${best.w}</b>! Quindi il numero <b>${P.code[L]}</b> è la <b>${L}</b>.`
+        : `La parola «${shape(best.w)}» ha già tante lettere. Leggendola viene in mente <b>${best.w}</b>! Quindi il numero <b>${P.code[L]}</b> è la <b>${L}</b>.`;
     } else {
       /* nessun aiuto dalle parole: il numero più frequente è quasi sempre una vocale */
       const all = lettersOf(P.text).split('');
       const cnt = c => all.filter(x => x === c).length;
       L = missing.map(n => dec[n]).sort((a, b) => cnt(b) - cnt(a))[0];
       tag = 'freq';
-      why = `Il numero <b>${P.code[L]}</b> è il più frequente nella frase (${cnt(L)} volte). In italiano le lettere più comuni sono le vocali, soprattutto E, A, I, O: qui è la <b>${L}</b>.`;
+      why = `Il numero <b>${P.code[L]}</b> è quello che si vede più spesso nella frase: ${cnt(L)} volte! Le lettere che usiamo di più sono le vocali, come E, A, I, O. Qui è la <b>${L}</b>.`;
     }
-    const tip = tag === 'word' ? Z.say(`Guarda la parola «${shape(best.w)}»: le manca una sola lettera.`, `Nella parola «${shape(best.w)}» manca solo una lettera: quale parola italiana può essere?`)
-      : tag === 'guessword' ? `La parola «${shape(best.w)}» ha già molte lettere scoperte: prova a leggerla ad alta voce, che parola potrebbe essere?`
-      : 'Conta quante volte compare ogni numero: quello più frequente è quasi sempre una vocale, di solito E, A, I oppure O.';
+    const tip = tag === 'word' ? Z.say(`Guarda la parola «${shape(best.w)}»: le manca una lettera sola. Che parola è?`, `Nella parola «${shape(best.w)}» manca solo una lettera. Prova a dirla ad alta voce!`)
+      : tag === 'guessword' ? `La parola «${shape(best.w)}» ha già tante lettere. Leggila ad alta voce: che parola può essere?`
+      : 'Conta quante volte vedi ogni numero. Quello che vedi più spesso è quasi sempre una vocale: E, A, I oppure O.';
     s.m[P.code[L]] = L;
     return { state: s, focus: [P.code[L]], area: tag === 'freq' ? [] : [P.code[L]], why, tag, tip };
   }
