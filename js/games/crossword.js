@@ -470,7 +470,745 @@ GIACCA|Si indossa sopra la camicia
 CAMICIA|Ha il colletto e i bottoni
 BOTTONE|Si infila nell'asola
 TASCA|Ci si mettono le mani o le chiavi
-CINTURA|Tiene su i pantaloni`;
+CINTURA|Tiene su i pantaloni
+AIA|Il cortile della fattoria
+AVO|Antenato, nonno di tanto tempo fa
+BUE|Animale grosso che tirava l'aratro
+BAR|Ci si beve il caffè
+BLU|Il colore del mare profondo
+ERA|Tanto tempo fa, come l'era dei dinosauri
+GAS|Si accende sotto la pentola
+GRU|Uccello dalle zampe lunghe, o macchina da cantiere
+IRA|Rabbia molto forte
+SUD|Il punto cardinale opposto al nord
+EST|Il punto cardinale dove sorge il sole
+NORD|Lo indica la bussola
+OVEST|Il punto cardinale dove tramonta il sole
+UFO|Disco volante
+VIA|Strada di città
+ZOO|Ci si vedono gli animali selvatici
+MAI|Il contrario di sempre
+NOI|Io e te insieme
+VOI|Tu e gli altri
+LORO|Quelle persone là
+GOL|Si fa tirando in porta
+BIS|Si chiede alla fine del concerto
+NEO|Piccola macchia scura sulla pelle
+MIO|Non tuo, ma ...
+TUO|Non mio, ma ...
+SUO|Di lui o di lei
+ANNI|Si contano al compleanno
+ASSE|Tavola di legno
+ANSA|Curva del fiume
+AGLIO|Ha un odore forte e tiene lontani i vampiri
+ALCE|Grosso cervo del nord
+ALGA|Pianta del mare
+ALI|Servono per volare
+ALPE|Montagna alta
+ALTO|Il contrario di basso
+AMACA|Letto di rete appeso tra due alberi
+ANGOLO|Lo formano due muri che si incontrano
+ANIMA|Lo spirito di una persona
+ANTA|Porta dell'armadio
+APERTO|Il contrario di chiuso
+ARATRO|Serve per lavorare la terra
+ARGENTO|Metallo grigio e lucente
+ARMA|Spada o lancia
+AROMA|Profumo buono di cibo
+ASILO|Scuola dei bambini piccoli
+ASPRO|Il sapore del limone acerbo
+ATTO|Parte di uno spettacolo a teatro
+AVARO|Non spende mai niente
+AZZURRO|Il colore del cielo sereno
+BACCA|Piccolo frutto del bosco
+BAFFI|Crescono sopra la bocca
+BAGAGLIO|Si porta in viaggio
+BALLO|Si fa a ritmo di musica
+BANCO|Il tavolo dello scolaro
+BANDA|Gruppo che suona per strada
+BARBA|Cresce sul mento
+BASSO|Il contrario di alto
+BASTONE|Aiuta a camminare
+BATTELLO|Piccola nave sul lago
+BELLO|Il contrario di brutto
+BENE|Il contrario di male
+BIANCO|Il colore del latte
+BIRO|Penna a sfera
+BOCCA|Si apre per mangiare
+BOLLA|Di sapone, vola e scoppia
+BORGO|Piccolo paese antico
+BOTTEGA|Negozio di un artigiano
+BRUCO|Diventerà una farfalla
+BRUTTO|Il contrario di bello
+BUIO|Quando non c'è luce
+BUONO|Ha un buon sapore
+BUSTA|Ci si mette la lettera
+CACAO|Serve per fare il cioccolato
+CAFFE|Si beve nella tazzina
+CALDO|Il contrario di freddo
+CALMO|Tranquillo, sereno
+CAMPANA|Suona sul campanile
+CANALE|A Venezia ci passano le gondole
+CANTO|Lo fa il cantante
+CAPO|Chi comanda
+CAPRA|Animale con la barbetta che bela
+CARO|Costa tanto
+CASCO|Protegge la testa in moto
+CAVO|Filo elettrico
+CEDRO|Grande albero, o agrume
+CENTO|Dieci volte dieci
+CERCHIO|Figura rotonda
+CERO|Grossa candela
+CIAO|Si dice per salutare
+CIBO|Si mangia
+CIMA|La punta della montagna
+CINEMA|Ci si guardano i film
+CINQUE|Le dita di una mano
+CIRCO|Ci sono i clown e gli acrobati
+CITTA|Più grande di un paese
+CODA|La muove il cane felice
+COLLA|Serve per attaccare
+COLPO|Botta
+CONO|Si riempie di gelato
+CORNO|Ce l'ha il rinoceronte
+CORPO|Testa, braccia e gambe
+CORSA|Si fa correndo
+CORTO|Il contrario di lungo
+COSA|Oggetto qualunque
+COTONE|Stoffa delle magliette
+CREMA|Dolce e morbida, dentro i bignè
+CRESTA|Ce l'ha il gallo in testa
+CROCE|Due righe che si incrociano
+CRUDO|Non cotto
+CUBO|Il dado ne ha la forma
+CULLA|Il lettino del neonato
+DAINO|Animale del bosco con le macchie
+DATO|Informazione
+DEBOLE|Il contrario di forte
+DENARO|I soldi
+DIETA|Si fa per dimagrire
+DIVISA|Vestito uguale per tutta la squadra
+DOCCIA|Ci si lava in piedi
+DOLCE|Il sapore dello zucchero
+DOLORE|Fa male
+DONNA|Persona adulta femmina
+DORMIRE|Si fa a letto
+DURO|Il contrario di morbido
+EROE|Fa grandi imprese coraggiose
+ESAME|Prova a scuola
+ETNA|Vulcano della Sicilia
+FAME|Si ha prima di mangiare
+FANGO|Terra bagnata
+FARE|Verbo: ... i compiti
+FASE|Una delle facce della luna
+FATTO|Cosa successa davvero
+FAVOLA|Racconto con la morale
+FEDE|L'anello degli sposi
+FELICE|Molto contento
+FIATO|Si prende per correre
+FIERA|Mercato grande e festoso
+FILA|Persone una dietro l'altra
+FINE|Il contrario di inizio
+FIOCCO|Di neve, o sul regalo
+FIRMA|Si scrive in fondo alla lettera
+FOCE|Dove il fiume finisce nel mare
+FOGLIO|Pagina di carta
+FONTE|Sorgente d'acqua
+FORTE|Il contrario di debole
+FOSSO|Scavo lungo la strada
+FOTO|Si scatta con la macchina fotografica
+FRECCIA|Si tira con l'arco
+FREDDO|Il contrario di caldo
+FRENO|Fa fermare la bici
+FRONTE|Sta sopra gli occhi
+FRUTTA|Mele, pere e banane
+FUMO|Esce dal camino
+FUNE|Corda grossa
+GALA|Festa elegante
+GARA|Competizione sportiva
+GATTA|Femmina del gatto
+GELO|Freddo che ghiaccia
+GEMMA|Pietra preziosa
+GENTE|Tante persone
+GESSO|Si usa sulla lavagna
+GIALLO|Il colore del limone
+GIORNO|Dura ventiquattro ore
+GIRO|Si fa intorno all'isolato
+GOCCIA|Un pezzettino di pioggia
+GONNA|Vestito da donna, senza pantaloni
+GRANDE|Il contrario di piccolo
+GRASSO|Il contrario di magro
+GRIGIO|Il colore della nebbia
+GUSTO|Sapore
+IGLOO|Casa di ghiaccio
+IMPERO|Regno grandissimo
+INIZIO|Il contrario di fine
+INNO|Canzone della nazione
+LACCIO|Si allaccia alla scarpa
+LADRO|Ruba
+LAMPO|Luce del temporale
+LARGO|Il contrario di stretto
+LASTRA|Pezzo piatto di vetro
+LATO|Il quadrato ne ha quattro
+LAVORO|Lo si fa per guadagnare
+LEGGE|Regola dello Stato
+LEGNO|Viene dagli alberi
+LENTO|Il contrario di veloce
+LEVA|Serve per sollevare
+LIBERO|Non prigioniero
+LIEVITO|Fa gonfiare il pane
+LINEA|Riga dritta
+LINGUA|Sta nella bocca
+LISCIO|Senza nodi né grinze
+LITRO|Unità per misurare l'acqua
+LOTTA|Combattimento
+LUCCIOLA|Insetto che brilla di notte
+LUNGO|Il contrario di corto
+LUPA|Femmina del lupo
+MAGRO|Il contrario di grasso
+MALE|Il contrario di bene
+MANICO|Si impugna
+MANTO|Mantello
+MARZO|Il mese di inizio primavera
+MATTONE|Serve per costruire i muri
+MATTINO|Viene dopo l'alba
+MENTA|Erba dal profumo fresco
+MENTO|Sta sotto la bocca
+MESE|Ce ne sono dodici in un anno
+METRO|Cento centimetri
+MILLE|Dieci volte cento
+MINUTO|Sessanta secondi
+MODA|Si segue nel vestire
+MOLLA|Rimbalza
+MONDO|La Terra
+MONTE|Montagna
+MORBIDO|Il contrario di duro
+MOSCA|Insetto che ronza
+MOSTRA|Esposizione di quadri
+MULO|Figlio di asino e cavalla
+MULINO|Ha le pale e macina il grano
+NASTRO|Si lega al regalo
+NATURA|Piante e animali
+NERO|Il colore del carbone
+NIENTE|Nulla
+NOME|Ce l'hanno tutte le persone
+NONNO|Il papà del papà
+NORMA|Regola
+NUMERO|Si conta
+NUOVO|Il contrario di vecchio
+OCEANO|Più grande del mare
+ODIO|Il contrario di amore
+OGGI|Il giorno di adesso
+OMBELICO|Sta in mezzo alla pancia
+ONORE|Gloria e rispetto
+OPERA|Si canta a teatro
+ORARIO|Dice quando parte il treno
+ORSA|Femmina dell'orso
+ORTICA|Pianta che punge
+OSTE|Padrone dell'osteria
+OVALE|Forma dell'uovo
+PADRE|Il papà
+PAGINA|Si gira leggendo
+PAGLIA|Ci dormono le mucche
+PALAZZO|Edificio grande
+PALMA|Albero delle spiagge calde
+PANCIA|La pappa ci arriva
+PANNA|Si monta per i dolci
+PARETE|Muro della stanza
+PAROLA|Si scrive con le lettere
+PARTE|Pezzo di un tutto
+PASTO|Pranzo o cena
+PATTO|Accordo
+PAURA|Si prova al buio
+PAVONE|Fa la ruota con la coda
+PELLE|Ci copre tutto il corpo
+PELO|Ce l'ha il gatto
+PEPE|Spezia che pizzica
+PESCA|Frutto con la buccia vellutata
+PESO|Si misura con la bilancia
+PETALO|Parte colorata del fiore
+PEZZO|Parte
+PIANTA|Cresce nel vaso
+PICCOLO|Il contrario di grande
+PIENO|Il contrario di vuoto
+PIETRA|Sasso
+PIGIAMA|Si mette per dormire
+PIOLO|Gradino della scala a pioli
+PISTA|Ci corrono le auto
+POLLICE|Il dito più grosso
+POMPA|Gonfia le ruote
+PORTONE|Porta grande del palazzo
+POSTA|Ci arrivano le lettere
+PRANZO|Si mangia a mezzogiorno
+PREMIO|Si vince
+PRESTO|Il contrario di tardi
+PRIMO|Arriva prima di tutti
+PROVA|Tentativo
+PUNTO|Si mette alla fine della frase
+RAGAZZO|Più grande di un bambino
+RAME|Metallo rossiccio
+RAZZO|Va nello spazio
+REGNO|Il paese del re
+RICCO|Ha tanti soldi
+RIDERE|Si fa quando si è allegri
+RIGA|Linea dritta
+RIMA|Fa suonare bene la poesia
+RIPOSO|Si fa quando si è stanchi
+ROBOT|Macchina che si muove da sola
+ROSSO|Il colore della fragola
+ROTONDO|Come una palla
+RUGA|Piega della pelle
+RUMORE|Suono forte
+RUSCELLO|Piccolo fiume
+SACCA|Borsa morbida
+SALSA|Si versa sulla pasta
+SALUTE|Si augura a chi starnutisce
+SANO|Non malato
+SANTO|Persona molto buona della Chiesa
+SAPERE|Conoscere
+SAPORE|Si sente con la lingua
+SCAFFALE|Ci si mettono i libri
+SCATOLA|Contenitore di cartone
+SCENA|Parte del film
+SCHIENA|Sta dietro il corpo
+SCOGLIO|Roccia nel mare
+SCORZA|Buccia dura
+SECCO|Senza acqua
+SEDE|Posto principale
+SEGNO|Traccia
+SEMAFORO|Rosso, giallo e verde
+SENTIERO|Stradina di montagna
+SERPENTE|Striscia per terra
+SETE|Si ha quando si vuole bere
+SILENZIO|Quando non c'è rumore
+SINDACO|Il capo del comune
+SOLDATO|Fa parte dell'esercito
+SONNO|Si ha la sera
+SOPRA|Il contrario di sotto
+SORTE|Il destino
+SOTTO|Il contrario di sopra
+SPAZIO|Ci vanno gli astronauti
+SPESA|Si fa al supermercato
+SPINA|Ce l'ha la rosa
+SPORT|Calcio, nuoto, tennis
+STAGIONE|Primavera, estate, autunno o inverno
+STALLA|Casa delle mucche
+STANZA|Parte della casa
+STATUA|Scultura
+STIVALE|Scarpa alta, e anche l'Italia
+STOFFA|Tessuto
+STORIA|Racconto
+STRETTO|Il contrario di largo
+STUFA|Scalda la casa
+SUONO|Si sente con le orecchie
+TACCO|Sotto la scarpa
+TALPA|Scava sotto terra
+TANTO|Molto
+TAPPO|Chiude la bottiglia
+TARDI|Il contrario di presto
+TASTO|Si preme sulla tastiera
+TELO|Si stende sulla spiaggia
+TEMA|Si scrive a scuola
+TENERO|Morbido
+TESTA|Ci sono gli occhi e la bocca
+TIMIDO|Si vergogna un po'
+TINTA|Colore
+TIRO|Lancio
+TOSSE|Viene col raffreddore
+TRAMA|La storia del film
+TRISTE|Il contrario di allegro
+TROTA|Pesce di fiume
+TUBO|Ci passa l'acqua
+TUTA|Si mette per fare sport
+UMIDO|Un po' bagnato
+UNGHIA|Sta in punta al dito
+UOMO|Persona adulta maschio
+URLO|Grido forte
+USCITA|Il contrario di entrata
+UTILE|Serve a qualcosa
+VACCA|Mucca
+VAGONE|Carrozza del treno
+VALORE|Quanto vale una cosa
+VAPORE|Esce dalla pentola che bolle
+VECCHIO|Il contrario di nuovo
+VELOCE|Il contrario di lento
+VERO|Il contrario di falso
+VESPA|Insetto giallo e nero che punge
+VESTITO|Si indossa
+VIALE|Strada larga con gli alberi
+VISO|La faccia
+VITA|Il tempo in cui si vive
+VITE|Si avvita col cacciavite
+VOCE|Si usa per parlare
+VOLO|Lo fa l'uccello
+VOTO|Lo dà la maestra
+VUOTO|Il contrario di pieno
+ZANZARA|Punge d'estate
+ZOCCOLO|Scarpa di legno, o piede del cavallo
+ZUPPA|Minestra calda
+ACERO|Albero con le foglie rosse in autunno
+AMARO|Il contrario di dolce
+ANCORA|Tiene ferma la nave
+ANTICO|Di tanto tempo fa
+APRILE|Il mese dopo marzo
+ARCATA|Fila di archi
+ARTE|Pittura, musica e scultura
+ASSO|La carta più forte
+ATTESA|Si fa aspettando
+AURORA|La luce prima dell'alba
+AVVENTURA|Viaggio pieno di sorprese
+BARILE|Botte di legno
+BASE|La parte di sotto
+BATTITO|Lo fa il cuore
+BEVANDA|Si beve
+BIDONE|Grosso contenitore
+BILANCIA|Misura il peso
+BIONDO|Colore di capelli chiaro
+BORRACCIA|Si porta in gita piena d'acqua
+BOTOLA|Porta nel pavimento
+BRACE|Carbone acceso
+BRANCO|Gruppo di lupi
+BRETELLE|Tengono su i pantaloni
+CALORE|Lo dà il sole
+CAMERA|Stanza da letto
+CANESTRO|Ci si fa canestro a basket
+CANNA|Serve per pescare
+CANOTTO|Barchetta di gomma
+CAPELLI|Crescono sulla testa
+CAREZZA|Gesto dolce con la mano
+CARTELLO|Indica la strada
+CATENA|Fatta di anelli
+CAVOLO|Verdura a foglie
+CENTRO|Il punto in mezzo
+CERTO|Sicuro
+CESTO|Cesta
+CETRIOLO|Verdura verde e lunga
+CHIOCCIOLA|Lumaca con la casetta
+CIOTOLA|Ci mangia il gatto
+COLAZIONE|Il pasto del mattino
+COLLANA|Si porta al collo
+CONCHIGLIA|Si trova sulla spiaggia
+CORAGGIO|Il contrario di paura
+CORNICE|Sta intorno al quadro
+CORTILE|Spazio aperto tra le case
+CUOIO|Pelle per le scarpe
+DADI|Si tirano nel gioco dell'oca
+DAMIGIANA|Grande bottiglia per il vino
+DATTERO|Frutto della palma
+DIAMANTE|Pietra preziosa durissima
+DOMANDA|Finisce col punto di domanda
+DOMANI|Il giorno dopo oggi
+DOPO|Il contrario di prima
+DOTE|Qualità
+EDICOLA|Ci si comprano i giornali
+ELENCO|Lista
+ENTRATA|Il contrario di uscita
+ERBETTA|Piccola erba
+ESTERO|Fuori dall'Italia
+FAGIOLO|Legume
+FALCO|Uccello rapace
+FALSO|Il contrario di vero
+FAMIGLIA|Mamma, papà e figli
+FATICA|Stanchezza
+FEBBRE|Viene quando si è malati
+FERMATA|Ci si aspetta l'autobus
+FERIE|Vacanze dal lavoro
+FETTA|Pezzo di torta
+FIGLIO|Il bambino di mamma e papà
+FINALE|L'ultima parte
+FIORAIO|Vende i fiori
+FOLLA|Tantissime persone
+FONDO|La parte più bassa
+FORMA|Tondo o quadrato
+FORTUNA|Un quadrifoglio la porta
+FRASE|Gruppo di parole
+FUNGO|Cresce nel bosco
+GALLERIA|Il treno ci passa sotto la montagna
+GAMBERO|Va all'indietro
+GELSO|Albero dei bachi da seta
+GENITORI|Mamma e papà
+GENNAIO|Il primo mese
+GIOIA|Grande contentezza
+GIORNALE|Si legge al mattino
+GIUGNO|Il mese di inizio estate
+GOMITO|Piega il braccio
+GRAPPOLO|D'uva
+GRIDO|Urlo
+GUERRA|Il contrario di pace
+INCHIOSTRO|Sta nella penna
+ISTRICE|Ha gli aculei
+LAMPONE|Frutto di bosco rosso
+LAVAGNA|Ci si scrive col gesso
+LEGUME|Fagiolo o lenticchia
+LENZUOLO|Copre il materasso
+LEONESSA|Femmina del leone
+LIBRAIO|Vende i libri
+LUGLIO|Mese d'estate
+LUMINOSO|Pieno di luce
+MACCHINA|Automobile
+MAGGIO|Il mese delle rose
+MANGIARE|Si fa a tavola
+MANICA|Copre il braccio
+MARITO|Lo sposo
+MATERASSO|Sta sul letto
+MATTA|Pazza
+MAZZO|Di fiori, o di carte
+MEDICINA|Cura le malattie
+MERENDA|Si mangia il pomeriggio
+MESTOLO|Cucchiaio grande per la minestra
+MINIERA|Ci si scava il carbone
+MIRTILLO|Bacca blu
+MOGLIE|La sposa
+MOMENTO|Attimo
+MONTONE|Maschio della pecora
+MORSO|Si dà al panino
+MOTORE|Fa andare l'auto
+MULINELLO|Vento che gira
+NASCITA|Il primo giorno di vita
+NEGOZIANTE|Lavora nel negozio
+NEMICO|Il contrario di amico
+NOCCIOLA|Frutto secco tondo
+NOVEMBRE|Il mese dopo ottobre
+OCCASIONE|Opportunità
+OMBRELLONE|Fa ombra in spiaggia
+ONESTO|Non dice bugie
+ORCHESTRA|Tanti musicisti insieme
+ORIZZONTE|Dove il cielo tocca il mare
+OSTERIA|Locale dove si mangia
+OTTOBRE|Il mese delle castagne
+PACCO|Arriva per posta
+PAGELLA|Ha i voti della scuola
+PALLONE|Si calcia
+PANINO|Si riempie di prosciutto
+PAPAVERO|Fiore rosso dei campi
+PARENTE|Della stessa famiglia
+PASSERO|Piccolo uccello di città
+PATENTE|Serve per guidare
+PECORELLA|Piccola pecora
+PEDONE|Cammina sulle strisce
+PELUCHE|Orsacchiotto morbido
+PENSIERO|Idea nella testa
+PIGNA|Frutto del pino
+PILA|Batteria
+PIPISTRELLO|Vola di notte a testa in giù
+PISCINA|Ci si nuota
+POMERIGGIO|Viene dopo pranzo
+PORTAFOGLIO|Ci si tengono i soldi
+POZZANGHERA|Acqua per terra dopo la pioggia
+PRUGNA|Frutto viola
+PULCINO|Piccolo della gallina
+QUADERNO|Ci si scrive a scuola
+QUATTRO|Il numero dopo il tre
+RAGIONE|Chi ha ... vince la discussione
+RANOCCHIO|Rana
+RASOIO|Taglia la barba
+RICETTA|Dice come si cucina
+RIFUGIO|Casetta in montagna
+RISATA|Viene dopo una barzelletta
+RITMO|Lo segue chi balla
+ROTOLO|Di carta
+SALVAGENTE|Fa galleggiare
+SARDINA|Piccolo pesce in scatola
+SCALINO|Gradino
+SCARPONE|Scarpa da montagna
+SCIATORE|Scende sulla neve
+SCOPERTA|Cosa trovata per la prima volta
+SECONDO|Viene dopo il primo
+SEMPRE|Il contrario di mai
+SENTINELLA|Fa la guardia
+SETTE|I giorni della settimana
+SIEPE|Cespugli in fila
+SIGNORA|Donna gentile
+SOLDI|Denaro
+SPALLA|Unisce il braccio al corpo
+SPAVENTO|Paura improvvisa
+SPAZZOLA|Pettina i capelli
+SPIGA|Del grano
+SPINACI|Verdura di Braccio di Ferro
+STAGNO|Piccolo lago
+STRADINA|Piccola strada
+SUSINA|Prugna
+TACCHINO|Uccello del giorno del Ringraziamento
+TAGLIO|Lo fa la forbice
+TAVOLINO|Piccolo tavolo
+TELEVISORE|Ci si guardano i cartoni
+TEMPESTA|Grande temporale
+TENDINA|Piccola tenda
+TERRAZZO|Grande balcone
+TOVAGLIA|Copre la tavola
+TRAFFICO|Tante auto in coda
+TRAMPOLINO|Ci si tuffa
+TRATTORE|Lavora nei campi
+TRIANGOLO|Ha tre lati
+UCCELLO|Ha le piume e vola
+UFFICIO|Ci si lavora alla scrivania
+UNICORNO|Cavallo con un corno
+VALLATA|Valle grande
+VENERDI|Il giorno prima del sabato
+VERDURA|Insalata, carote, zucchine
+VIOLA|Fiore e colore
+VOLANTE|Si gira guidando
+ZAMPOGNA|Si suona a Natale
+ZIA|Sorella della mamma
+ACINO|Un chicco d'uva
+ALTARE|Sta in chiesa
+AMARE|Voler tanto bene
+AMICA|Persona cara
+ANELITO|Desiderio forte
+ANIMALE|Cane, gatto o leone
+ANTENNA|Prende il segnale della tv
+APRIRE|Il contrario di chiudere
+ARANCIO|Il colore della carota
+ARIETE|Maschio della pecora
+ARTISTA|Pittore o musicista
+ASCIA|Taglia la legna
+ASTRO|Stella
+ATLETA|Fa sport
+ATRIO|Ingresso del palazzo
+BALIA|Tata
+BARONE|Nobile
+BATTERE|Colpire
+BENDA|Copre la ferita
+BIRRA|Bevanda con la schiuma
+BOA|Serpente grande
+BOE|Galleggiano nel mare
+CALA|Piccola spiaggia
+CALCE|Si usa per i muri
+CANONE|Si paga ogni mese
+CAPANNA|Casetta di legno e paglia
+CARA|Amata
+CARTE|Si giocano a briscola
+CASTORO|Costruisce dighe
+CAVA|Ci si prende la pietra
+CENE|Pasti della sera
+CESTA|Ci si mette il pane
+CIGLIA|Stanno sopra gli occhi
+CINE|Il cinema, in breve
+COCCO|Noce delle palme
+COLA|Bevanda frizzante scura
+COLLE|Piccola collina
+CONTE|Nobile
+CORNA|Le ha la mucca
+COTTO|Il contrario di crudo
+DANZA|Ballo
+DARE|Il contrario di prendere
+DATA|Giorno, mese e anno
+DIRE|Parlare
+DITA|Ne abbiamo dieci
+DIVO|Attore famoso
+DOGANA|Si passa al confine
+ECCO|Si dice porgendo qualcosa
+EDEN|Paradiso terrestre
+EMOZIONE|Sentimento forte
+ERBE|Piante piccole dei prati
+ERRORE|Sbaglio
+ESCA|Si mette sull'amo
+ESSERE|Verbo: io sono
+ETERNO|Dura per sempre
+FINO|Sottile
+FIOCO|Debole, come una luce
+FORO|Buco
+FRATE|Vive nel convento
+GARE|Competizioni
+GELATAIO|Vende i gelati
+GENERE|Tipo
+GIRA|Ruota
+GITA|Viaggetto di un giorno
+GRATA|Inferriata
+GUIDA|Accompagna i turisti
+IDOLO|Persona molto ammirata
+INCANTO|Magia
+INVITO|Si manda per la festa
+LEALE|Sincero e fedele
+LIRA|Antico strumento a corde
+LOGO|Simbolo di una ditta
+MARINA|Spiaggia
+MASSO|Pietra grossa
+MATTO|Pazzo
+MERLO|Uccello nero dal becco giallo
+MINA|Della matita
+MOLO|Ci attraccano le barche
+MUSO|Faccia degli animali
+NANA|Piccolissima
+OCCHI|Servono per vedere
+ORCO|Gigante cattivo delle fiabe
+ORLO|Bordo
+PALO|Bastone piantato a terra
+PARI|Uguale
+RARO|Che si trova poco
+RATA|Pagamento a pezzi
+RENNA|Tira la slitta di Babbo Natale
+RIO|Ruscello
+SANTA|Donna molto buona della Chiesa
+SCIA|Lasciata dalla barca
+SITO|Pagina internet
+SOLO|Senza compagnia
+SORTA|Specie
+TASSO|Animale del bosco
+UNICO|Solo uno
+UNTO|Sporco d'olio
+VENA|Ci scorre il sangue
+ACETO|Si mette sull'insalata
+ALLORO|Corona dei vincitori
+AUTORE|Scrive i libri
+BASTA|Si dice per fermare
+BELVA|Animale feroce
+CARAMELLA|Dolcetto incartato
+ABETE|Albero di Natale
+ACERBO|Non ancora maturo
+ALIANTE|Aereo senza motore
+ANICE|Seme profumato
+ANTILOPE|Corre veloce nella savana
+ARCIERE|Tira con l'arco
+ASTUCCIO|Ci si tengono le matite
+BALENIERA|Nave che cacciava le balene
+CARIE|Buco nel dente
+CERINO|Piccolo fiammifero
+ENIGMA|Indovinello
+EPOCA|Periodo della storia
+ERETTO|Dritto in piedi
+ESILE|Sottile
+ETICA|Le regole del bene
+IRIDE|Parte colorata dell'occhio
+ISOLANO|Abita su un'isola
+LATINO|Lingua degli antichi Romani
+NOTARE|Accorgersi
+OLIVETO|Campo di olivi
+OPACO|Non lucido
+ORATA|Pesce del mare
+ORIGANO|Erba sulla pizza
+OSARE|Avere coraggio
+OTTONE|Metallo giallo delle trombe
+PARETI|Muri della stanza
+RETINA|Piccola rete
+SERATA|La sera intera
+SONATA|Musica per pianoforte
+TARTINA|Pane piccolo con qualcosa sopra
+TELONE|Grande telo
+TENORE|Cantante con voce alta
+TERRENO|Pezzo di terra
+TONO|Della voce
+TRITONE|Animale degli stagni
+UNIONE|Fa la forza
+URANO|Pianeta lontano
+NEONATO|Bambino appena nato
+ORATORE|Parla in pubblico
+SALINA|Ci si fa il sale
+SEGNALE|Avviso
+TERRINA|Ciotola grande
+ALATO|Con le ali
+AMENO|Piacevole
+ARIOSO|Pieno d'aria
+EOLIE|Isole della Sicilia
+OLIARE|Mettere l'olio
+RIDOTTO|Fatto più piccolo
+SANARE|Guarire
+SOAVE|Dolce e delicato
+TENACE|Non si arrende
+ORNATO|Decorato
+RONZIO|Lo fa la mosca
+CIRCA|Più o meno
+OTTIMO|Buonissimo`;
 
   const WORDS = [], CLUE = {};
   for (const line of DICT.split('\n')) {
@@ -480,81 +1218,171 @@ CINTURA|Tiene su i pantaloni`;
     WORDS.push(w);
   }
 
-  /* prova a mettere la parola con inizio (x, y) in direzione d (0 = orizzontale, 1 = verticale) */
-  function fits(n, g, used, w, x, y, d) {
-    const dx = d ? 0 : 1, dy = d ? 1 : 0, L = w.length;
-    const ex = x + dx * (L - 1), ey = y + dy * (L - 1);
-    if (x < 0 || y < 0 || ex >= n || ey >= n) return -1;
-    const at = (cx, cy) => (cx < 0 || cy < 0 || cx >= n || cy >= n ? '' : g[cy * n + cx]);
-    if (at(x - dx, y - dy) || at(ex + dx, ey + dy)) return -1;
-    let cross = 0;
-    for (let k = 0; k < L; k++) {
-      const cx = x + dx * k, cy = y + dy * k, i = cy * n + cx, c = g[i];
-      if (c) {
-        if (c !== w[k] || used[d][i]) return -1;
-        cross++;
-      } else if (at(cx + dy, cy + dx) || at(cx - dy, cy - dx)) return -1;
-    }
-    return cross > 0 && cross < L ? cross : -1;
+  /* parole di due lettere, come nelle riviste di enigmistica: piccole parole, note musicali e sigle delle province */
+  const SHORT = {};
+  const addShort = (s, clue, how) => (SHORT[s] = SHORT[s] || []).push({ clue, how });
+  for (const l of `IL|Articolo maschile: ... gatto
+LO|Articolo: ... zaino
+LA|Articolo femminile: ... casa
+UN|Articolo: ... cane
+DI|Piccola parola: la casa ... Anna
+DA|Piccola parola: vengo ... Roma
+IN|Piccola parola: vado ... montagna
+SU|Il contrario di giù
+NO|Il contrario di sì
+RE|Ha la corona in testa
+DO|La prima nota musicale
+MI|La nota dopo il re
+FA|La nota dopo il mi
+LA|La nota dopo il sol
+SI|La nota dopo il la
+TU|Si dice a un amico: ... sei qui
+IO|Lo dice chi parla di sé
+TE|Vengo con ...
+ME|Parla con ...
+CI|... vediamo domani
+VI|... aspetto qui
+MA|Piccolo ... forte
+SE|... piove, prendo l'ombrello
+ED|La «e» davanti a una vocale
+AD|La «a» davanti a una vocale
+OH|Si dice per la meraviglia
+AH|Si dice per la sorpresa
+TV|La televisione, in breve
+OK|Va bene, in inglese`.split('\n')) { const [s, c] = l.split('|'); addShort(s, c); }
+  for (const p of `AG Agrigento,AL Alessandria,AN Ancona,AO Aosta,AR Arezzo,AP Ascoli Piceno,AT Asti,AV Avellino,BA Bari,BL Belluno,BN Benevento,BG Bergamo,BI Biella,BO Bologna,BZ Bolzano,BS Brescia,BR Brindisi,CA Cagliari,CL Caltanissetta,CB Campobasso,CE Caserta,CT Catania,CZ Catanzaro,CH Chieti,CO Como,CS Cosenza,CR Cremona,KR Crotone,CN Cuneo,EN Enna,FE Ferrara,FI Firenze,FG Foggia,FR Frosinone,GE Genova,GO Gorizia,GR Grosseto,IM Imperia,IS Isernia,SP La Spezia,AQ L'Aquila,LT Latina,LE Lecce,LC Lecco,LI Livorno,LO Lodi,LU Lucca,MC Macerata,MN Mantova,MS Massa,MT Matera,ME Messina,MI Milano,MO Modena,NA Napoli,NO Novara,NU Nuoro,OR Oristano,PD Padova,PA Palermo,PR Parma,PV Pavia,PG Perugia,PE Pescara,PC Piacenza,PI Pisa,PT Pistoia,PN Pordenone,PZ Potenza,PO Prato,RG Ragusa,RA Ravenna,RC Reggio Calabria,RE Reggio Emilia,RI Rieti,RN Rimini,RM Roma,RO Rovigo,SA Salerno,SS Sassari,SV Savona,SI Siena,SR Siracusa,SO Sondrio,TA Taranto,TE Teramo,TR Terni,TO Torino,TP Trapani,TN Trento,TV Treviso,TS Trieste,UD Udine,VA Varese,VE Venezia,VB Verbania,VC Vercelli,VR Verona,VV Vibo Valentia,VI Vicenza,VT Viterbo`.split(',')) {
+    const s = p.slice(0, 2), city = p.slice(3);
+    addShort(s, `Sigla di ${city}`, `Ogni provincia ha una sigla di due lettere, come sulle vecchie targhe delle auto. ${city} è <b>${s}</b>.`);
   }
 
+  /* pezzi di parola: «Le vocali di pisa», «L'inizio di casa»… con la spiegazione per il suggerimento */
+  const FRAG = {};
+  const lettersOf = s => s.split('').join(', ').replace(/, ([A-Z])$/, ' e $1');
+  const addFrag = (s, clue, how) => { if (!SHORT[s] && !CLUE[s]) (FRAG[s] = FRAG[s] || []).push({ clue, how }); };
+  for (const w of WORDS) {
+    if (w.length < 4 || w.length > 8) continue;
+    const lw = w.toLowerCase();
+    addFrag(w.slice(0, 2), `L'inizio di «${lw}»`, `«${lw}» comincia con <b>${w.slice(0, 2)}</b>.`);
+    addFrag(w.slice(-2), `La fine di «${lw}»`, `«${lw}» finisce con <b>${w.slice(-2)}</b>.`);
+    if (w.length >= 6) {
+      addFrag(w.slice(0, 3), `L'inizio di «${lw}»`, `«${lw}» comincia con <b>${w.slice(0, 3)}</b>.`);
+      addFrag(w.slice(-3), `La fine di «${lw}»`, `«${lw}» finisce con <b>${w.slice(-3)}</b>.`);
+    }
+    if (w.length === 4 || w.length === 6) {
+      const a = w.slice(0, w.length / 2), b = w.slice(w.length / 2), how = `Tagliamo «${lw}» a metà: ${a} e ${b}.`;
+      addFrag(a, `Metà di «${lw}»`, how);
+      addFrag(b, `Metà di «${lw}»`, how);
+    }
+    const v = w.replace(/[^AEIOU]/g, ''), c = w.replace(/[AEIOU]/g, '');
+    if (v.length === 2) addFrag(v, `Le vocali di «${lw}»`, `In «${lw}» le vocali sono ${lettersOf(v)}: insieme fanno <b>${v}</b>.`);
+    if (c.length === 2) addFrag(c, `Le consonanti di «${lw}»`, `In «${lw}» le consonanti (le lettere che non sono vocali) sono ${lettersOf(c)}: insieme fanno <b>${c}</b>.`);
+  }
+  /* 1 = parola vera o di due lettere, 2 = pezzo di parola, 0 = lettera sola, -1 = non va */
+  const kind = s => (s.length < 2 ? 0 : (s.length > 2 && CLUE[s]) || SHORT[s] ? 1 : FRAG[s] ? 2 : -1);
+  /* quanto è bella una fila: parola vera > parolina > sigla > pezzo di parola */
+  const SIGLA = s => SHORT[s] && SHORT[s].every(o => o.how);
+  const worth = s => { const k = kind(s); return k === 1 ? (s.length > 2 ? 5 : SIGLA(s) ? 0.3 : 3) : k === 2 ? -1 : 0; };
+
+  /* schema libero: si mettono parole vere, il più fitte possibile; poi si riempiono i buchi
+     con lettere che formano parole corte, sigle o pezzi di parola; le caselle vuote diventano nere */
   function build(n) {
-    const g = new Array(n * n).fill(''), used = [new Uint8Array(n * n), new Uint8Array(n * n)];
-    const place = (w, x, y, d) => {
-      for (let k = 0; k < w.length; k++) { const i = (y + d * k) * n + x + (1 - d) * k; g[i] = w[k]; used[d][i] = 1; }
-      list.push({ w, x, y, d });
+    const g = new Array(n * n).fill('');
+    const at = (x, y) => (x < 0 || y < 0 || x >= n || y >= n ? '' : g[y * n + x]);
+    const runAt = (x, y, d) => {
+      const dx = d ? 0 : 1, dy = d ? 1 : 0;
+      while (at(x - dx, y - dy)) { x -= dx; y -= dy; }
+      let s = '';
+      while (at(x, y)) { s += at(x, y); x += dx; y += dy; }
+      return s;
     };
-    const list = [];
-    const first = Z.pick(WORDS.filter(w => w.length >= n - 4 && w.length <= n));
-    place(first, Z.ri(0, n - first.length), (n / 2) | 0, 0);
-    const inUse = new Set([first]);
-    const target = Math.round(n * n / 7.5);
-    for (let miss = 0; list.length < target && miss < 3;) {
-      let best = null, bs = 0;
-      for (const w of Z.shuffle(WORDS.slice())) {
-        if (inUse.has(w) || w.length > n) continue;
-        for (let k = 0; k < w.length; k++) for (let i = 0; i < n * n; i++) {
-          if (g[i] !== w[k]) continue;
-          const d = used[0][i] ? 1 : 0;
-          if (used[d][i]) continue;
-          const x = i % n - (d ? 0 : k), y = ((i / n) | 0) - (d ? k : 0);
-          const c = fits(n, g, used, w, x, y, d);
-          if (c < 0) continue;
-          /* più incroci e parole più lunghe; un po' di caso per variare */
-          const sc = c * 3 + w.length * 0.5 + Math.random() * 2;
+    const tryPlace = (w, x, y, d, keep) => {
+      const dx = d ? 0 : 1, dy = d ? 1 : 0, L = w.length;
+      if (x < 0 || y < 0 || x + dx * (L - 1) >= n || y + dy * (L - 1) >= n) return null;
+      if (at(x - dx, y - dy) || at(x + dx * L, y + dy * L)) return null;
+      for (let k = 0; k < L; k++) { const c = g[(y + dy * k) * n + x + dx * k]; if (c && c !== w[k]) return null; }
+      const ch = [];
+      for (let k = 0; k < L; k++) { const i = (y + dy * k) * n + x + dx * k; if (!g[i]) { g[i] = w[k]; ch.push(i); } }
+      let r = null;
+      if (ch.length && ch.length < L) {
+        r = { ch, cross: L - ch.length, good: 0, frag: 0 };
+        for (const i of ch) {
+          const s = runAt(i % n, (i / n) | 0, 1 - d), k = kind(s);
+          if (k < 0) { r = null; break; }
+          if (k === 1 && s.length > 1 && !SIGLA(s)) r.good++;
+          if (k === 2) r.frag++;
+        }
+      }
+      if (!r || !keep) for (const i of ch) g[i] = '';
+      return r;
+    };
+    const used = new Set();
+    const first = Z.pick(WORDS.filter(w => w.length >= Math.min(n, 10) - 2 && w.length <= Math.min(n, 11)));
+    const fy = Z.ri(0, 1) ? 0 : Z.ri(0, n - 1), fx = Z.ri(0, n - first.length);
+    for (let k = 0; k < first.length; k++) g[fy * n + fx + k] = first[k];
+    used.add(first);
+    for (let fails = 0; fails < 2;) {
+      let best = null, bs = -1e9;
+      for (const w of Z.shuffle(WORDS.filter(w => !used.has(w) && w.length <= n)).slice(0, 260))
+        for (const d of [0, 1]) for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+          const r = tryPlace(w, x, y, d, false);
+          if (!r) continue;
+          const sc = r.ch.length + r.cross * 2.5 + r.good * 2 - r.frag * 2.5 + Math.random() * 2;
           if (sc > bs) { bs = sc; best = { w, x, y, d }; }
         }
-        if (best && bs > 8) break;
-      }
-      if (!best) { miss++; continue; }
-      place(best.w, best.x, best.y, best.d);
-      inUse.add(best.w);
+      if (!best) { fails++; continue; }
+      tryPlace(best.w, best.x, best.y, best.d, true);
+      used.add(best.w);
     }
-    return list;
+    const LET = 'AEIOURNTLSCDMPGBVFZ';
+    for (let pass = 0; pass < 3; pass++) for (const i of Z.shuffle(Z.range(n * n))) {
+      if (g[i]) continue;
+      let best = '', bs = 0;
+      for (const c of LET) {
+        g[i] = c;
+        const a = runAt(i % n, (i / n) | 0, 0), b = runAt(i % n, (i / n) | 0, 1), ka = kind(a), kb = kind(b);
+        g[i] = '';
+        if (ka < 0 || kb < 0 || (a.length < 2 && b.length < 2)) continue;
+        const sc = worth(a) + worth(b) + Math.random();
+        if (sc > bs) { bs = sc; best = c; }
+      }
+      if (best) g[i] = best;
+    }
+    return g;
   }
 
   function layout(n) {
-    let best = null;
-    for (let t = 0; t < 12; t++) {
-      const list = build(n);
-      if (!best || list.length > best.length) best = list;
-      if (list.length >= Math.round(n * n / 8)) break;
+    let g = null, best = -1;
+    for (let t = 0; t < 3; t++) {
+      const h = build(n), full = h.filter(c => c).length;
+      if (full > best) { best = full; g = h; }
     }
-    /* si ritaglia lo schema intorno alle parole */
+    /* si tolgono righe e colonne vuote ai bordi */
     let x0 = n, y0 = n, x1 = 0, y1 = 0;
-    for (const p of best) {
-      x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y);
-      x1 = Math.max(x1, p.x + (p.d ? 0 : p.w.length - 1)); y1 = Math.max(y1, p.y + (p.d ? p.w.length - 1 : 0));
-    }
+    g.forEach((c, i) => { if (c) { const x = i % n, y = (i / n) | 0; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } });
     const w = x1 - x0 + 1, h = y1 - y0 + 1;
-    const sol = new Array(w * h).fill('.');
-    const words = best.map(p => ({ word: p.w, x: p.x - x0, y: p.y - y0, d: p.d, clue: CLUE[p.w] }));
-    for (const p of words) for (let k = 0; k < p.word.length; k++) sol[(p.y + p.d * k) * w + p.x + (1 - p.d) * k] = p.word[k];
+    const sol = Z.range(w * h).map(i => g[(y0 + ((i / w) | 0)) * n + x0 + i % w] || '.').join('');
+    /* ogni fila di due o più lettere è una parola, con la sua definizione */
+    const words = [];
+    for (const d of [0, 1]) for (let a = 0; a < (d ? w : h); a++) {
+      const len = d ? h : w;
+      let s = '', st = 0;
+      for (let b = 0; b <= len; b++) {
+        const i = b < len ? (d ? b * w + a : a * w + b) : -1, c = i >= 0 ? sol[i] : '.';
+        if (c !== '.') { if (!s) st = i; s += c; continue; }
+        if (s.length > 1) {
+          const p = { word: s, x: st % w, y: (st / w) | 0, d };
+          if (s.length > 2 && CLUE[s]) p.clue = CLUE[s];
+          else { const o = Z.pick(SHORT[s] || FRAG[s]); p.clue = o.clue; if (o.how) p.how = o.how; }
+          words.push(p);
+        }
+        s = '';
+      }
+    }
     /* numerazione: in ordine di lettura, un numero per ogni casella dove comincia una parola */
     const starts = [...new Set(words.map(p => p.y * w + p.x))].sort((a, b) => a - b);
     for (const p of words) p.num = starts.indexOf(p.y * w + p.x) + 1;
     words.sort((a, b) => a.d - b.d || a.num - b.num);
-    return { w, h, sol: sol.join(''), words };
+    return { w, h, sol, words };
   }
   Z.DICT = { WORDS, CLUE };
 
@@ -571,7 +1399,7 @@ CINTURA|Tiene su i pantaloni`;
   }
 
   /* Incastro: quante soluzioni ha lo schema con l'elenco delle parole (si ferma a 2) */
-  function countFills(P, fixed) {
+  function countFills(P, fixed, diff) {
     const slots = P.words.map(p => cellsOf(P, p));
     const g = new Array(P.w * P.h).fill('');
     for (const i of fixed) g[i] = P.sol[i];
@@ -579,9 +1407,10 @@ CINTURA|Tiene su i pantaloni`;
     const used = new Array(pool.length).fill(false);
     const done = new Array(slots.length).fill(false);
     let found = 0, nodes = 0;
+    const LIM = 40000;
     const fitsIn = (k, w) => w.length === slots[k].length && slots[k].every((i, j) => !g[i] || g[i] === w[j]);
     const rec = () => {
-      if (found > 1 || ++nodes > 200000) return;
+      if (found > 1 || ++nodes > LIM) return;
       let best = -1, bc = null;
       for (let k = 0; k < slots.length; k++) {
         if (done[k]) continue;
@@ -590,8 +1419,16 @@ CINTURA|Tiene su i pantaloni`;
         if (!c.length) return;
         if (!bc || c.length < bc.length) { best = k; bc = c; }
       }
-      if (best < 0) { found++; return; }
+      if (best < 0) {
+        found++;
+        /* una soluzione diversa da quella giusta: si ricordano le caselle che cambiano */
+        if (diff && !diff.length) for (let i = 0; i < g.length; i++) if (g[i] && g[i] !== P.sol[i]) diff.push(i);
+        return;
+      }
+      const tried = new Set();
       for (const j of bc) {
+        if (tried.has(pool[j])) continue;
+        tried.add(pool[j]);
         const prev = slots[best].map(i => g[i]);
         slots[best].forEach((i, t) => { g[i] = pool[j][t]; });
         used[j] = done[best] = true;
@@ -601,7 +1438,7 @@ CINTURA|Tiene su i pantaloni`;
       }
     };
     rec();
-    return nodes > 200000 ? 2 : found;
+    return nodes > LIM ? 2 : found;
   }
 
   function generateFit(opt) {
@@ -611,9 +1448,13 @@ CINTURA|Tiene su i pantaloni`;
       const first = Z.pick(P.words);
       const given = cellsOf(P, first);
       let ok = false;
-      for (let t = 0; t < 4; t++) {
-        if (countFills(P, given) === 1) { ok = true; break; }
-        const p = Z.pick(P.words.filter(q => !cellsOf(P, q).every(i => given.includes(i))));
+      for (let t = 0; t < 12; t++) {
+        const diff = [];
+        if (countFills(P, given, diff) === 1) { ok = true; break; }
+        /* si scrive una parola dove l'altra soluzione sbaglia (o una a caso, se la ricerca era troppo lunga) */
+        const open = P.words.filter(q => !cellsOf(P, q).every(i => given.includes(i)));
+        const hit = q => cellsOf(P, q).filter(i => diff.includes(i)).length;
+        const p = diff.length ? open.sort((a, b) => hit(b) - hit(a))[0] : Z.pick(open);
         given.push(...cellsOf(P, p).filter(i => !given.includes(i)));
       }
       if (!ok) continue;
@@ -660,8 +1501,9 @@ CINTURA|Tiene su i pantaloni`;
           p = Z.pick(open.filter(q => known(q) === top));
           const k = cellsOf(P, p).filter(i => st.v[i]).length;
           tag = k ? 'cross' : 'clue';
-          tip = `Prova la <b>${label(p)}</b>: «${p.clue}». ` + (k ? `Hai già ${k === 1 ? 'una lettera' : k + ' lettere'} su ${p.word.length}: ti aiutano!` : `È lunga ${p.word.length} lettere.`);
-          why = `<b>${label(p)}</b>: «${p.clue}». ` + (k
+          tip = `Prova la <b>${label(p)}</b>: «${p.clue}». ` + (k ? `Hai già ${k === 1 ? 'una lettera' : k + ' lettere'} su ${p.word.length}: ti aiutano!` : `È lunga ${p.word.length} lettere.`)
+            + (p.how && !/^Sigla/.test(p.clue) ? ' Attenzione: qui non va una parola intera, ma un pezzetto di parola.' : '');
+          why = `<b>${label(p)}</b>: «${p.clue}». ` + (p.how ? p.how + ' ' : '') + (k
             ? `Avevi già ${k === 1 ? 'una lettera' : k + ' lettere'} su ${p.word.length}: con quelle è più facile. È <b>${p.word}</b>! `
             : `La risposta è <b>${p.word}</b>. `);
         }
@@ -674,10 +1516,8 @@ CINTURA|Tiene su i pantaloni`;
 
   function check(P) {
     if (!P || P.words.length < 6) return 'troppo poche parole';
-    const seen = new Set();
     for (const p of P.words) {
-      if (!CLUE[p.word] || seen.has(p.word)) return 'parola non valida: ' + p.word;
-      seen.add(p.word);
+      if (kind(p.word) < 1 || !p.clue) return 'parola non valida: ' + p.word;
       if (cellsOf(P, p).map(i => P.sol[i]).join('') !== p.word) return 'schema incoerente: ' + p.word;
     }
     /* ogni sequenza di 2+ lettere in fila deve essere una parola dello schema */
@@ -708,9 +1548,23 @@ CINTURA|Tiene su i pantaloni`;
       const grid = Z.h('div.cw-grid');
       const nums = {};
       for (const p of P.words) nums[p.y * W + p.x] = p.num;
+      /* come nelle riviste: le caselle vuote vicino al bordo restano fuori (bordi frastagliati), le altre sono nere */
+      const out = new Set();
+      for (let i = 0; i < W * H; i++) {
+        const x = i % W, y = (i / W) | 0;
+        const edge = Math.min(x, y, W - 1 - x, H - 1 - y);
+        if (P.sol[i] === '.' && edge === 0) out.add(i);
+      }
+      for (let grow = 0; grow < 2; grow++) for (let i = 0; i < W * H; i++) {
+        const x = i % W, y = (i / W) | 0;
+        if (P.sol[i] === '.' && !out.has(i) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
+          const nx = x + dx, ny = y + dy;
+          return nx >= 0 && ny >= 0 && nx < W && ny < H && out.has(ny * W + nx);
+        })) out.add(i);
+      }
       const cells = [], lets = [];
       for (let i = 0; i < W * H; i++) {
-        if (P.sol[i] === '.') { const b = Z.h('span.cw-c.blank'); grid.append(b); cells.push(b); lets.push(null); continue; }
+        if (P.sol[i] === '.') { const b = Z.h('span.cw-c.' + (out.has(i) ? 'blank' : 'blk')); grid.append(b); cells.push(b); lets.push(null); continue; }
         const l = Z.h('span.cw-l');
         const c = Z.h('span.cw-c', null, nums[i] && !fit ? Z.h('span.cw-n', { text: nums[i] }) : null, l);
         if (isGiven.has(i)) c.classList.add('given');
@@ -747,11 +1601,12 @@ CINTURA|Tiene su i pantaloni`;
           body = lens.map(L => [Z.h('h3.cw-h', { text: `${L} lettere` }), Z.h('p.cw-words', null,
             ...P.words.filter(p => p.word.length === L).map(p => p.word).sort().map(w => Z.h('span' + (wr.has(w) ? '.done' : ''), { text: w })))]).flat();
         } else {
-          const sec = d => [Z.h('h3.cw-h', { text: d ? 'Verticali' : 'Orizzontali' }),
-            ...P.words.filter(p => p.d === d).map(p => Z.h('button.cw-item' + (cur && cellsOf(P, p).every(i => cur.v[i]) ? '.done' : ''), {
-              type: 'button', on: { click: () => { Z.ui.closeOverlay(); selectWord(p); } },
-            }, Z.h('b', { text: p.num + '. ' }), p.clue + ` (${p.word.length})`))];
-          body = [...sec(0), ...sec(1)];
+          /* come nelle riviste: «ORIZZONTALI: 1. … - 4. …» tutto di seguito; si tocca una definizione per andarci */
+          const sec = d => Z.h('p.cw-par', null, Z.h('b.cw-dir', { text: d ? 'VERTICALI: ' : 'ORIZZONTALI: ' }),
+            ...P.words.filter(p => p.d === d).flatMap((p, k) => [k ? ' - ' : '', Z.h('span.cw-item' + (cur && cellsOf(P, p).every(i => cur.v[i]) ? '.done' : ''), {
+              role: 'button', tabindex: 0, on: { click: () => { Z.ui.closeOverlay(); selectWord(p); } },
+            }, Z.h('b', { text: p.num + '. ' }), p.clue)]));
+          body = [sec(0), sec(1)];
         }
         Z.ui.openSheet([Z.h('div.cw-all', null, ...body),
           Z.h('div.sheet-actions', null, Z.h('button.btn', { type: 'button', text: 'Chiudi', on: { click: Z.ui.closeOverlay } }))]);
@@ -851,12 +1706,13 @@ CINTURA|Tiene su i pantaloni`;
     id: 'crossword',
     name: 'Cruciverba',
     hue: 300,
-    tagline: 'Parole incrociate, con le definizioni.',
+    tagline: 'Parole crociate a schema libero, con le definizioni.',
     rules: Z.rules({
       goal: `Scrivi nello schema tutte le <b>parole</b> che rispondono alle <b>definizioni</b>.`,
       rules: [
         `Ogni fila di caselle bianche è una parola. Le parole <b>orizzontali</b> si leggono da sinistra a destra, le <b>verticali</b> dall'alto in basso.`,
-        `Le caselle scure separano le parole.`,
+        `Le caselle colorate separano le parole.`,
+        `Come nelle riviste di enigmistica, ci sono anche <b>parole di due lettere</b>, <b>sigle delle province</b> («Sigla di Roma» è RM) e <b>pezzetti di parola</b>: «Le vocali di «pisa»» è IA, «L'inizio di «casa»» è CA, «Metà di «dado»» è DA.`,
         `Le parole si incrociano: una casella può far parte di una parola orizzontale e di una verticale, e la lettera è la stessa per tutte e due.`,
         `Si scrive solo con lettere senza accenti (PERCHÉ diventa PERCHE).`,
       ],
@@ -885,7 +1741,8 @@ CINTURA|Tiene su i pantaloni`;
       goal: `<b>Incastra</b> nello schema tutte le parole dell'elenco. Non ci sono definizioni: le parole le conosci già.`,
       rules: [
         `Ogni fila di caselle bianche (in orizzontale o in verticale) ospita <b>una parola</b> dell'elenco, della stessa lunghezza.`,
-        `Ogni parola si usa <b>una volta sola</b>.`,
+        `Ogni parola si usa <b>una volta sola</b>. Nell'elenco ci sono anche le parole di due lettere.`,
+        `Le caselle colorate separano le parole.`,
         `Dove due parole si incrociano, la lettera deve andare bene per tutte e due.`,
       ],
       play: [

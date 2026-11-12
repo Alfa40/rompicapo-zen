@@ -19,7 +19,9 @@ https://alfa40.github.io/rompicapo-zen/ (si pubblica da sola a ogni push su `mai
   Se aggiungi una regola o un gioco logico, segui lo stesso schema e controlla che il Suggerimento non debba mai
   «svelare» una mossa.
 - Giochi di parole: `js/games/crossword.js` (Cruciverba e Incastro) contiene il dizionario con le definizioni
-  (`Z.DICT`, usato anche da `anagram.js`); `wordsearch.js` ha i suoi temi e chiavi, `cipher.js` i proverbi.
+  (`Z.DICT`, usato anche da `anagram.js`). Gli schemi sono fitti «a schema libero» come nelle riviste: si mettono
+  parole vere, poi i buchi si riempiono con parole di due lettere, sigle delle province e pezzi di parola
+  (`SHORT`, `FRAG`, con `how` che il Suggerimento usa per spiegarli); le caselle vuote vicino al bordo restano fuori; `wordsearch.js` ha i suoi temi e chiavi, `cipher.js` i proverbi.
   Solo lettere A–Z senza accenti. Tastiera di lettere comune: `Z.letterPad` in `core.js`.
 - `js/games/<gioco>.js`: ogni gioco ha `rules` (scritte con `Z.rules({goal, rules, play, start})`: scopo, regole complete,
   comandi e primo passo, comprensibili anche a chi non ha mai giocato; la prima partita le mostra una parte alla volta), `options`, `generate(opt)` (ogni rompicapo è generato al momento e ha una sola
