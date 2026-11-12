@@ -495,6 +495,13 @@ GOL|Si fa tirando in porta
 BIS|Si chiede alla fine del concerto
 NEO|Piccola macchia scura sulla pelle
 MIO|Non tuo, ma ...
+MIA|Non tua, ma ...
+TUA|Non mia, ma ...
+SUA|Di lei o di lui, al femminile
+TRA|Piccola parola: ... poco arrivo
+PER|Piccola parola: un regalo ... te
+CON|Piccola parola: vengo ... te
+NEI|Piccole macchie scure sulla pelle
 TUO|Non mio, ma ...
 SUO|Di lui o di lei
 ANNI|Si contano al compleanno
@@ -1218,6 +1225,29 @@ OTTIMO|Buonissimo`;
     WORDS.push(w);
   }
 
+  /* plurali regolari (MELA → MELE, FIORE → FIORI): tante parole in più per riempire lo schema */
+  const PLUR = {};
+  const NOPLUR = new Set(`ALA ARMA UOMO UOVO DITO BRACCIO OSSO ZIO DIO MANO RE AUTO FOTO MOTO RADIO BICI CINEMA CAFFE CITTA NOVITA
+    ROBOT SPORT TENNIS GAS BAR BLU SUD EST NORD OVEST UFO ZOO ACQUA ARIA LATTE MIELE SALE PEPE ORO FAME SETE PACE BUIO NIENTE
+    OGGI DOMANI SEMPRE DOPO SOPRA SOTTO PRESTO TARDI TANTO CIRCA ECCO BASTA CIAO MAI NOI VOI LORO MIO TUO SUO ITALIA ROMA ETNA
+    NATALE PASQUA EDEN URANO ESSERE FARE DARE DIRE SAPERE POTERE AMARE APRIRE RIDERE DORMIRE MANGIARE OSARE NOTARE OLIARE SANARE
+    INVERNO ESTATE AUTUNNO PRIMAVERA DOMENICA VENERDI MARZO APRILE MAGGIO GIUGNO LUGLIO OTTOBRE NOVEMBRE GENNAIO RISO GRANO FIENO
+    SANGUE CACAO PANNA BURRO OLIO ACETO FARINA ZUCCHERO GHIACCIO NEBBIA PIOGGIA NEVE GELO MORBIDO`.split(/\s+/));
+  const MASC_A = new Set('PIGIAMA PIANETA PILOTA ASTRONAUTA PIRATA ATLETA ARTISTA POETA PAPA TEMA PROBLEMA CLIMA DRAMMA SCHEMA POEMA DIADEMA ENIGMA'.split(' '));
+  for (const w of WORDS) {
+    if (NOPLUR.has(w) || w.length < 3) continue;
+    let p = '';
+    if (/[CG]O$/.test(w) || /[CG]IA$/.test(w)) continue;
+    else if (/IO$/.test(w)) p = w.slice(0, -1);
+    else if (/O$/.test(w)) p = w.slice(0, -1) + 'I';
+    else if (/E$/.test(w) && !/IE$/.test(w)) p = w.slice(0, -1) + 'I';
+    else if (/[CG]A$/.test(w)) p = MASC_A.has(w) ? '' : w.slice(0, -1) + 'HE';
+    else if (/A$/.test(w)) p = w.slice(0, -1) + (MASC_A.has(w) ? 'I' : 'E');
+    if (!p || p.length < 3 || CLUE[p] || PLUR[p]) continue;
+    const lw = w.toLowerCase();
+    PLUR[p] = { clue: `Il plurale di «${lw}»`, how: `Quando di «${lw}» ce n'è più di uno, diciamo <b>${p}</b>.` };
+  }
+
   /* parole di due lettere, come nelle riviste di enigmistica: piccole parole, note musicali e sigle delle province */
   const SHORT = {};
   const addShort = (s, clue, how) => (SHORT[s] = SHORT[s] || []).push({ clue, how });
@@ -1258,15 +1288,22 @@ OK|Va bene, in inglese`.split('\n')) { const [s, c] = l.split('|'); addShort(s, 
   /* pezzi di parola: «Le vocali di pisa», «L'inizio di casa»… con la spiegazione per il suggerimento */
   const FRAG = {};
   const lettersOf = s => s.split('').join(', ').replace(/, ([A-Z])$/, ' e $1');
-  const addFrag = (s, clue, how) => { if (!SHORT[s] && !CLUE[s]) (FRAG[s] = FRAG[s] || []).push({ clue, how }); };
+  const addFrag = (s, clue, how) => { if (!SHORT[s] && !CLUE[s] && !PLUR[s]) (FRAG[s] = FRAG[s] || []).push({ clue, how }); };
   for (const w of WORDS) {
     if (w.length < 4 || w.length > 8) continue;
     const lw = w.toLowerCase();
     addFrag(w.slice(0, 2), `L'inizio di «${lw}»`, `«${lw}» comincia con <b>${w.slice(0, 2)}</b>.`);
     addFrag(w.slice(-2), `La fine di «${lw}»`, `«${lw}» finisce con <b>${w.slice(-2)}</b>.`);
-    if (w.length >= 6) {
+    if (w.length >= 5) {
       addFrag(w.slice(0, 3), `L'inizio di «${lw}»`, `«${lw}» comincia con <b>${w.slice(0, 3)}</b>.`);
       addFrag(w.slice(-3), `La fine di «${lw}»`, `«${lw}» finisce con <b>${w.slice(-3)}</b>.`);
+      /* il cuore della parola: senza la prima e l'ultima lettera */
+      const mid = w.slice(1, -1);
+      if (mid.length <= 4) addFrag(mid, `Il cuore di «${lw}»`, `Togliamo la prima e l'ultima lettera di «${lw}»: resta <b>${mid}</b>.`);
+    }
+    if (w.length >= 7) {
+      addFrag(w.slice(0, 4), `L'inizio di «${lw}»`, `«${lw}» comincia con <b>${w.slice(0, 4)}</b>.`);
+      addFrag(w.slice(-4), `La fine di «${lw}»`, `«${lw}» finisce con <b>${w.slice(-4)}</b>.`);
     }
     if (w.length === 4 || w.length === 6) {
       const a = w.slice(0, w.length / 2), b = w.slice(w.length / 2), how = `Tagliamo «${lw}» a metà: ${a} e ${b}.`;
@@ -1274,14 +1311,17 @@ OK|Va bene, in inglese`.split('\n')) { const [s, c] = l.split('|'); addShort(s, 
       addFrag(b, `Metà di «${lw}»`, how);
     }
     const v = w.replace(/[^AEIOU]/g, ''), c = w.replace(/[AEIOU]/g, '');
-    if (v.length === 2) addFrag(v, `Le vocali di «${lw}»`, `In «${lw}» le vocali sono ${lettersOf(v)}: insieme fanno <b>${v}</b>.`);
-    if (c.length === 2) addFrag(c, `Le consonanti di «${lw}»`, `In «${lw}» le consonanti (le lettere che non sono vocali) sono ${lettersOf(c)}: insieme fanno <b>${c}</b>.`);
+    if (v.length === 2 || v.length === 3) addFrag(v, `Le vocali di «${lw}»`, `In «${lw}» le vocali sono ${lettersOf(v)}: insieme fanno <b>${v}</b>.`);
+    if (c.length === 2 || c.length === 3) addFrag(c, `Le consonanti di «${lw}»`, `In «${lw}» le consonanti (le lettere che non sono vocali) sono ${lettersOf(c)}: insieme fanno <b>${c}</b>.`);
   }
   /* 1 = parola vera o di due lettere, 2 = pezzo di parola, 0 = lettera sola, -1 = non va */
-  const kind = s => (s.length < 2 ? 0 : (s.length > 2 && CLUE[s]) || SHORT[s] ? 1 : FRAG[s] ? 2 : -1);
+  const kind = s => (s.length < 2 ? 0 : (s.length > 2 && (CLUE[s] || PLUR[s])) || SHORT[s] ? 1 : FRAG[s] ? 2 : -1);
   /* quanto è bella una fila: parola vera > parolina > sigla > pezzo di parola */
   const SIGLA = s => SHORT[s] && SHORT[s].every(o => o.how);
-  const worth = s => { const k = kind(s); return k === 1 ? (s.length > 2 ? 5 : SIGLA(s) ? 0.3 : 3) : k === 2 ? -1 : 0; };
+  /* tutte le file possibili, per lunghezza */
+  const ALL = [];
+  for (const s of [...WORDS.filter(w => w.length > 2), ...Object.keys(PLUR), ...Object.keys(SHORT), ...Object.keys(FRAG)]) (ALL[s.length] = ALL[s.length] || []).push(s);
+  const worth = s => { const k = kind(s); return k === 1 ? (s.length > 2 ? (PLUR[s] ? 3.5 : 5) : SIGLA(s) ? 0.3 : 3) : k === 2 ? -1 : 0; };
 
   /* schema libero: si mettono parole vere, il più fitte possibile; poi si riempiono i buchi
      con lettere che formano parole corte, sigle o pezzi di parola; le caselle vuote diventano nere */
@@ -1315,14 +1355,14 @@ OK|Va bene, in inglese`.split('\n')) { const [s, c] = l.split('|'); addShort(s, 
       if (!r || !keep) for (const i of ch) g[i] = '';
       return r;
     };
-    const used = new Set();
+    const used = new Set(), PLACE = [...WORDS, ...Object.keys(PLUR)];
     const first = Z.pick(WORDS.filter(w => w.length >= Math.min(n, 10) - 2 && w.length <= Math.min(n, 11)));
     const fy = Z.ri(0, 1) ? 0 : Z.ri(0, n - 1), fx = Z.ri(0, n - first.length);
     for (let k = 0; k < first.length; k++) g[fy * n + fx + k] = first[k];
     used.add(first);
     for (let fails = 0; fails < 2;) {
       let best = null, bs = -1e9;
-      for (const w of Z.shuffle(WORDS.filter(w => !used.has(w) && w.length <= n)).slice(0, 260))
+      for (const w of Z.shuffle(PLACE.filter(w => !used.has(w) && w.length <= n)).slice(0, 150))
         for (const d of [0, 1]) for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
           const r = tryPlace(w, x, y, d, false);
           if (!r) continue;
@@ -1334,27 +1374,114 @@ OK|Va bene, in inglese`.split('\n')) { const [s, c] = l.split('|'); addShort(s, 
       used.add(best.w);
     }
     const LET = 'AEIOURNTLSCDMPGBVFZ';
-    for (let pass = 0; pass < 3; pass++) for (const i of Z.shuffle(Z.range(n * n))) {
-      if (g[i]) continue;
-      let best = '', bs = 0;
-      for (const c of LET) {
-        g[i] = c;
-        const a = runAt(i % n, (i / n) | 0, 0), b = runAt(i % n, (i / n) | 0, 1), ka = kind(a), kb = kind(b);
-        g[i] = '';
-        if (ka < 0 || kb < 0 || (a.length < 2 && b.length < 2)) continue;
-        const sc = worth(a) + worth(b) + Math.random();
-        if (sc > bs) { bs = sc; best = c; }
+    /* punteggio delle file che passano per le caselle appena scritte (null se una fila non va) */
+    const score = cs => {
+      let sc = 0;
+      const seen = new Set();
+      /* ogni lettera deve stare in almeno una parola */
+      if (cs.some(i => runAt(i % n, (i / n) | 0, 0).length < 2 && runAt(i % n, (i / n) | 0, 1).length < 2)) return null;
+      for (const i of cs) for (const d of [0, 1]) {
+        const x = i % n, y = (i / n) | 0, s = runAt(x, y, d);
+        let sx = x, sy = y;
+        while (at(sx - (d ? 0 : 1), sy - (d ? 1 : 0))) { sx -= d ? 0 : 1; sy -= d ? 1 : 0; }
+        const key = d + ':' + sx + ':' + sy;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        if (kind(s) < 0) return null;
+        sc += worth(s);
       }
-      if (best) g[i] = best;
-    }
+      return sc;
+    };
+    /* si riempiono i buchi: una casella alla volta, poi due vicine insieme */
+    const fillHoles = pair => {
+      for (const i of Z.shuffle(Z.range(n * n))) {
+        if (g[i]) continue;
+        const x = i % n, y = (i / n) | 0;
+        const groups = pair ? [x + 1 < n && !g[i + 1] ? [i, i + 1] : null, y + 1 < n && !g[i + n] ? [i, i + n] : null].filter(Boolean) : [[i]];
+        let best = null, bs = -2.5 * (pair ? 2 : 1);
+        for (const cs of groups) for (const a of LET) for (const b of pair ? LET : ['']) {
+          g[cs[0]] = a;
+          if (pair) g[cs[1]] = b;
+          const sc = score(cs);
+          for (const j of cs) g[j] = '';
+          if (sc !== null && sc + Math.random() > bs) { bs = sc + Math.random(); best = [cs, a, b]; }
+        }
+        if (best) { g[best[0][0]] = best[1]; if (pair) g[best[0][1]] = best[2]; }
+      }
+    };
+    /* file di caselle vuote: si cerca una parola (o parolina, o pezzo) che le riempie attaccandosi alle lettere vicine */
+    const fillGaps = () => {
+      for (const d of Z.shuffle([0, 1])) for (let a = 0; a < n; a++) {
+        const idx = b => (d ? b * n + a : a * n + b);
+        for (let b = 0; b < n; b++) {
+          if (g[idx(b)]) continue;
+          let e = b;
+          while (e + 1 < n && !g[idx(e + 1)]) e++;
+          let L = '', R = '';
+          for (let k = b - 1; k >= 0 && g[idx(k)]; k--) L = g[idx(k)] + L;
+          for (let k = e + 1; k < n && g[idx(k)]; k++) R += g[idx(k)];
+          const len = e - b + 1;
+          let best = null, bs = -2;
+          /* j caselle riempite: tutte (si attacca a destra e a sinistra), o solo alcune vicino a un lato */
+          const tries = [[len, L, R]];
+          for (let j = 1; j < len; j++) { if (L) tries.push([j, L, '']); if (R) tries.push([j, '', R]); }
+          for (const [j, l, r] of tries) {
+            const start = r ? e - j + 1 : b, cs = Z.range(j).map(k => idx(start + k));
+            for (const s of ALL[l.length + j + r.length] || []) {
+              if (!s.startsWith(l) || !s.endsWith(r)) continue;
+              cs.forEach((i, k) => { g[i] = s[l.length + k]; });
+              const sc = score(cs);
+              cs.forEach(i => { g[i] = ''; });
+              if (sc !== null && sc + Math.random() > bs) { bs = sc + Math.random(); best = [cs, s.slice(l.length, l.length + j)]; }
+            }
+          }
+          if (best) best[0].forEach((i, k) => { g[i] = best[1][k]; });
+          b = e;
+        }
+      }
+    };
+    for (let pass = 0; pass < 2; pass++) fillHoles(false);
+    fillGaps();
+    fillHoles(true);
+    fillGaps();
+    fillHoles(false);
     return g;
   }
 
+  /* come nelle riviste: le caselle vuote vicino al bordo restano fuori (bordi frastagliati), le altre sono nere */
+  function outsideOf(sol, W, H) {
+    const out = new Set();
+    for (let i = 0; i < W * H; i++) {
+      const x = i % W, y = (i / W) | 0;
+      if (sol[i] === '.' && Math.min(x, y, W - 1 - x, H - 1 - y) === 0) out.add(i);
+    }
+    for (let grow = 0; grow < 2; grow++) for (let i = 0; i < W * H; i++) {
+      const x = i % W, y = (i / W) | 0;
+      if (sol[i] === '.' && !out.has(i) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
+        const nx = x + dx, ny = y + dy;
+        return nx >= 0 && ny >= 0 && nx < W && ny < H && out.has(ny * W + nx);
+      })) out.add(i);
+    }
+    return out;
+  }
+  /* quante caselle nere ci sono in mezzo allo schema; quelle attaccate ad altre nere contano di più */
+  function blackCost(sol, n) {
+    const out = outsideOf(sol, n, n);
+    let c = 0;
+    for (let i = 0; i < n * n; i++) {
+      if (sol[i] !== '.' || out.has(i)) continue;
+      c++;
+      if (i % n + 1 < n && sol[i + 1] === '.' && !out.has(i + 1)) c += 1.5;
+      if (i + n < n * n && sol[i + n] === '.' && !out.has(i + n)) c += 1.5;
+    }
+    return c;
+  }
+
   function layout(n) {
-    let g = null, best = -1;
-    for (let t = 0; t < 3; t++) {
-      const h = build(n), full = h.filter(c => c).length;
-      if (full > best) { best = full; g = h; }
+    let g = null, best = 1e9;
+    for (let t = 0, T = n <= 9 ? 16 : n <= 11 ? 12 : n <= 13 ? 10 : 8; t < T; t++) {
+      const h = build(n), cost = blackCost(h.map(c => c || '.'), n) + h.filter(c => !c).length * 0.05;
+      if (cost < best) { best = cost; g = h; }
     }
     /* si tolgono righe e colonne vuote ai bordi */
     let x0 = n, y0 = n, x1 = 0, y1 = 0;
@@ -1372,7 +1499,7 @@ OK|Va bene, in inglese`.split('\n')) { const [s, c] = l.split('|'); addShort(s, 
         if (s.length > 1) {
           const p = { word: s, x: st % w, y: (st / w) | 0, d };
           if (s.length > 2 && CLUE[s]) p.clue = CLUE[s];
-          else { const o = Z.pick(SHORT[s] || FRAG[s]); p.clue = o.clue; if (o.how) p.how = o.how; }
+          else { const o = Z.pick(SHORT[s] || (PLUR[s] && [PLUR[s]]) || FRAG[s]); p.clue = o.clue; if (o.how) p.how = o.how; }
           words.push(p);
         }
         s = '';
@@ -1502,7 +1629,7 @@ OK|Va bene, in inglese`.split('\n')) { const [s, c] = l.split('|'); addShort(s, 
           const k = cellsOf(P, p).filter(i => st.v[i]).length;
           tag = k ? 'cross' : 'clue';
           tip = `Prova la <b>${label(p)}</b>: «${p.clue}». ` + (k ? `Hai già ${k === 1 ? 'una lettera' : k + ' lettere'} su ${p.word.length}: ti aiutano!` : `È lunga ${p.word.length} lettere.`)
-            + (p.how && !/^Sigla/.test(p.clue) ? ' Attenzione: qui non va una parola intera, ma un pezzetto di parola.' : '');
+            + (kind(p.word) === 2 ? ' Attenzione: qui non va una parola intera, ma un pezzetto di parola.' : '');
           why = `<b>${label(p)}</b>: «${p.clue}». ` + (p.how ? p.how + ' ' : '') + (k
             ? `Avevi già ${k === 1 ? 'una lettera' : k + ' lettere'} su ${p.word.length}: con quelle è più facile. È <b>${p.word}</b>! `
             : `La risposta è <b>${p.word}</b>. `);
@@ -1548,20 +1675,7 @@ OK|Va bene, in inglese`.split('\n')) { const [s, c] = l.split('|'); addShort(s, 
       const grid = Z.h('div.cw-grid');
       const nums = {};
       for (const p of P.words) nums[p.y * W + p.x] = p.num;
-      /* come nelle riviste: le caselle vuote vicino al bordo restano fuori (bordi frastagliati), le altre sono nere */
-      const out = new Set();
-      for (let i = 0; i < W * H; i++) {
-        const x = i % W, y = (i / W) | 0;
-        const edge = Math.min(x, y, W - 1 - x, H - 1 - y);
-        if (P.sol[i] === '.' && edge === 0) out.add(i);
-      }
-      for (let grow = 0; grow < 2; grow++) for (let i = 0; i < W * H; i++) {
-        const x = i % W, y = (i / W) | 0;
-        if (P.sol[i] === '.' && !out.has(i) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
-          const nx = x + dx, ny = y + dy;
-          return nx >= 0 && ny >= 0 && nx < W && ny < H && out.has(ny * W + nx);
-        })) out.add(i);
-      }
+      const out = outsideOf(P.sol, W, H);
       const cells = [], lets = [];
       for (let i = 0; i < W * H; i++) {
         if (P.sol[i] === '.') { const b = Z.h('span.cw-c.' + (out.has(i) ? 'blank' : 'blk')); grid.append(b); cells.push(b); lets.push(null); continue; }
